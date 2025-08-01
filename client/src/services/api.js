@@ -59,9 +59,13 @@ export const jobAPI = {
 
 // Fitment API
 export const fitmentAPI = {
-  // Calculate fitment score
+  // Calculate fitment score for a specific job
   calculateFitment: (studentPhone, jobId) => 
     api.get(`/fitment/${studentPhone}/${jobId}`),
+  
+  // Get all matched jobs for a student
+  getMatchedJobs: (studentPhone, params = {}) => 
+    api.get(`/fitment/${studentPhone}`, { params }),
 }
 
 // Health check

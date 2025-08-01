@@ -3,6 +3,88 @@ const Student = require('../models/Student');
 const Job = require('../models/Job');
 const router = express.Router();
 
+// GET /api/fitment/:studentPhone - Get all matched jobs for a student
+router.get('/:studentPhone', async (req, res) => {
+  try {
+    const { studentPhone } = req.params;
+    const { limit = 10, minScore = 0 } = req.query;
+
+    // Find student
+    const student = await Student.findOne({ phone: studentPhone });
+    if (!student) {
+      return res.status(404).json({ 
+        error: 'Student not found' 
+      });
+    }
+
+    // Get all active jobs
+    const jobs = await Job.find({ isActive: { $ne: false } });
+
+    if (jobs.length === 0) {
+      return res.json({
+        message: 'No active jobs found in the system',
+        student: {
+          name: student.name,
+          phone: student.phone,
+          education: student.education,
+          experience: student.experience,
+          skills: student.skills,
+          assessmentScore: student.assessmentScore
+        },
+        matchedJobs: [],
+        totalJobs: 0,
+        averageScore: 0
+      });
+    }
+
+    // Calculate fitment for each job
+    const matchedJobs = [];
+    for (const job of jobs) {
+      try {
+        const fitmentResult = calculateFitment(student, job);
+        
+        if (fitmentResult.score >= minScore) {
+          matchedJobs.push({
+            ...job.toObject(),
+            fitment: fitmentResult
+          });
+        }
+      } catch (error) {
+        console.error(`Error calculating fitment for job ${job.jobId}:`, error);
+        // Continue with other jobs even if one fails
+      }
+    }
+
+    // Sort by fitment score (highest first) and limit results
+    matchedJobs.sort((a, b) => b.fitment.score - a.fitment.score);
+    const limitedJobs = matchedJobs.slice(0, parseInt(limit));
+
+    res.json({
+      message: 'Matched jobs retrieved successfully',
+      student: {
+        name: student.name,
+        phone: student.phone,
+        education: student.education,
+        experience: student.experience,
+        skills: student.skills,
+        assessmentScore: student.assessmentScore
+      },
+      matchedJobs: limitedJobs,
+      totalJobs: matchedJobs.length,
+      averageScore: matchedJobs.length > 0 
+        ? Math.round(matchedJobs.reduce((sum, job) => sum + job.fitment.score, 0) / matchedJobs.length)
+        : 0
+    });
+
+  } catch (error) {
+    console.error('Error fetching matched jobs:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch matched jobs',
+      message: error.message 
+    });
+  }
+});
+
 // GET /api/fitment/:studentPhone/:jobId - Calculate fitment score
 router.get('/:studentPhone/:jobId', async (req, res) => {
   try {

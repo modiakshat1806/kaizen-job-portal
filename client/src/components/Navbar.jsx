@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Briefcase, User, QrCode, Home, Building } from 'lucide-react'
+import { User, QrCode, Home, Building } from 'lucide-react'
+import Logo from './Logo'
 
 const Navbar = () => {
   const location = useLocation()
@@ -7,20 +8,17 @@ const Navbar = () => {
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
     { path: '/assessment', label: 'Assessment', icon: User },
-    { path: '/career-match', label: 'Career Match', icon: Briefcase },
+    { path: '/career-match', label: 'Career Match', icon: User },
     { path: '/post-job', label: 'Post Job', icon: Building },
     { path: '/scan', label: 'QR Scanner', icon: QrCode },
   ]
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-white shadow-sm border-b border-gray-200 relative z-50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Kaizen Jobs</span>
+        <div className="flex items-center justify-between h-20">
+          <Link to="/" className="flex items-center">
+            <Logo size="default" />
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -35,7 +33,7 @@ const Navbar = () => {
                   className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     isActive
                       ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      : 'text-gray-600 hover:text-primary-700 hover:bg-primary-50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -47,7 +45,7 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <button className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+            <button className="p-2 rounded-lg text-gray-600 hover:text-primary-700 hover:bg-primary-50">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
@@ -69,7 +67,7 @@ const Navbar = () => {
                   className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     isActive
                       ? 'bg-primary-100 text-primary-700'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      : 'text-gray-600 hover:text-primary-700 hover:bg-primary-50'
                   }`}
                 >
                   <Icon className="w-4 h-4" />

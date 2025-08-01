@@ -141,7 +141,7 @@ router.get('/', async (req, res) => {
     if (location) filter['location.type'] = location;
 
     const jobs = await Job.find(filter)
-      .select('jobId title company jobType location industry createdAt')
+      .select('jobId title company jobType location industry salary requirements createdAt')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);

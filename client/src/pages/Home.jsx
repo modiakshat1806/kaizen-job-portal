@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { User, Briefcase, Building, QrCode, ArrowRight, Star } from 'lucide-react'
+import Logo from '../components/Logo'
 
 const Home = () => {
   const features = [
@@ -8,28 +9,28 @@ const Home = () => {
       description: 'Complete a comprehensive assessment to understand your skills and career goals',
       icon: User,
       path: '/assessment',
-      color: 'bg-blue-500'
+      color: 'bg-primary-500'
     },
     {
       title: 'Career Match',
       description: 'Find jobs that match your skills and preferences with our AI-powered matching',
       icon: Briefcase,
       path: '/career-match',
-      color: 'bg-green-500'
+      color: 'bg-secondary-500'
     },
     {
       title: 'Post Job',
       description: 'Companies can post job opportunities and reach qualified candidates',
       icon: Building,
       path: '/post-job',
-      color: 'bg-purple-500'
+      color: 'bg-accent-500'
     },
     {
       title: 'QR Scanner',
       description: 'Scan QR codes to quickly access job details and apply',
       icon: QrCode,
       path: '/scan',
-      color: 'bg-orange-500'
+      color: 'bg-primary-600'
     }
   ]
 
@@ -45,9 +46,12 @@ const Home = () => {
       {/* Hero Section */}
       <section className="text-center space-y-6">
         <div className="space-y-4">
+          <div className="flex justify-center mb-6">
+            <Logo size="large" />
+          </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900">
             Find Your Perfect
-            <span className="text-primary-600"> Career Match</span>
+            <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent"> Career Match</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Connect talented students with innovative companies through our AI-powered job matching platform.
@@ -69,7 +73,7 @@ const Home = () => {
       <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
           <div key={index} className="card text-center">
-            <div className="text-3xl font-bold text-primary-600">{stat.value}</div>
+            <div className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">{stat.value}</div>
             <div className="text-sm text-gray-600">{stat.label}</div>
           </div>
         ))}
@@ -96,7 +100,7 @@ const Home = () => {
                 className="card hover:shadow-lg transition-shadow duration-200 group"
               >
                 <div className="space-y-4">
-                  <div className={`w-12 h-12 ${feature.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                  <div className={`w-12 h-12 ${feature.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-200 shadow-lg`}>
                     <Icon className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -128,8 +132,8 @@ const Home = () => {
 
         <div className="grid md:grid-cols-3 gap-8">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-2xl font-bold text-primary-600">1</span>
+            <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
+              <span className="text-2xl font-bold text-white">1</span>
             </div>
             <h3 className="text-xl font-semibold text-gray-900">Complete Assessment</h3>
             <p className="text-gray-600">
@@ -138,8 +142,8 @@ const Home = () => {
           </div>
 
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-2xl font-bold text-primary-600">2</span>
+            <div className="w-16 h-16 bg-gradient-to-br from-secondary-500 to-secondary-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
+              <span className="text-2xl font-bold text-white">2</span>
             </div>
             <h3 className="text-xl font-semibold text-gray-900">Get Matched</h3>
             <p className="text-gray-600">
@@ -148,8 +152,8 @@ const Home = () => {
           </div>
 
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto">
-              <span className="text-2xl font-bold text-primary-600">3</span>
+            <div className="w-16 h-16 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center mx-auto shadow-lg">
+              <span className="text-2xl font-bold text-white">3</span>
             </div>
             <h3 className="text-xl font-semibold text-gray-900">Apply & Connect</h3>
             <p className="text-gray-600">
@@ -160,7 +164,7 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary-600 rounded-2xl p-8 text-center text-white">
+      <section className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-2xl p-8 text-center text-white shadow-xl">
         <div className="space-y-4">
           <h2 className="text-3xl font-bold">
             Ready to Start Your Journey?
@@ -169,7 +173,7 @@ const Home = () => {
             Join thousands of students who have found their dream careers through our platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/assessment" className="bg-white text-primary-600 font-medium py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+            <Link to="/assessment" className="bg-white text-primary-600 font-medium py-3 px-8 rounded-lg hover:bg-gray-100 transition-colors duration-200 shadow-lg">
               Start Assessment
             </Link>
             <Link to="/post-job" className="border border-white text-white font-medium py-3 px-8 rounded-lg hover:bg-white hover:text-primary-600 transition-colors duration-200">

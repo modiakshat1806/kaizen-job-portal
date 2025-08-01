@@ -12,7 +12,8 @@ const validateStudentData = [
   body('education.field').notEmpty().withMessage('Field of study is required'),
   body('education.institution').notEmpty().withMessage('Institution is required'),
   body('education.graduationYear').isInt({ min: 1950, max: new Date().getFullYear() + 10 }).withMessage('Invalid graduation year'),
-  body('careerGoals').notEmpty().withMessage('Career goals are required')
+  body('careerGoals').notEmpty().withMessage('Career goals are required'),
+  body('experienceYears').optional().isInt({ min: 0, max: 50 }).withMessage('Experience years must be between 0 and 50')
 ];
 
 // POST /api/student - Save student assessment
@@ -34,6 +35,7 @@ router.post('/', validateStudentData, async (req, res) => {
       education,
       skills,
       experience,
+      experienceYears,
       interests,
       careerGoals,
       preferredLocation,
@@ -56,7 +58,11 @@ router.post('/', validateStudentData, async (req, res) => {
       email,
       education,
       skills: skills || [],
-      experience: experience || { years: 0, internships: [], projects: [] },
+      experience: {
+        years: experience?.years || experienceYears || 0,
+        internships: experience?.internships || [],
+        projects: experience?.projects || []
+      },
       interests: interests || [],
       careerGoals,
       preferredLocation: preferredLocation || [],

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { ChevronLeft, ChevronRight, Check, User, GraduationCap, Briefcase, Target, MapPin } from 'lucide-react'
-import { studentAPI } from '../services/api'
+import { studentAPI, fitmentAPI } from '../services/api'
 
 const StudentAssessment = () => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -39,14 +39,46 @@ const StudentAssessment = () => {
           years: parseInt(data.experienceYears) || 0,
           internships: [],
           projects: []
+        },
+        // Ensure all required fields are present
+        education: {
+          degree: data.education?.degree || 'Bachelor',
+          field: data.education?.field || 'Computer Science',
+          institution: data.education?.institution || 'University',
+          graduationYear: parseInt(data.education?.graduationYear) || new Date().getFullYear()
         }
       }
 
+      // 1. POST the assessment to /api/student
       await studentAPI.saveAssessment(studentData)
       toast.success('Assessment completed successfully!')
-      navigate('/career-match')
+      
+      // 2. GET fitment results from /api/fitment/:studentPhone
+      const matchedJobsResponse = await fitmentAPI.getMatchedJobs(data.phone, {
+        limit: 20,
+        minScore: 30 // Only show jobs with at least 30% match
+      })
+      
+      // 3. Navigate to /career-match with the job match results passed in state
+      navigate('/career-match', {
+        state: {
+          jobs: matchedJobsResponse.data.matchedJobs,
+          student: matchedJobsResponse.data.student,
+          totalJobs: matchedJobsResponse.data.totalJobs,
+          averageScore: matchedJobsResponse.data.averageScore,
+          fromAssessment: true
+        }
+      })
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to save assessment')
+      console.error('Assessment submission error:', error)
+      if (error.response?.status === 404) {
+        toast.error('Failed to find matched jobs. Please try again.')
+      } else if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.error || 'Validation failed'
+        toast.error(errorMessage)
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to save assessment')
+      }
     } finally {
       setIsSubmitting(false)
     }
