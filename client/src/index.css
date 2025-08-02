@@ -29,6 +29,69 @@
     @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
   }
   
+  /* Select dropdown styling */
+  select.input-field {
+    @apply appearance-none bg-white;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+  
+  select.input-field:focus {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233b82f6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  }
+  
+  /* Ensure dropdown appears below */
+  select.input-field option {
+    @apply bg-white text-gray-900;
+  }
+  
+
+  
+  /* Ensure select dropdown appears below */
+  .form-group select {
+    position: relative;
+    z-index: 10;
+  }
+  
+  /* Force dropdown to appear below */
+  select.input-field {
+    transform: translateZ(0);
+  }
+  
+  /* Override browser default dropdown behavior */
+  select.input-field:focus {
+    transform: translateZ(0);
+  }
+  
+  /* Ensure options appear below */
+  select.input-field option {
+    position: relative;
+    z-index: 1000;
+  }
+  
+  /* Additional dropdown positioning fixes */
+  .form-group .relative {
+    position: relative;
+    z-index: 20;
+  }
+  
+  /* Override any browser-specific dropdown behavior */
+  select.input-field {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  
+  /* Ensure dropdown opens downward */
+  select.input-field:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
   .card {
     @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
   }
@@ -39,6 +102,7 @@
   
   .form-group {
     @apply space-y-2;
+    position: relative;
   }
   
   .form-label {
@@ -63,5 +127,56 @@
   
   .step-pending {
     @apply border-gray-300 bg-gray-50 text-gray-500;
+  }
+  
+  /* Slider styling */
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  
+  .slider::-webkit-slider-track {
+    background: #e5e7eb;
+    height: 8px;
+    border-radius: 4px;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #7c3aed;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .slider::-webkit-slider-thumb:hover {
+    background: #6d28d9;
+    transform: scale(1.1);
+  }
+  
+  .slider::-moz-range-track {
+    background: #e5e7eb;
+    height: 8px;
+    border-radius: 4px;
+    border: none;
+  }
+  
+  .slider::-moz-range-thumb {
+    background: #7c3aed;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .slider::-moz-range-thumb:hover {
+    background: #6d28d9;
   }
 } 
