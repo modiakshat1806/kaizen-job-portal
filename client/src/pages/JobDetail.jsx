@@ -64,6 +64,15 @@ const JobDetail = () => {
     return 'Poor Match'
   }
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount || 0)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-64">
@@ -160,7 +169,7 @@ const JobDetail = () => {
               {job.salary.min && (
                 <div className="flex items-center text-gray-600">
                   <DollarSign className="w-4 h-4 mr-2" />
-                  <span>${job.salary.min.toLocaleString()} - ${job.salary.max?.toLocaleString() || 'N/A'}</span>
+                  <span>{formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)} {job.salary.period}</span>
                 </div>
               )}
             </div>

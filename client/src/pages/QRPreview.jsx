@@ -22,8 +22,8 @@ const QRPreview = () => {
       setJob(response.data.job)
     } catch (error) {
       console.error('Error fetching job:', error)
-      toast.error('Failed to load job details')
-      navigate('/job-posting')
+             toast.error('Failed to load job details')
+       navigate('/post-job')
     } finally {
       setLoading(false)
     }
@@ -101,10 +101,10 @@ const QRPreview = () => {
       <div className="max-w-4xl mx-auto">
         <div className="text-center py-12">
           <p className="text-gray-600">Job not found</p>
-          <button
-            onClick={() => navigate('/job-posting')}
-            className="btn-primary mt-4"
-          >
+                     <button
+             onClick={() => navigate('/post-job')}
+             className="btn-primary mt-4"
+           >
             Post New Job
           </button>
         </div>
@@ -148,10 +148,18 @@ const QRPreview = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Job Details</h3>
                                  <div className="space-y-2 text-sm">
-                   <div className="flex justify-between items-center">
-                     <span className="text-gray-600">Job ID:</span>
-                     <span className="font-medium font-mono">{job.jobId}</span>
-                   </div>
+                                       <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Job ID:</span>
+                      <span className="font-medium font-mono">{job.jobId}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Contact Person:</span>
+                      <span className="font-medium">{job.contactPerson?.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Contact Phone:</span>
+                      <span className="font-medium">{job.contactPerson?.phone}</span>
+                    </div>
                    <div className="flex justify-between items-center">
                      <span className="text-gray-600">Industry:</span>
                      <span className="font-medium">{job.industry}</span>
@@ -301,10 +309,10 @@ const QRPreview = () => {
 
       {/* Action Buttons */}
       <div className="mt-8 flex justify-center space-x-4">
-        <button
-          onClick={() => navigate('/job-posting')}
-          className="btn-outline flex items-center"
-        >
+                 <button
+           onClick={() => navigate('/post-job')}
+           className="btn-outline flex items-center"
+         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Post Another Job
         </button>

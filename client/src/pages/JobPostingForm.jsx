@@ -181,10 +181,18 @@ const JobPostingForm = () => {
                        </span>
                      </div>
                    )}
-                   <div className="flex justify-between items-center">
-                     <span className="text-gray-600">Job ID:</span>
-                     <span className="font-medium font-mono text-gray-500">Will be generated after posting</span>
-                   </div>
+                                       <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Job ID:</span>
+                      <span className="font-medium font-mono text-gray-500">Will be generated after posting</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Contact Person:</span>
+                      <span className="font-medium">{previewData.contactPerson?.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Contact Phone:</span>
+                      <span className="font-medium">{previewData.contactPerson?.phone}</span>
+                    </div>
                  </div>
               </div>
 
@@ -353,18 +361,40 @@ const JobPostingForm = () => {
               {errors.industry && <p className="form-error">{errors.industry.message}</p>}
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Job Type *</label>
-              <select className="input-field" {...register('jobType', { required: 'Job type is required' })}>
-                <option value="">Select Job Type</option>
-                <option value="Full-time">Full-time</option>
-                <option value="Part-time">Part-time</option>
-                <option value="Contract">Contract</option>
-                <option value="Internship">Internship</option>
-                <option value="Freelance">Freelance</option>
-              </select>
-              {errors.jobType && <p className="form-error">{errors.jobType.message}</p>}
-            </div>
+                         <div className="form-group">
+               <label className="form-label">Job Type *</label>
+               <select className="input-field" {...register('jobType', { required: 'Job type is required' })}>
+                 <option value="">Select Job Type</option>
+                 <option value="Full-time">Full-time</option>
+                 <option value="Part-time">Part-time</option>
+                 <option value="Contract">Contract</option>
+                 <option value="Internship">Internship</option>
+                 <option value="Freelance">Freelance</option>
+               </select>
+               {errors.jobType && <p className="form-error">{errors.jobType.message}</p>}
+             </div>
+
+             <div className="form-group">
+               <label className="form-label">Contact Person Name *</label>
+               <input
+                 type="text"
+                 className="input-field"
+                 placeholder="e.g., John Doe"
+                 {...register('contactPerson.name', { required: 'Contact person name is required' })}
+               />
+               {errors.contactPerson?.name && <p className="form-error">{errors.contactPerson.name.message}</p>}
+             </div>
+
+             <div className="form-group">
+               <label className="form-label">Contact Person Phone *</label>
+               <input
+                 type="tel"
+                 className="input-field"
+                 placeholder="e.g., +91 98765 43210"
+                 {...register('contactPerson.phone', { required: 'Contact person phone is required' })}
+               />
+               {errors.contactPerson?.phone && <p className="form-error">{errors.contactPerson.phone.message}</p>}
+             </div>
           </div>
 
           <div className="form-group mt-6">

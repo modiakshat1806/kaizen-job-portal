@@ -12,16 +12,28 @@ const jobSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  company: {
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    logo: String,
-    description: String,
-    website: String
-  },
+     company: {
+     name: {
+       type: String,
+       required: true,
+       trim: true
+     },
+     logo: String,
+     description: String,
+     website: String
+   },
+   contactPerson: {
+     name: {
+       type: String,
+       required: true,
+       trim: true
+     },
+     phone: {
+       type: String,
+       required: true,
+       trim: true
+     }
+   },
   description: {
     type: String,
     required: true
