@@ -51,7 +51,7 @@ router.post('/', validateJobData, async (req, res) => {
       responsibilities: responsibilities || [],
       benefits: benefits || [],
       location: location || { type: 'On-site' },
-      salary: salary || { min: 0, max: 0, currency: 'USD', period: 'Yearly' },
+      salary: salary || { min: 0, max: 0, currency: 'INR', period: 'Yearly' },
       jobType,
       industry,
       department,

@@ -60,7 +60,7 @@ const jobSchema = new mongoose.Schema({
     max: Number,
     currency: {
       type: String,
-      default: 'USD'
+      default: 'INR'
     },
     period: {
       type: String,
@@ -106,7 +106,8 @@ jobSchema.pre('save', function(next) {
 
 // Generate QR code URL for the job
 jobSchema.methods.generateQRCode = function() {
-  const jobUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/job/${this.jobId}`;
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  const jobUrl = `${frontendUrl}/job/${this.jobId}`;
   return jobUrl;
 };
 
