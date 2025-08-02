@@ -1,35 +1,19 @@
-import logoImage from '../assests/logo1.jpg'
+import logoImage from '../assets/logo1.png' // Change if needed
 
-const Logo = ({ size = 'default', showText = true }) => {
-  const sizeClasses = {
-    small: 'w-16 h-16',
-    default: 'w-28 h-28',
-    large: 'w-40 h-40'
-  }
-
-  const textSizes = {
-    small: 'text-xs',
-    default: 'text-sm',
-    large: 'text-base'
-  }
-
+const Logo = () => {
   return (
-    <div className="flex items-center">
-      {/* Logo Image with Jobs Text */}
-      <div className={`${sizeClasses[size]} relative`}>
-        <img 
-          src={logoImage} 
-          alt="THE PROJECT Kaizen" 
-          className="w-full h-full object-cover"
-        />
-        {showText && (
-          <div className="absolute bottom-0 right-0 bg-primary-500 text-white px-1 py-0.5 rounded-tl text-xs font-semibold shadow-sm">
-            Jobs
-          </div>
-        )}
-      </div>
+    // This container sets the size of the logo.
+    // We've simplified this component to remove the extra text and size options
+    // for a cleaner look, just like in your example image.
+    // EDITED: Increased width from w-28 to w-36 to make the logo bigger.
+    <div className="w-36 h-auto">
+      <img
+        src={logoImage}
+        alt="Kaizen Job Portal Logo"
+        className="w-full h-full object-contain"
+      />
     </div>
   )
 }
 
-export default Logo 
+export default Logo
