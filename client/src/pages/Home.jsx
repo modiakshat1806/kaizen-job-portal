@@ -1,12 +1,94 @@
 import { Link } from 'react-router-dom'
-import { User, Briefcase, Building, QrCode, ArrowRight, Zap, Shield, Trophy } from 'lucide-react'
+import { User, Briefcase, Building, QrCode, ArrowRight, Zap, MapPin, Users, Target } from 'lucide-react'
+import { useEffect, useState, useRef } from 'react'
+import Logo from '../components/Logo'
+
+// Animated Counter Component
+const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
+  const [count, setCount] = useState(0)
+  const [hasAnimated, setHasAnimated] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true)
+          let startTime = null
+          const startValue = 0
+
+          const animate = (currentTime) => {
+            if (startTime === null) startTime = currentTime
+            const progress = Math.min((currentTime - startTime) / duration, 1)
+
+            const easeOutQuart = 1 - Math.pow(1 - progress, 4)
+            const currentCount = Math.floor(easeOutQuart * (end - startValue) + startValue)
+
+            setCount(currentCount)
+
+            if (progress < 1) {
+              requestAnimationFrame(animate)
+            }
+          }
+
+          requestAnimationFrame(animate)
+        }
+      },
+      { threshold: 0.5 }
+    )
+
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
+
+    return () => {
+      if (ref.current) {
+        observer.unobserve(ref.current)
+      }
+    }
+  }, [end, duration, hasAnimated])
+
+  return <span ref={ref}>{count}{suffix}</span>
+}
 
 const Home = () => {
+  const [scrollY, setScrollY] = useState(0)
+  const [activeSection, setActiveSection] = useState(0)
+  const sectionsRef = useRef([])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      setScrollY(currentScrollY)
+      
+      // Determine which section is currently in view
+      const sectionElements = sectionsRef.current
+      if (sectionElements.length > 0) {
+        const windowHeight = window.innerHeight
+        const scrollPosition = currentScrollY + windowHeight / 2
+        
+        sectionElements.forEach((section, index) => {
+          if (section) {
+            const sectionTop = section.offsetTop
+            const sectionHeight = section.offsetHeight
+            
+            if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+              setActiveSection(index)
+            }
+          }
+        })
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const stats = [
-    { label: 'Active Jobs', value: '150+' },
-    { label: 'Students Matched', value: '500+' },
-    { label: 'Partner Companies', value: '50+' },
-    { label: 'Success Stories', value: '85%' }
+    { label: 'Active Jobs', value: 150, suffix: '+' },
+    { label: 'Students Matched', value: 500, suffix: '+' },
+    { label: 'Partner Companies', value: 50, suffix: '+' },
+    { label: 'Success Stories', value: 85, suffix: '%' }
   ]
 
   const features = [
@@ -26,71 +108,89 @@ const Home = () => {
       title: 'Company Hub',
       description: 'Streamlined recruitment process for hiring managers',
       icon: Building,
-      path: '/companies'
+      path: '/post-job'
     },
     {
       title: 'Quick Apply',
       description: 'One-click applications with QR code technology',
       icon: QrCode,
-      path: '/apply'
+      path: '/scan'
     }
   ]
 
-  const benefits = [
-    {
-      title: 'Lightning Fast',
-      description: 'Get matched with relevant opportunities in seconds',
-      icon: Zap
-    },
-    {
-      title: 'Secure & Private',
-      description: 'Your data is protected with enterprise-grade security',
-      icon: Shield
-    },
-    {
-      title: 'Proven Results',
-      description: 'Join thousands who found their dream careers',
-      icon: Trophy
-    }
-  ]
+
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-purple-50 via-white to-purple-50 pt-16 pb-24 px-4 overflow-hidden">
+      <section 
+        ref={(el) => (sectionsRef.current[0] = el)}
+        className="relative bg-gradient-to-br from-purple-50 via-white to-purple-50 pt-16 pb-24 px-4 overflow-hidden min-h-screen flex items-center"
+        style={{
+          transform: `translateZ(${scrollY * 0.01}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
         {/* Enhanced 3D Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-purple-600 rounded-full blur-3xl animate-pulse"></div>
+          <div 
+            className="absolute top-20 left-10 w-32 h-32 bg-purple-600 rounded-full blur-3xl animate-pulse"
+            style={{
+              transform: `translateZ(${scrollY * 0.005}px) translateY(${scrollY * 0.002}px)`
+            }}
+          ></div>
           <div 
             className="absolute bottom-20 right-10 w-40 h-40 bg-purple-400 rounded-full blur-3xl animate-pulse" 
-            style={{animationDelay: '1s'}}
+            style={{
+              animationDelay: '1s',
+              transform: `translateZ(${scrollY * 0.004}px) translateY(${scrollY * -0.001}px)`
+            }}
           ></div>
           <div 
             className="absolute top-1/2 left-1/3 w-24 h-24 bg-purple-500 rounded-full blur-2xl animate-bounce" 
-            style={{animationDelay: '2s'}}
+            style={{
+              animationDelay: '2s',
+              transform: `translateZ(${scrollY * 0.008}px) translateY(${scrollY * 0.004}px)`
+            }}
           ></div>
         </div>
-       
-        <div className="max-w-7xl mx-auto relative">
+        
+        <div className="max-w-7xl mx-auto relative w-full">
           <div className="text-center max-w-4xl mx-auto mb-16">
-            <div className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6 transform hover:scale-105 transition-transform duration-300 shadow-lg">
+            <div 
+              className={`inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6 transform transition-all duration-1000 shadow-lg ${
+                activeSection === 0 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-4 opacity-80'
+              }`}
+            >
               🚀 August Fest 2025 - Career Connection Platform
             </div>
-           
-            <h1 className="text-6xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-6 transform hover:scale-105 transition-transform duration-500">
+            
+            <h1 
+              className={`text-6xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-6 transform transition-all duration-1000 ${
+                activeSection === 0 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+              }`}
+            >
               Your career journey
               <br />
               <span className="bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
                 starts here
               </span>
             </h1>
-           
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
+            
+            <p 
+              className={`text-xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto transform transition-all duration-1000 ${
+                activeSection === 0 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
+              }`}
+            >
               Connect with innovative companies, showcase your skills, and discover opportunities
               that align with your career aspirations through our intelligent matching system.
             </p>
-           
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            
+            <div
+              className={`flex flex-col sm:flex-row gap-4 justify-center mb-8 transform transition-all duration-1000 ${
+                activeSection === 0 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-80'
+              }`}
+            >
               <Link
                 to="/assessment"
                 className="group inline-flex items-center px-8 py-4 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-1 hover:scale-105"
@@ -103,28 +203,53 @@ const Home = () => {
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link
-                to="/browse"
+                to="/post-job"
                 className="inline-flex items-center px-8 py-4 border-2 border-purple-200 text-purple-700 font-semibold rounded-xl hover:bg-purple-50 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 shadow-md hover:shadow-lg"
               >
-                Browse Opportunities
+                Post Opportunities
               </Link>
+            </div>
+
+            {/* Feature Icons Row */}
+            <div
+              className={`flex flex-col sm:flex-row gap-6 justify-center items-center mb-12 transform transition-all duration-1000 ${
+                activeSection === 0 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-80'
+              }`}
+            >
+              <div className="flex items-center gap-2 text-gray-600 text-sm">
+                <MapPin className="w-4 h-4 text-purple-600" />
+                <span>August Fest 2025</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600 text-sm">
+                <Users className="w-4 h-4 text-purple-600" />
+                <span>Smart Matching</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-600 text-sm">
+                <Target className="w-4 h-4 text-purple-600" />
+                <span>Instant Fitment</span>
+              </div>
             </div>
           </div>
 
           {/* Enhanced 3D Stats Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <div
+            className={`grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto transform transition-all duration-1000 ${
+              activeSection === 0 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-12 opacity-60 scale-95'
+            }`}
+          >
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 text-center hover:bg-white transition-all duration-500 transform hover:-translate-y-3 hover:scale-105 shadow-lg hover:shadow-2xl"
+                className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 text-center hover:bg-white transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 shadow-lg hover:shadow-2xl"
                 style={{
                   transformStyle: 'preserve-3d',
                   perspective: '1000px',
-                  animationDelay: `${index * 0.1}s`
+                  animationDelay: `${index * 0.1}s`,
+                  transform: `translateZ(${scrollY * 0.01}px)`
                 }}
               >
                 <div className="text-3xl font-bold text-purple-600 mb-1 transform hover:scale-110 transition-transform duration-300">
-                  {stat.value}
+                  <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 </div>
                 <div className="text-gray-600 text-sm">{stat.label}</div>
               </div>
@@ -134,29 +259,56 @@ const Home = () => {
       </section>
 
       {/* Enhanced Features Section with 3D Cards */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section 
+        ref={(el) => (sectionsRef.current[1] = el)}
+        className="py-20 px-4 bg-white relative min-h-screen flex items-center"
+        style={{
+          transform: `translateZ(${Math.max(0, scrollY - 800) * 0.005}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
+        {/* 3D Section Transition Effect */}
+        <div 
+          className={`absolute inset-0 bg-gradient-to-b from-transparent via-purple-50/20 to-transparent transition-opacity duration-1000 ${
+            activeSection === 1 ? 'opacity-100' : 'opacity-0'
+          }`}
+        ></div>
+        
+        <div className="max-w-7xl mx-auto relative w-full">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4 transform hover:scale-105 transition-transform duration-300">
+            <h2 
+              className={`text-4xl font-bold text-gray-900 mb-4 transform transition-all duration-1000 ${
+                activeSection === 1 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+              }`}
+            >
               Everything you need to succeed
             </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            <p 
+              className={`text-gray-600 text-lg max-w-2xl mx-auto transform transition-all duration-1000 ${
+                activeSection === 1 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
+              }`}
+            >
               Powerful tools designed to connect talent with opportunity seamlessly
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div 
+            className={`grid md:grid-cols-2 lg:grid-cols-4 gap-8 transform transition-all duration-1000 ${
+              activeSection === 1 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-16 opacity-60 scale-95'
+            }`}
+          >
             {features.map((feature, index) => {
               const Icon = feature.icon
               return (
                 <Link
                   key={index}
                   to={feature.path}
-                  className="group bg-gray-50 hover:bg-white p-8 rounded-2xl transition-all duration-500 hover:shadow-2xl border border-transparent hover:border-purple-100 transform hover:-translate-y-4 hover:rotate-y-6"
+                  className="group bg-gray-50 hover:bg-white p-8 rounded-2xl transition-all duration-500 hover:shadow-2xl border border-transparent hover:border-purple-100 transform hover:-translate-y-2 hover:rotate-y-3"
                   style={{
                     transformStyle: 'preserve-3d',
                     perspective: '1000px',
-                    animationDelay: `${index * 0.1}s`
+                    animationDelay: `${index * 0.1}s`,
+                    transform: `translateZ(${scrollY * 0.005}px)`
                   }}
                 >
                   <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110">
@@ -179,159 +331,242 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Enhanced Process Section with 3D Elements */}
-      <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-purple-700 relative overflow-hidden">
-        {/* 3D Floating Elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div 
-            className="absolute top-10 left-10 w-20 h-20 bg-white rounded-full animate-bounce" 
-            style={{animationDelay: '0s'}}
-          ></div>
-          <div 
-            className="absolute top-20 right-20 w-16 h-16 bg-white rounded-full animate-bounce" 
-            style={{animationDelay: '1s'}}
-          ></div>
-          <div 
-            className="absolute bottom-10 left-1/4 w-12 h-12 bg-white rounded-full animate-bounce" 
-            style={{animationDelay: '2s'}}
-          ></div>
-        </div>
-       
-        <div className="max-w-6xl mx-auto relative">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4 transform hover:scale-105 transition-transform duration-300">
+
+
+      {/* Simple. Fast. Effective. Section */}
+      <section
+        ref={(el) => (sectionsRef.current[2] = el)}
+        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 relative"
+        style={{
+          transform: `translateZ(${Math.max(0, scrollY - 1200) * 0.005}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
+        <div className="max-w-6xl mx-auto relative w-full">
+          <div className="text-center mb-12">
+            <h2
+              className={`text-4xl md:text-5xl font-bold text-gray-900 mb-4 transform transition-all duration-1000 ${
+                activeSection === 2 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+              }`}
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text'
+              }}
+            >
               Simple. Fast. Effective.
             </h2>
-            <p className="text-purple-100 text-lg">
-              Get started in just three easy steps
+            <p
+              className={`text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed transform transition-all duration-1000 ${
+                activeSection === 2 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
+              }`}
+            >
+              A seamless three-step process that revolutionizes how students discover and apply for opportunities
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center text-white transform hover:-translate-y-2 transition-transform duration-500">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform hover:rotate-12 hover:scale-110 transition-all duration-300 shadow-lg">
-                01
+          <div
+            className={`grid md:grid-cols-3 gap-8 transform transition-all duration-1000 ${
+              activeSection === 2 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-16 opacity-60 scale-95'
+            }`}
+          >
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
+                <Briefcase className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-2xl font-semibold mb-4">Create Profile</h3>
-              <p className="text-purple-100 leading-relaxed">
-                Build your professional profile and complete our comprehensive skills assessment
+              <h3 className="text-xl font-semibold mb-3 text-purple-600">1. Companies Post</h3>
+              <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Companies create job postings through our simple form and receive unique QR codes for the Opportunity Wall</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
+                <QrCode className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-purple-600">2. Students Scan</h3>
+              <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Students scan QR codes and complete a quick onboarding with education details and personality assessment</p>
+            </div>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-purple-600">3. Smart Matching</h3>
+              <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Our AI instantly calculates fitment scores, showing how well students align with each opportunity</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Kaizen Section */}
+      <section
+        ref={(el) => (sectionsRef.current[3] = el)}
+        className="py-20 px-4 bg-gradient-to-br from-purple-50 via-white to-purple-100 relative"
+        style={{
+          transform: `translateZ(${Math.max(0, scrollY - 1600) * 0.005}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
+        <div className="max-w-6xl mx-auto relative w-full">
+          <div className="text-center mb-16">
+            <h2
+              className={`text-4xl md:text-5xl font-bold text-gray-900 mb-6 transform transition-all duration-1000 ${
+                activeSection === 3 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+              }`}
+            >
+              Why Choose Kaizen?
+            </h2>
+            <p
+              className={`text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed transform transition-all duration-1000 ${
+                activeSection === 3 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
+              }`}
+            >
+              Built specifically for August Fest 2025 with cutting-edge technology and user experience
+            </p>
+          </div>
+
+          <div
+            className={`grid md:grid-cols-2 lg:grid-cols-4 gap-8 transform transition-all duration-1000 ${
+              activeSection === 3 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-16 opacity-60 scale-95'
+            }`}
+          >
+            {/* QR Code Magic */}
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <QrCode className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+                QR Code Magic
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Instant access to opportunities with a simple scan
               </p>
             </div>
 
-            <div className="text-center text-white transform hover:-translate-y-2 transition-transform duration-500">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform hover:rotate-12 hover:scale-110 transition-all duration-300 shadow-lg">
-                02
+            {/* Smart Fitment */}
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <Target className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-2xl font-semibold mb-4">Get Matched</h3>
-              <p className="text-purple-100 leading-relaxed">
-                Our AI analyzes your profile and connects you with the most relevant opportunities
+              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+                Smart Fitment
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                AI-powered matching based on personality and skills
               </p>
             </div>
 
-            <div className="text-center text-white transform hover:-translate-y-2 transition-transform duration-500">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold transform hover:rotate-12 hover:scale-110 transition-all duration-300 shadow-lg">
-                03
+            {/* Instant Results */}
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <Zap className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-2xl font-semibold mb-4">Land the Job</h3>
-              <p className="text-purple-100 leading-relaxed">
-                Apply with confidence and start your career journey with the right company
+              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+                Instant Results
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Get your fitment score immediately after assessment
+              </p>
+            </div>
+
+            {/* Event Exclusive */}
+            <div className="text-center group">
+              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <Users className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+                Event Exclusive
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Designed exclusively for August Fest 2025 participants
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Enhanced Benefits Section with 3D Layout */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6 transform hover:scale-105 transition-transform duration-300">
-                Why students choose our platform
+      {/* Enhanced Final CTA Section */}
+      <section
+        ref={(el) => (sectionsRef.current[4] = el)}
+        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 relative overflow-hidden flex items-center"
+        style={{
+          transform: `translateZ(${Math.max(0, scrollY - 2400) * 0.005}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
+        {/* Subtle Background Elements */}
+        <div
+          className={`absolute inset-0 transition-opacity duration-1000 ${
+            activeSection === 4 ? 'opacity-30' : 'opacity-0'
+          }`}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-200/20 via-transparent to-indigo-200/20"></div>
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-300/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-300/10 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="max-w-6xl mx-auto text-center relative w-full z-10">
+          <div
+            className={`transform transition-all duration-1000 ${
+              activeSection === 4 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-12 opacity-60 scale-95'
+            }`}
+          >
+            {/* Main Heading */}
+            <div className="mb-8">
+              <h2
+                className={`text-4xl md:text-5xl font-bold text-gray-900 mb-6 transform transition-all duration-1000 ${
+                  activeSection === 4 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+                }`}
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}
+              >
+                Ready to accelerate your career?
               </h2>
-              <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                We've built the most effective career platform specifically for August Fest 2025,
-                combining cutting-edge technology with deep understanding of student needs.
-              </p>
-             
-              <div className="space-y-6">
-                {benefits.map((benefit, index) => {
-                  const Icon = benefit.icon
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-start gap-4 transform hover:-translate-x-2 transition-transform duration-300"
-                    >
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 transform hover:rotate-12 hover:scale-110 transition-all duration-300 shadow-md">
-                        <Icon className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                          {benefit.title}
-                        </h3>
-                        <p className="text-gray-600">
-                          {benefit.description}
-                        </p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
             </div>
-           
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-12 rounded-3xl transform hover:-translate-y-2 hover:scale-105 transition-all duration-500 shadow-xl hover:shadow-2xl">
-              <div className="text-center">
-                <div className="text-6xl font-bold text-purple-600 mb-2 transform hover:scale-110 transition-transform duration-300">
-                  85%
-                </div>
-                <div className="text-gray-700 font-medium mb-4">Success Rate</div>
-                <p className="text-gray-600 text-sm">
-                  of students find their ideal role within 30 days of joining our platform
-                </p>
-              </div>
+
+
+
+            {/* Two Action Buttons */}
+            <div
+              className={`flex flex-col sm:flex-row gap-6 justify-center items-center transform transition-all duration-1000 ${
+                activeSection === 4 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-80'
+              }`}
+            >
+              <Link
+                to="/assessment"
+                className="group inline-flex items-center px-8 py-4 bg-white text-purple-700 font-semibold rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 border border-purple-200"
+              >
+                <QrCode className="w-5 h-5 mr-3 text-purple-600" />
+                <span className="text-lg">Start as Student</span>
+              </Link>
+              <Link
+                to="/post-job"
+                className="group inline-flex items-center px-8 py-4 border-2 border-purple-400 text-purple-700 font-semibold rounded-xl hover:bg-purple-50 hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
+              >
+                <Briefcase className="w-5 h-5 mr-3 text-purple-600" />
+                <span className="text-lg">Post as Company</span>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Enhanced Final CTA with 3D Effects */}
-      <section className="py-20 px-4 bg-gray-50 relative overflow-hidden">
-        {/* 3D Background Elements */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-600 rounded-full blur-3xl animate-pulse"></div>
-          <div 
-            className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-purple-400 rounded-full blur-3xl animate-pulse" 
-            style={{animationDelay: '1.5s'}}
-          ></div>
-        </div>
-       
-        <div className="max-w-4xl mx-auto text-center relative">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6 transform hover:scale-105 transition-transform duration-300">
-            Ready to accelerate your career?
-          </h2>
-          <p className="text-gray-600 text-lg mb-10">
-            Join the future of career discovery at August Fest 2025
-          </p>
-         
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/register"
-              className="inline-flex items-center px-10 py-4 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-2 hover:scale-105"
-              style={{
-                transformStyle: 'preserve-3d',
-                perspective: '1000px'
-              }}
-            >
-              Get Started Now
-              <ArrowRight className="ml-2 w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              to="/learn-more"
-              className="inline-flex items-center px-10 py-4 text-purple-600 font-semibold hover:text-purple-700 transition-colors transform hover:-translate-y-1 hover:scale-105"
-            >
-              Learn More
-            </Link>
+      {/* Footer Section with Logo */}
+      <section className="py-8 px-4 text-white bg-gray-900">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center mb-4">
+            <Logo />
           </div>
+          <h3 className="text-xl font-semibold mb-2 text-white">
+            Smart matchmaking for August Fest 2025
+          </h3>
+          <p className="text-gray-300 text-sm">
+            Built with ❤️ for connecting talent with opportunity
+          </p>
         </div>
       </section>
     </div>

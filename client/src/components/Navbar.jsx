@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { User, QrCode, Home, Building, X, Menu } from 'lucide-react'
+import { User, Home, Building, X, Menu } from 'lucide-react'
 // NEW: Import motion for animations
 import { motion, AnimatePresence } from 'framer-motion'
 import Logo from './Logo'
@@ -27,7 +27,6 @@ const Navbar = () => {
     { path: '/', label: 'Home', icon: Home },
     { path: '/assessment', label: 'Assessment', icon: User },
     { path: '/post-job', label: 'For Companies', icon: Building },
-    { path: '/scan', label: 'Scan QR', icon: QrCode },
   ]
 
   const NavLink = ({ item }) => {
@@ -57,32 +56,29 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-gray-700/50 shadow-lg">
+    <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-lg border-b border-gray-700/50 shadow-lg">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo and Dynamic Greeting */}
-          <div className="flex items-center space-x-4">
-            <Link to="/" onClick={() => setIsMenuOpen(false)}>
-              {/* Pass showText={false} to hide the "Jobs" tag */}
-              <Logo showText={false} />
+        <div className="flex items-center h-20">
+          {/* Logo and Dynamic Greeting - Left Side */}
+          <div className="flex items-center space-x-8 flex-1">
+            <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex-shrink-0">
+              {/* Logo positioned to the left */}
+              <Logo />
             </Link>
             <div className="hidden lg:block text-sm text-gray-400 font-light">
               {greeting}
             </div>
           </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-2">
+          {/* Desktop Menu - Center */}
+          <div className="hidden md:flex items-center space-x-6 flex-1 justify-center">
             {navItems.map((item) => (
               <NavLink key={item.path} item={item} />
             ))}
           </div>
 
-          {/* Right side actions - User Profile */}
-          <div className="flex items-center space-x-4">
-             <div className="hidden md:block bg-gray-700/50 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                Demo Mode
-             </div>
+          {/* Right side actions - User Profile - Right Side */}
+          <div className="flex items-center justify-end space-x-4 flex-1">
              {/* --- Creative Feature: User Profile Mockup --- */}
              <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
