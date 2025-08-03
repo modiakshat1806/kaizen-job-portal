@@ -12,7 +12,9 @@ const validateJobData = [
   body('requirements.education').isIn(['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Any']).withMessage('Invalid education requirement'),
   body('jobType').isIn(['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance']).withMessage('Invalid job type'),
   body('industry').notEmpty().withMessage('Industry is required'),
-  body('location.type').isIn(['Remote', 'On-site', 'Hybrid']).withMessage('Invalid location type')
+  body('location.type').isIn(['Remote', 'On-site', 'Hybrid']).withMessage('Invalid location type'),
+  body('contactPerson.name').trim().isLength({ min: 2 }).withMessage('Contact person name must be at least 2 characters'),
+  body('contactPerson.phone').trim().isLength({ min: 10 }).withMessage('Contact person phone must be at least 10 characters')
 ];
 
 // POST /api/job - Create new job posting
@@ -30,6 +32,7 @@ router.post('/', validateJobData, async (req, res) => {
     const {
       title,
       company,
+      contactPerson,
       description,
       requirements,
       responsibilities,
@@ -46,12 +49,13 @@ router.post('/', validateJobData, async (req, res) => {
     const job = new Job({
       title,
       company,
+      contactPerson,
       description,
       requirements: requirements || { education: 'Any', experience: { min: 0 }, skills: [], certifications: [] },
       responsibilities: responsibilities || [],
       benefits: benefits || [],
       location: location || { type: 'On-site' },
-      salary: salary || { min: 0, max: 0, currency: 'USD', period: 'Yearly' },
+      salary: salary || { min: 0, max: 0, currency: 'INR', period: 'Yearly' },
       jobType,
       industry,
       department,
