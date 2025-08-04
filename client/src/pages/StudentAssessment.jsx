@@ -244,25 +244,41 @@ const StudentAssessment = () => {
       }
 
       await studentAPI.saveAssessment(studentData)
-      
+
       toast.success('Assessment completed successfully!')
-      
-      const assessmentData = {
-        basicDetails: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          degree: data.degree,
-          graduationYear: data.graduationYear,
-          specialization: data.specialization,
-          institution: data.institution
-        },
-        coreValues: selectedCoreValues,
-        workPreferences: sliderValues,
-        workStyle: bubbleAnswers
+
+      // Check if user came from a job page
+      const returnToJob = localStorage.getItem('returnToJob')
+
+      if (returnToJob) {
+        const jobInfo = JSON.parse(returnToJob)
+        localStorage.removeItem('returnToJob')
+
+        // Navigate back to job page with phone number for fitment calculation
+        navigate(`/job/${jobInfo.jobId}`, {
+          state: {
+            fromAssessment: true,
+            studentPhone: data.phone
+          }
+        })
+      } else {
+        const assessmentData = {
+          basicDetails: {
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            degree: data.degree,
+            graduationYear: data.graduationYear,
+            specialization: data.specialization,
+            institution: data.institution
+          },
+          coreValues: selectedCoreValues,
+          workPreferences: sliderValues,
+          workStyle: bubbleAnswers
+        }
+
+        navigate('/career-match-results', { state: { assessmentData } })
       }
-      
-      navigate('/career-match-results', { state: { assessmentData } })
     } catch (error) {
       console.error('Assessment submission error:', error)
       console.error('Error response:', error.response?.data)

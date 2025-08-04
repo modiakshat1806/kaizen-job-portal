@@ -220,4 +220,89 @@ router.put('/:id', validateJobData, async (req, res) => {
   }
 });
 
-module.exports = router; 
+// GET /api/job/:jobId/analytics - Get job analytics for companies
+router.get('/:jobId/analytics', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+
+    // Find the job
+    let job = await Job.findOne({ jobId: jobId });
+    if (!job) {
+      job = await Job.findById(jobId);
+    }
+
+    if (!job) {
+      return res.status(404).json({
+        error: 'Job not found'
+      });
+    }
+
+    // Get all students who have taken assessments
+    const Student = require('../models/Student');
+    const allStudents = await Student.find({});
+
+    // Calculate fitment scores for all students
+    const { calculateFitmentWithAI } = require('./fitment');
+    const candidateAnalytics = [];
+
+    for (const student of allStudents) {
+      try {
+        const fitmentResult = await calculateFitmentWithAI(student, job);
+        candidateAnalytics.push({
+          studentId: student._id,
+          name: student.name,
+          phone: student.phone,
+          email: student.email,
+          education: student.education,
+          fitmentScore: fitmentResult.score,
+          strengths: fitmentResult.strengths || [],
+          improvements: fitmentResult.improvements || [],
+          assessmentScore: student.assessmentScore
+        });
+      } catch (error) {
+        console.error(`Error calculating fitment for student ${student._id}:`, error);
+      }
+    }
+
+    // Sort by fitment score (highest first)
+    candidateAnalytics.sort((a, b) => b.fitmentScore - a.fitmentScore);
+
+    // Calculate analytics
+    const totalCandidates = candidateAnalytics.length;
+    const excellentMatches = candidateAnalytics.filter(c => c.fitmentScore >= 80).length;
+    const goodMatches = candidateAnalytics.filter(c => c.fitmentScore >= 60 && c.fitmentScore < 80).length;
+    const fairMatches = candidateAnalytics.filter(c => c.fitmentScore >= 40 && c.fitmentScore < 60).length;
+    const averageScore = totalCandidates > 0
+      ? Math.round(candidateAnalytics.reduce((sum, c) => sum + c.fitmentScore, 0) / totalCandidates)
+      : 0;
+
+    res.json({
+      message: 'Job analytics retrieved successfully',
+      job: {
+        jobId: job.jobId,
+        title: job.title,
+        company: job.company,
+        createdAt: job.createdAt,
+        isActive: job.isActive
+      },
+      analytics: {
+        totalCandidates,
+        excellentMatches,
+        goodMatches,
+        fairMatches,
+        averageScore,
+        topCandidates: candidateAnalytics.slice(0, 10) // Top 10 candidates
+      },
+      candidates: candidateAnalytics
+    });
+
+  } catch (error) {
+    console.error('Error fetching job analytics:', error);
+    res.status(500).json({
+      error: 'Failed to fetch job analytics',
+      message: error.message
+    });
+  }
+});
+
+module.exports = router;

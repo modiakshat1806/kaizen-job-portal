@@ -1,7 +1,13 @@
 const express = require('express');
 const Student = require('../models/Student');
 const Job = require('../models/Job');
+const OpenAI = require('openai');
 const router = express.Router();
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // GET /api/fitment/:studentPhone - Get all matched jobs for a student
 router.get('/:studentPhone', async (req, res) => {
@@ -41,7 +47,7 @@ router.get('/:studentPhone', async (req, res) => {
     const matchedJobs = [];
     for (const job of jobs) {
       try {
-        const fitmentResult = calculateFitment(student, job);
+        const fitmentResult = await calculateFitmentWithAI(student, job);
         
         if (fitmentResult.score >= minScore) {
           matchedJobs.push({
@@ -106,8 +112,8 @@ router.get('/:studentPhone/:jobId', async (req, res) => {
       });
     }
 
-    // Calculate fitment score
-    const fitmentResult = calculateFitment(student, job);
+    // Calculate fitment score using OpenAI
+    const fitmentResult = await calculateFitmentWithAI(student, job);
 
     res.json({
       message: 'Fitment calculated successfully',
@@ -123,7 +129,97 @@ router.get('/:studentPhone/:jobId', async (req, res) => {
   }
 });
 
-// Fitment calculation algorithm
+// OpenAI-based fitment calculation
+async function calculateFitmentWithAI(student, job) {
+  try {
+    const prompt = `
+You are an expert HR professional and career counselor. Analyze the following student profile and job requirements to provide a comprehensive fitment score and detailed reasoning.
+
+STUDENT PROFILE:
+- Name: ${student.name}
+- Education: ${student.education.degree} in ${student.education.field} from ${student.education.institution} (${student.education.graduationYear})
+- Experience: ${student.experience.years} years
+- Skills: ${student.skills.map(s => `${s.name} (${s.level})`).join(', ')}
+- Career Goals: ${student.careerGoals}
+- Assessment Scores:
+  * Technical: ${student.assessmentScore.technical}/100
+  * Communication: ${student.assessmentScore.communication}/100
+  * Problem Solving: ${student.assessmentScore.problemSolving}/100
+  * Teamwork: ${student.assessmentScore.teamwork}/100
+
+JOB REQUIREMENTS:
+- Title: ${job.title}
+- Company: ${job.company.name}
+- Industry: ${job.industry}
+- Job Type: ${job.jobType}
+- Required Education: ${job.requirements.education}
+- Required Experience: ${job.requirements.experience.min}-${job.requirements.experience.max || 'unlimited'} years
+- Required Skills: ${job.requirements.skills.join(', ')}
+- Job Description: ${job.description}
+- Responsibilities: ${job.responsibilities.join(', ')}
+
+ANALYSIS INSTRUCTIONS:
+1. Focus PRIMARILY on the student's assessment scores (technical, communication, problem solving, teamwork) as they reflect actual capabilities
+2. Consider how well the student's skills align with job requirements
+3. Evaluate if the student's career goals match the job opportunity
+4. Consider the student's educational background relevance
+5. DO NOT heavily weight location preferences or salary expectations
+6. Provide a score between 0-100 and detailed reasoning
+
+Please respond in the following JSON format:
+{
+  "score": <number between 0-100>,
+  "reasons": [
+    "<detailed reason 1>",
+    "<detailed reason 2>",
+    "<detailed reason 3>"
+  ],
+  "strengths": [
+    "<strength 1>",
+    "<strength 2>"
+  ],
+  "improvements": [
+    "<area for improvement 1>",
+    "<area for improvement 2>"
+  ]
+}
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert HR professional specializing in candidate-job matching. Provide accurate, detailed, and helpful fitment analysis."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 1000
+    });
+
+    const response = completion.choices[0].message.content;
+    const fitmentData = JSON.parse(response);
+
+    return {
+      score: Math.min(Math.max(fitmentData.score, 0), 100), // Ensure score is between 0-100
+      reasons: fitmentData.reasons || [],
+      strengths: fitmentData.strengths || [],
+      improvements: fitmentData.improvements || [],
+      aiGenerated: true
+    };
+
+  } catch (error) {
+    console.error('OpenAI fitment calculation error:', error);
+    // Fallback to traditional calculation if OpenAI fails
+    return calculateFitment(student, job);
+  }
+}
+
+// Traditional fitment calculation algorithm (fallback)
 function calculateFitment(student, job) {
   let totalScore = 0;
   let maxScore = 0;
@@ -290,4 +386,5 @@ function getMatchLevel(percentage) {
   return 'Poor Match';
 }
 
-module.exports = router; 
+module.exports = router;
+module.exports.calculateFitmentWithAI = calculateFitmentWithAI;

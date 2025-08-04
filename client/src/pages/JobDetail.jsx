@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { 
-  Building, MapPin, Clock, DollarSign, Users, FileText, 
+import {
+  Building, MapPin, Clock, DollarSign, Users, FileText,
   Star, TrendingUp, ArrowLeft, CheckCircle, XCircle,
   GraduationCap, Briefcase, Target, Award
 } from 'lucide-react'
-import { jobAPI, fitmentAPI } from '../services/api'
+import { jobAPI, fitmentAPI, studentAPI } from '../services/api'
 
 const JobDetail = () => {
   const { jobId } = useParams()
@@ -17,9 +17,23 @@ const JobDetail = () => {
   const [fitmentData, setFitmentData] = useState(location.state?.fitmentData || null)
   const [studentPhone, setStudentPhone] = useState('')
   const [showPhoneInput, setShowPhoneInput] = useState(false)
+  const [showNewUserModal, setShowNewUserModal] = useState(false)
+
+  // Check if accessed via QR code (no referrer or direct access)
+  const isQRAccess = !document.referrer || document.referrer === '' ||
+                     location.state?.fromQR === true
 
   useEffect(() => {
     fetchJob()
+
+    // Check if returning from assessment
+    if (location.state?.fromAssessment && location.state?.studentPhone) {
+      setStudentPhone(location.state.studentPhone)
+      // Auto-calculate fitment after a short delay
+      setTimeout(() => {
+        handleCheckFitmentWithPhone(location.state.studentPhone)
+      }, 1000)
+    }
   }, [jobId])
 
   const fetchJob = async () => {
@@ -35,19 +49,46 @@ const JobDetail = () => {
     }
   }
 
+  const handleCheckFitmentWithPhone = async (phone) => {
+    try {
+      // First check if student exists
+      const studentResponse = await studentAPI.getByPhone(phone)
+
+      if (studentResponse.data.student) {
+        // Student exists, calculate fitment
+        const response = await fitmentAPI.calculateFitment(phone, jobId)
+        setFitmentData(response.data.fitment)
+        toast.success('Fitment calculated successfully!')
+      }
+    } catch (error) {
+      if (error.response?.status === 404) {
+        // Student not found, show new user modal
+        setShowNewUserModal(true)
+        setShowPhoneInput(false)
+      } else {
+        toast.error('Error checking fitment. Please try again.')
+      }
+    }
+  }
+
   const handleCheckFitment = async () => {
     if (!studentPhone) {
       setShowPhoneInput(true)
       return
     }
 
-    try {
-      const response = await fitmentAPI.calculateFitment(studentPhone, jobId)
-      setFitmentData(response.data.fitment)
-      toast.success('Fitment calculated successfully!')
-    } catch (error) {
-      toast.error('Student not found. Please complete the assessment first.')
-    }
+    await handleCheckFitmentWithPhone(studentPhone)
+  }
+
+  const handleTakeAssessment = () => {
+    // Store current job info in localStorage to return after assessment
+    localStorage.setItem('returnToJob', JSON.stringify({
+      jobId: jobId,
+      phone: studentPhone
+    }))
+
+    // Navigate to assessment
+    navigate('/assessment')
   }
 
   const getMatchColor = (score) => {
@@ -128,6 +169,35 @@ const JobDetail = () => {
         </div>
       )}
 
+      {/* New User Modal */}
+      {showNewUserModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">New Phone Number Detected</h3>
+            <p className="text-gray-600 mb-4">
+              We couldn't find an assessment record for this phone number. Please take our assessment test first to get your fitment score.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowNewUserModal(false)
+                  setStudentPhone('')
+                }}
+                className="btn-outline flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTakeAssessment}
+                className="btn-primary flex-1"
+              >
+                Take Assessment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
@@ -166,7 +236,19 @@ const JobDetail = () => {
                 <Clock className="w-4 h-4 mr-2" />
                 <span>{job.industry}</span>
               </div>
-              {job.salary.min && (
+              {job.salary.min && !isQRAccess && (
+                <div className="flex items-center text-gray-600">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  <span>{formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)} {job.salary.period}</span>
+                </div>
+              )}
+              {job.salary.min && isQRAccess && !fitmentData && (
+                <div className="flex items-center text-gray-600">
+                  <DollarSign className="w-4 h-4 mr-2" />
+                  <span>Salary details available after fitment check</span>
+                </div>
+              )}
+              {job.salary.min && isQRAccess && fitmentData && (
                 <div className="flex items-center text-gray-600">
                   <DollarSign className="w-4 h-4 mr-2" />
                   <span>{formatCurrency(job.salary.min)} - {formatCurrency(job.salary.max)} {job.salary.period}</span>
@@ -285,16 +367,52 @@ const JobDetail = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900">Why this score?</h4>
-                  <ul className="space-y-2">
-                    {fitmentData.reasons.map((reason, index) => (
-                      <li key={index} className="text-sm text-gray-600 flex items-start">
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span>{reason}</span>
-                      </li>
-                    ))}
-                  </ul>
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Analysis</h4>
+                    <ul className="space-y-2">
+                      {fitmentData.reasons.map((reason, index) => (
+                        <li key={index} className="text-sm text-gray-600 flex items-start">
+                          <CheckCircle className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                          <span>{reason}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {fitmentData.strengths && fitmentData.strengths.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-green-700 mb-2">Your Strengths</h4>
+                      <ul className="space-y-1">
+                        {fitmentData.strengths.map((strength, index) => (
+                          <li key={index} className="text-sm text-green-600 flex items-start">
+                            <Star className="w-4 h-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>{strength}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {fitmentData.improvements && fitmentData.improvements.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-orange-700 mb-2">Areas for Growth</h4>
+                      <ul className="space-y-1">
+                        {fitmentData.improvements.map((improvement, index) => (
+                          <li key={index} className="text-sm text-orange-600 flex items-start">
+                            <TrendingUp className="w-4 h-4 text-orange-500 mr-2 mt-0.5 flex-shrink-0" />
+                            <span>{improvement}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {fitmentData.aiGenerated && (
+                    <div className="text-xs text-gray-500 italic border-t pt-2">
+                      Analysis powered by AI
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
@@ -315,21 +433,23 @@ const JobDetail = () => {
             )}
           </div>
 
-          {/* Quick Actions */}
-          <div className="card">
-            <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-            <div className="space-y-3">
-              <button className="btn-primary w-full">
-                Apply Now
-              </button>
-              <button className="btn-outline w-full">
-                Save Job
-              </button>
-              <button className="btn-outline w-full">
-                Share Job
-              </button>
+          {/* Quick Actions - Hidden for QR access until fitment check */}
+          {(!isQRAccess || fitmentData) && (
+            <div className="card">
+              <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button className="btn-primary w-full">
+                  Apply Now
+                </button>
+                <button className="btn-outline w-full">
+                  Save Job
+                </button>
+                <button className="btn-outline w-full">
+                  Share Job
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Company Info */}
           <div className="card">
