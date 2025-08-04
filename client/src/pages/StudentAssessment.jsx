@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronDown } from 'lucide-react'
-import { studentAPI, fitmentAPI } from '../services/api'
+import { studentAPI, fitmentAPI, recommendationsAPI } from '../services/api'
 
 const StudentAssessment = () => {
   const navigate = useNavigate()
   const { register, handleSubmit, watch, formState: { errors }, setValue, reset } = useForm()
-  
+
   // State management
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -35,6 +35,11 @@ const StudentAssessment = () => {
   const [degreeDropdownOpen, setDegreeDropdownOpen] = useState(false)
   const [selectedDegree, setSelectedDegree] = useState('')
   const [showProgressPopup, setShowProgressPopup] = useState(false)
+
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
 
   // Add CSS animations
   useEffect(() => {
@@ -151,6 +156,7 @@ const StudentAssessment = () => {
     return Object.values(bubbleAnswers).every(value => value !== null)
   }
 
+
   const calculateAssessmentScore = (data) => {
     let technical = 50
     let communication = 50
@@ -262,22 +268,59 @@ const StudentAssessment = () => {
           }
         })
       } else {
-        const assessmentData = {
-          basicDetails: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            degree: data.degree,
-            graduationYear: data.graduationYear,
-            specialization: data.specialization,
-            institution: data.institution
-          },
-          coreValues: selectedCoreValues,
-          workPreferences: sliderValues,
-          workStyle: bubbleAnswers
-        }
+        // Try to generate recommendations using the teammate's API first
+        try {
+          const assessmentData = {
+            fullName: data.name,
+            coreValues: selectedCoreValues,
+            workPreferences: sliderValues,
+            behavioralAnswers: bubbleAnswers
+          }
 
-        navigate('/career-match-results', { state: { assessmentData } })
+          const recommendationsResponse = await recommendationsAPI.generateRecommendations(assessmentData)
+
+          // Navigate to /career-match with the AI recommendations
+          navigate('/career-match', {
+            state: {
+              recommendations: recommendationsResponse.data.recommendations,
+              student: {
+                name: data.name,
+                phone: data.phone,
+                education: {
+                  degree: data.degree,
+                  institution: data.institution,
+                  graduationYear: data.graduationYear,
+                  specialization: data.specialization
+                },
+                coreValues: selectedCoreValues,
+                assessmentScore
+              },
+              totalRecommendations: recommendationsResponse.data.totalRecommendations,
+              fromAssessment: true,
+              generatedAt: recommendationsResponse.data.generatedAt
+            }
+          })
+        } catch (recommendationError) {
+          console.log('Recommendations API failed, falling back to career-match-results:', recommendationError)
+
+          // Fallback to the original career-match-results approach
+          const assessmentData = {
+            basicDetails: {
+              name: data.name,
+              email: data.email,
+              phone: data.phone,
+              degree: data.degree,
+              graduationYear: data.graduationYear,
+              specialization: data.specialization,
+              institution: data.institution
+            },
+            coreValues: selectedCoreValues,
+            workPreferences: sliderValues,
+            workStyle: bubbleAnswers
+          }
+
+          navigate('/career-match-results', { state: { assessmentData } })
+        }
       }
     } catch (error) {
       console.error('Assessment submission error:', error)
@@ -981,6 +1024,11 @@ const StudentAssessment = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-2xl">🎓</span>
+          </div>
+        </div>
         <h1
           className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
           style={{

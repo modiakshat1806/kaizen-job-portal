@@ -9,6 +9,8 @@ const studentRoutes = require('./routes/student');
 const jobRoutes = require('./routes/job');
 const fitmentRoutes = require('./routes/fitment');
 const openaiRoutes = require('./routes/openai');
+const recommendationsRoutes = require('./routes/recommendations');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -33,6 +35,8 @@ app.use('/api/student', studentRoutes);
 app.use('/api/job', jobRoutes);
 app.use('/api/fitment', fitmentRoutes);
 app.use('/api', openaiRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
