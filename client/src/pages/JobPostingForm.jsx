@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
@@ -6,6 +6,30 @@ import { Building, MapPin, DollarSign, Users, FileText, Plus, X, Eye, Edit, Tras
 import { jobAPI } from '../services/api'
 
 const JobPostingForm = () => {
+  // Add CSS animations for 3D job posting title effect
+  useEffect(() => {
+    const jobAnimationStyles = `
+      @keyframes jobTitlePop {
+        0% {
+          transform: scale(0.8) translateY(20px) rotateX(10deg);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(1.05) translateY(-3px) rotateX(-3deg);
+          opacity: 0.9;
+        }
+        100% {
+          transform: scale(1) translateY(0) rotateX(0deg);
+          opacity: 1;
+        }
+      }
+    `
+    const styleSheet = document.createElement('style')
+    styleSheet.textContent = jobAnimationStyles
+    document.head.appendChild(styleSheet)
+    return () => document.head.removeChild(styleSheet)
+  }, [])
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
   const [responsibilities, setResponsibilities] = useState([''])
@@ -129,22 +153,35 @@ const JobPostingForm = () => {
 
   if (showPreview && previewData) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Job Preview</h1>
-          <p className="text-gray-600">Review your job posting before publishing</p>
+          <h1
+            className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
+            style={{
+              animation: 'jobTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+              transformStyle: 'preserve-3d',
+              textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+            }}
+          >
+            Job Preview
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">Review your job posting before publishing</p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-8 text-white">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">{previewData.title}</h2>
-                <p className="text-blue-100 mt-1">{previewData.company?.name}</p>
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-8 text-white relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+
+            <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-4 sm:mb-0">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2">{previewData.title}</h2>
+                <p className="text-purple-100 text-lg">{previewData.company?.name}</p>
               </div>
-              <div className="text-right">
-                <span className="inline-block bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+              <div className="text-left sm:text-right">
+                <span className="inline-block bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-2">
                   {previewData.jobType}
                 </span>
                 <div className="mt-2 text-blue-100 text-sm">
@@ -156,19 +193,22 @@ const JobPostingForm = () => {
           </div>
 
           {/* Content */}
-          <div className="p-6 space-y-6">
+          <div className="p-6 sm:p-8 space-y-8">
             {/* Basic Info */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Job Details</h3>
-                                 <div className="space-y-2 text-sm">
-                   <div className="flex justify-between items-center">
-                     <span className="text-gray-600">Industry:</span>
-                     <span className="font-medium">{previewData.industry}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 transition-colors duration-300">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <Building className="w-5 h-5 mr-2 text-purple-600" />
+                  Job Details
+                </h3>
+                <div className="space-y-3 text-sm">
+                   <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                     <span className="text-gray-600 dark:text-gray-400">Industry:</span>
+                     <span className="font-medium text-gray-900 dark:text-white">{previewData.industry}</span>
                    </div>
-                   <div className="flex justify-between items-center">
-                     <span className="text-gray-600">Location:</span>
-                     <span className="font-medium">
+                   <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                     <span className="text-gray-600 dark:text-gray-400">Location:</span>
+                     <span className="font-medium text-gray-900 dark:text-white">
                        {previewData.location?.type === 'Remote' ? 'Remote' :
                         `${previewData.location?.city || ''}, ${previewData.location?.state || ''}, ${previewData.location?.country || ''}`}
                      </span>
@@ -307,16 +347,25 @@ const JobPostingForm = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Post a Job</h1>
-        <p className="text-gray-600">Create a new job posting to reach qualified candidates</p>
+        <h1
+          className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
+          style={{
+            animation: 'jobTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+            transformStyle: 'preserve-3d',
+            textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          Post a Job
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300">Create a new job posting to reach qualified candidates</p>
       </div>
 
       <form onSubmit={handleSubmit(handlePreview)} className="space-y-8">
         {/* Basic Information */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300">
+          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900 dark:text-white">
             <Building className="w-5 h-5 mr-2 text-blue-600" />
             Basic Information
           </h2>
@@ -410,8 +459,8 @@ const JobPostingForm = () => {
         </div>
 
         {/* Location & Salary */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300">
+          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900 dark:text-white">
             <MapPin className="w-5 h-5 mr-2 text-blue-600" />
             Location & Salary
           </h2>
@@ -495,8 +544,8 @@ const JobPostingForm = () => {
         </div>
 
         {/* Requirements */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300">
+          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900 dark:text-white">
             <Users className="w-5 h-5 mr-2 text-blue-600" />
             Requirements
           </h2>
@@ -562,8 +611,8 @@ const JobPostingForm = () => {
         </div>
 
         {/* Responsibilities */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300">
+          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900 dark:text-white">
             <FileText className="w-5 h-5 mr-2 text-blue-600" />
             Responsibilities
           </h2>
@@ -599,8 +648,8 @@ const JobPostingForm = () => {
         </div>
 
         {/* Benefits */}
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300">
+          <h2 className="text-xl font-semibold mb-6 flex items-center text-gray-900 dark:text-white">
             <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
             Benefits
           </h2>

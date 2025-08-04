@@ -6,6 +6,12 @@ import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronD
 import { studentAPI, fitmentAPI } from '../services/api'
 
 const StudentAssessment = () => {
+  // Clear saved state on component mount for fresh start
+  useEffect(() => {
+    localStorage.removeItem('studentAssessmentState')
+    localStorage.removeItem('studentAssessmentFormData')
+  }, [])
+
   // Add CSS animations for 3D assessment title effect and slider animations
   useEffect(() => {
     const assessmentAnimationStyles = `
@@ -676,10 +682,10 @@ const StudentAssessment = () => {
                       }}
                     />
                     <div
-                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2 transition-all duration-300 ease-out"
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
                       style={{
                         left: `${sliderValues.independence}%`,
-                        animation: sliderValues.independence !== 50 ? 'sliderBounce 0.3s ease-out' : 'none'
+                        transition: 'left 0.1s ease-out'
                       }}
                     >
                       {sliderValues.independence}
@@ -710,10 +716,10 @@ const StudentAssessment = () => {
                       }}
                     />
                     <div
-                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2 transition-all duration-300 ease-out"
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
                       style={{
                         left: `${sliderValues.routine}%`,
-                        animation: sliderValues.routine !== 50 ? 'sliderBounce 0.3s ease-out' : 'none'
+                        transition: 'left 0.1s ease-out'
                       }}
                     >
                       {sliderValues.routine}
@@ -744,10 +750,10 @@ const StudentAssessment = () => {
                       }}
                     />
                     <div
-                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2 transition-all duration-300 ease-out"
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
                       style={{
                         left: `${sliderValues.pace}%`,
-                        animation: sliderValues.pace !== 50 ? 'sliderBounce 0.3s ease-out' : 'none'
+                        transition: 'left 0.1s ease-out'
                       }}
                     >
                       {sliderValues.pace}
@@ -778,10 +784,10 @@ const StudentAssessment = () => {
                       }}
                     />
                     <div
-                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2 transition-all duration-300 ease-out"
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
                       style={{
                         left: `${sliderValues.focus}%`,
-                        animation: sliderValues.focus !== 50 ? 'sliderBounce 0.3s ease-out' : 'none'
+                        transition: 'left 0.1s ease-out'
                       }}
                     >
                       {sliderValues.focus}
@@ -812,10 +818,10 @@ const StudentAssessment = () => {
                       }}
                     />
                     <div
-                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2 transition-all duration-300 ease-out"
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
                       style={{
                         left: `${sliderValues.approach}%`,
-                        animation: sliderValues.approach !== 50 ? 'sliderBounce 0.3s ease-out' : 'none'
+                        transition: 'left 0.1s ease-out'
                       }}
                     >
                       {sliderValues.approach}
@@ -835,16 +841,16 @@ const StudentAssessment = () => {
               <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-xl font-semibold">Work Style Assessment</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Work Style Assessment</h3>
             </div>
-            <p className="text-gray-600 mb-6">Please rate how much you agree with each statement by selecting one bubble for each question.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">Please rate how much you agree with each statement by selecting one bubble for each question.</p>
             
             <div className="space-y-8">
               {/* Question 1 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I prefer working in a team rather than alone</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-4">I prefer working in a team rather than alone</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -861,7 +867,7 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 

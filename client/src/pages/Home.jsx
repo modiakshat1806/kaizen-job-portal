@@ -37,7 +37,10 @@ const AnimatedCounter = ({ end, duration = 2500, suffix = '' }) => {
           requestAnimationFrame(animate)
         }
       },
-      { threshold: 0.5 }
+      {
+        threshold: 0.1,
+        rootMargin: '50px 0px -50px 0px'
+      }
     )
 
     if (ref.current) {
@@ -220,8 +223,8 @@ const Home = () => {
         
         <div className="max-w-7xl mx-auto relative w-full">
           <div className="text-center max-w-4xl mx-auto mb-16">
-            <div 
-              className={`inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6 transform transition-all duration-700 ease-out shadow-lg ${
+            <div
+              className={`inline-block px-4 py-2 bg-purple-100 dark:bg-purple-800 text-purple-700 dark:text-purple-200 rounded-full text-sm font-medium mb-6 transform transition-all duration-700 ease-out shadow-lg ${
                 activeSection === 0 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-4 opacity-80'
               }`}
             >
@@ -315,7 +318,7 @@ const Home = () => {
             {stats.map((stat, index) => (
               <div
                 key={index}
-                className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 text-center hover:bg-white transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 shadow-lg hover:shadow-2xl"
+                className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm p-6 rounded-2xl border border-purple-100 dark:border-purple-400 text-center hover:bg-white dark:hover:bg-gray-700 transition-all duration-500 transform hover:-translate-y-2 hover:scale-105 shadow-lg hover:shadow-2xl"
                 style={{
                   transformStyle: 'preserve-3d',
                   perspective: '1000px',
@@ -326,7 +329,7 @@ const Home = () => {
                 <div className="text-3xl font-bold text-purple-600 mb-1 transform hover:scale-110 transition-transform duration-300">
                   <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="text-gray-600 text-sm">{stat.label}</div>
+                <div className="text-gray-600 dark:text-gray-300 text-sm">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -336,7 +339,7 @@ const Home = () => {
       {/* Enhanced Features Section with 3D Cards */}
       <section 
         ref={(el) => (sectionsRef.current[1] = el)}
-        className="py-20 px-4 bg-white relative min-h-screen flex items-center"
+        className="py-20 px-4 bg-white dark:bg-gray-800 relative min-h-screen flex items-center transition-colors duration-300"
         style={{
           transform: `translateZ(${Math.max(0, scrollY - 800) * 0.005}px)`,
           transition: 'transform 0.1s ease-out'
@@ -565,54 +568,59 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Enhanced Final CTA Section */}
+      {/* Join Our Aspirant Community Section */}
       <section
         ref={(el) => (sectionsRef.current[4] = el)}
-        className="py-20 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 relative overflow-hidden flex items-center"
+        className="py-20 px-4 text-white transition-colors duration-300 relative overflow-hidden"
         style={{
-          transform: `translateZ(${Math.max(0, scrollY - 2400) * 0.005}px)`,
-          transition: 'transform 0.1s ease-out',
-          minHeight: '60vh'
+          backgroundColor: '#1e5631',
+          minHeight: '60vh',
+          display: 'flex',
+          alignItems: 'center'
         }}
       >
-        {/* Subtle Background Elements */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-1000 ${
-            activeSection === 4 ? 'opacity-30' : 'opacity-0'
-          }`}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-200/20 via-transparent to-indigo-200/20"></div>
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-purple-300/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-300/10 rounded-full blur-3xl"></div>
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full animate-float"
+            style={{ animationDelay: '0s' }}
+          ></div>
+          <div
+            className="absolute top-32 right-20 w-16 h-16 bg-white/5 rounded-full animate-float"
+            style={{ animationDelay: '2s' }}
+          ></div>
+          <div
+            className="absolute bottom-20 left-1/4 w-12 h-12 bg-white/10 rounded-full animate-float"
+            style={{ animationDelay: '4s' }}
+          ></div>
         </div>
 
-        <div className="max-w-6xl mx-auto text-center relative w-full z-10">
+        <div className="max-w-6xl mx-auto relative w-full">
           <div
-            className={`transform transition-all duration-1000 ${
-              activeSection === 4 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-12 opacity-60 scale-95'
+            className={`text-center transform transition-all duration-1000 ${
+              activeSection === 4 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-80'
             }`}
           >
             {/* Main Heading */}
             <div className="mb-16">
               <h2
-                className={`text-4xl md:text-5xl font-bold text-gray-900 mb-6 transform transition-all duration-1000 ${
+                className={`text-4xl md:text-5xl font-bold text-white mb-6 transform transition-all duration-1000 ${
                   activeSection === 4 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
                 }`}
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                  paddingBottom: '4px'
-                }}
               >
-                Ready to accelerate your career?
+                Ready to Accelerate your Career?
               </h2>
+              <p
+                className={`text-xl mb-16 leading-relaxed max-w-3xl mx-auto transform transition-all duration-500 ease-out ${
+                  activeSection === 4 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-85'
+                }`}
+                style={{ color: '#a7f3d0' }}
+              >
+                Join hundreds of students and companies already using Kaizen Job Portal at August Fest 2025
+              </p>
             </div>
 
-
-
-            {/* Two Action Buttons */}
+            {/* Action Buttons */}
             <div
               className={`flex flex-col sm:flex-row gap-6 justify-center items-center transform transition-all duration-1000 ${
                 activeSection === 4 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-80'
@@ -620,9 +628,13 @@ const Home = () => {
             >
               <Link
                 to="/assessment"
-                className="group inline-flex items-center px-8 py-4 bg-white text-purple-700 font-semibold rounded-xl hover:bg-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 border border-purple-200"
+                onClick={() => {
+                  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                }}
+                className="group inline-flex items-center px-8 py-4 bg-white font-semibold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
+                style={{ color: '#1e5631' }}
               >
-                <QrCode className="w-5 h-5 mr-3 text-purple-600" />
+                <QrCode className="w-5 h-5 mr-3" style={{ color: '#1e5631' }} />
                 <span className="text-lg">Start as Student</span>
               </Link>
               <Link
@@ -630,9 +642,12 @@ const Home = () => {
                 onClick={() => {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
                 }}
-                className="group inline-flex items-center px-8 py-4 border-2 border-purple-400 text-purple-700 font-semibold rounded-xl hover:bg-purple-50 hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
+                className="group inline-flex items-center px-8 py-4 border-2 border-white text-white font-semibold rounded-xl hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
+                style={{ '--hover-text-color': '#1e5631' }}
+                onMouseEnter={(e) => e.target.style.color = '#1e5631'}
+                onMouseLeave={(e) => e.target.style.color = 'white'}
               >
-                <Briefcase className="w-5 h-5 mr-3 text-purple-600" />
+                <Briefcase className="w-5 h-5 mr-3" />
                 <span className="text-lg">Post as Company</span>
               </Link>
             </div>
@@ -640,20 +655,25 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Footer Section with Logo */}
-      <section className="py-8 px-4 text-white bg-gray-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="flex justify-center mb-4">
-            <Logo />
+      {/* Dark Footer Section */}
+      <footer className="py-12 px-4 text-white bg-gray-900 dark:bg-gray-800 transition-colors duration-300">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col items-center text-center">
+            {/* Logo and Branding */}
+            <div className="mb-6">
+              <div className="flex justify-center mb-4">
+                <Logo />
+              </div>
+              <p className="text-gray-300 text-lg mb-2">
+                Smart matchmaking for August Fest 2025
+              </p>
+              <p className="text-gray-400 text-sm">
+                Built with ❤️ for connecting talent with opportunity
+              </p>
+            </div>
           </div>
-          <h3 className="text-xl font-semibold mb-2 text-white">
-            Smart matchmaking for August Fest 2025
-          </h3>
-          <p className="text-gray-300 text-sm">
-            Built with ❤️ for connecting talent with opportunity
-          </p>
         </div>
-      </section>
+      </footer>
     </div>
   )
 }

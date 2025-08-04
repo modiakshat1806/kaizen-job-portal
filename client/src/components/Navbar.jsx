@@ -61,18 +61,35 @@ const Navbar = () => {
         <div
           className="relative"
           onMouseEnter={() => {
+            // Clear any existing timeout
             if (dropdownTimeout) {
               clearTimeout(dropdownTimeout)
               setDropdownTimeout(null)
             }
+            // Close other dropdowns immediately
+            if (item.label === 'For Students') {
+              setCompaniesDropdown(false)
+            } else {
+              setStudentsDropdown(false)
+            }
             setDropdownOpen(true)
           }}
           onMouseLeave={() => {
-            const timeout = setTimeout(() => setDropdownOpen(false), 500)
+            const timeout = setTimeout(() => setDropdownOpen(false), 200)
             setDropdownTimeout(timeout)
           }}
         >
           <button
+            onClick={() => {
+              // Toggle dropdown on click - if it's open, keep it open; if closed, open it
+              setDropdownOpen(!isDropdownOpen)
+              // Close other dropdown when clicking
+              if (item.label === 'For Students') {
+                setCompaniesDropdown(false)
+              } else {
+                setStudentsDropdown(false)
+              }
+            }}
             className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 whitespace-nowrap"
           >
             <Icon className="w-4 h-4" />
