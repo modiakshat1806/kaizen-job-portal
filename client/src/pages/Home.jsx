@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
 import { User, Briefcase, Building, QrCode, ArrowRight, Zap, MapPin, Users, Target } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Logo from '../components/Logo'
 
 // Animated Counter Component
-const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
+const AnimatedCounter = ({ end, duration = 2500, suffix = '' }) => {
   const [count, setCount] = useState(0)
   const [hasAnimated, setHasAnimated] = useState(false)
   const ref = useRef(null)
@@ -21,13 +21,16 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
             if (startTime === null) startTime = currentTime
             const progress = Math.min((currentTime - startTime) / duration, 1)
 
-            const easeOutQuart = 1 - Math.pow(1 - progress, 4)
-            const currentCount = Math.floor(easeOutQuart * (end - startValue) + startValue)
+            // Smoother easing function (ease-out-cubic)
+            const easeOutCubic = 1 - Math.pow(1 - progress, 3)
+            const currentCount = Math.floor(easeOutCubic * (end - startValue) + startValue)
 
             setCount(currentCount)
 
             if (progress < 1) {
               requestAnimationFrame(animate)
+            } else {
+              setCount(end) // Ensure we end exactly at the target
             }
           }
 
@@ -48,10 +51,61 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = '' }) => {
     }
   }, [end, duration, hasAnimated])
 
-  return <span ref={ref}>{count}{suffix}</span>
+  return (
+    <span
+      ref={ref}
+      style={{
+        display: 'inline-block',
+        minWidth: `${end.toString().length + suffix.length}ch`,
+        textAlign: 'center'
+      }}
+    >
+      {count}{suffix}
+    </span>
+  )
 }
 
 const Home = () => {
+  // Add CSS animations for 3D hero title effect
+  const heroAnimationStyles = `
+    @keyframes heroTitlePop {
+      0% {
+        transform: scale(0.8) translateY(30px) rotateX(15deg);
+        opacity: 0;
+      }
+      60% {
+        transform: scale(1.05) translateY(-5px) rotateX(-5deg);
+        opacity: 0.9;
+      }
+      100% {
+        transform: scale(1) translateY(0) rotateX(0deg);
+        opacity: 1;
+      }
+    }
+
+    @keyframes heroSpanPop {
+      0% {
+        transform: scale(0.7) translateY(20px) rotateY(10deg);
+        opacity: 0;
+      }
+      70% {
+        transform: scale(1.08) translateY(-3px) rotateY(-3deg);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(1) translateY(0) rotateY(0deg);
+        opacity: 1;
+      }
+    }
+  `
+
+  // Inject styles
+  React.useEffect(() => {
+    const styleSheet = document.createElement('style')
+    styleSheet.textContent = heroAnimationStyles
+    document.head.appendChild(styleSheet)
+    return () => document.head.removeChild(styleSheet)
+  }, [])
   const [scrollY, setScrollY] = useState(0)
   const [activeSection, setActiveSection] = useState(0)
   const sectionsRef = useRef([])
@@ -60,18 +114,18 @@ const Home = () => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       setScrollY(currentScrollY)
-      
-      // Determine which section is currently in view
+
+      // Determine which section is currently in view with smoother transitions
       const sectionElements = sectionsRef.current
       if (sectionElements.length > 0) {
         const windowHeight = window.innerHeight
-        const scrollPosition = currentScrollY + windowHeight / 2
-        
+        const scrollPosition = currentScrollY + windowHeight * 0.3 // Earlier trigger for smoother animations
+
         sectionElements.forEach((section, index) => {
           if (section) {
             const sectionTop = section.offsetTop
             const sectionHeight = section.offsetHeight
-            
+
             if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
               setActiveSection(index)
             }
@@ -80,8 +134,21 @@ const Home = () => {
       }
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    // Throttle scroll events for better performance and smoother animations
+    let ticking = false
+    const throttledHandleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          handleScroll()
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
+    handleScroll() // Call once to set initial state
+    return () => window.removeEventListener('scroll', throttledHandleScroll)
   }, [])
 
   const stats = [
@@ -108,14 +175,10 @@ const Home = () => {
       title: 'Company Hub',
       description: 'Streamlined recruitment process for hiring managers',
       icon: Building,
-      path: '/post-job'
-    },
-    {
-      title: 'Quick Apply',
-      description: 'One-click applications with QR code technology',
-      icon: QrCode,
-      path: '/scan'
+      path: '/post-job',
+      scrollToTop: true
     }
+
   ]
 
 
@@ -125,7 +188,7 @@ const Home = () => {
       {/* Hero Section */}
       <section 
         ref={(el) => (sectionsRef.current[0] = el)}
-        className="relative bg-gradient-to-br from-purple-50 via-white to-purple-50 pt-16 pb-24 px-4 overflow-hidden min-h-screen flex items-center"
+        className="relative bg-gradient-to-br from-purple-100 via-purple-50 to-purple-100 dark:from-gray-900 dark:via-purple-900/20 dark:to-gray-900 pt-16 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-screen flex items-center transition-colors duration-300"
         style={{
           transform: `translateZ(${scrollY * 0.01}px)`,
           transition: 'transform 0.1s ease-out'
@@ -158,28 +221,40 @@ const Home = () => {
         <div className="max-w-7xl mx-auto relative w-full">
           <div className="text-center max-w-4xl mx-auto mb-16">
             <div 
-              className={`inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6 transform transition-all duration-1000 shadow-lg ${
+              className={`inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-6 transform transition-all duration-700 ease-out shadow-lg ${
                 activeSection === 0 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-4 opacity-80'
               }`}
             >
               🚀 August Fest 2025 - Career Connection Platform
             </div>
             
-            <h1 
-              className={`text-6xl md:text-7xl font-extrabold text-gray-900 leading-tight mb-6 transform transition-all duration-1000 ${
-                activeSection === 0 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+            <h1
+              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white leading-tight mb-6 transform transition-all duration-700 ease-out ${
+                activeSection === 0 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-6 opacity-85'
               }`}
+              style={{
+                animation: 'heroTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+                transformStyle: 'preserve-3d',
+                textShadow: '0 4px 8px rgba(0,0,0,0.1), 0 8px 16px rgba(0,0,0,0.1)'
+              }}
             >
               Your career journey
               <br />
-              <span className="bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+              <span
+                className="bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent"
+                style={{
+                  animation: 'heroSpanPop 1.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s forwards',
+                  display: 'inline-block',
+                  transformStyle: 'preserve-3d'
+                }}
+              >
                 starts here
               </span>
             </h1>
             
-            <p 
-              className={`text-xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto transform transition-all duration-1000 ${
-                activeSection === 0 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
+            <p
+              className={`text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-10 leading-relaxed max-w-3xl mx-auto transform transition-all duration-500 ease-out ${
+                activeSection === 0 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-85'
               }`}
             >
               Connect with innovative companies, showcase your skills, and discover opportunities
@@ -276,9 +351,9 @@ const Home = () => {
         
         <div className="max-w-7xl mx-auto relative w-full">
           <div className="text-center mb-16">
-            <h2 
-              className={`text-4xl font-bold text-gray-900 mb-4 transform transition-all duration-1000 ${
-                activeSection === 1 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
+            <h2
+              className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 transform transition-all duration-700 ease-out ${
+                activeSection === 1 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-6 opacity-85'
               }`}
             >
               Everything you need to succeed
@@ -292,8 +367,8 @@ const Home = () => {
             </p>
           </div>
 
-          <div 
-            className={`grid md:grid-cols-2 lg:grid-cols-4 gap-8 transform transition-all duration-1000 ${
+          <div
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto transform transition-all duration-1000 ${
               activeSection === 1 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-16 opacity-60 scale-95'
             }`}
           >
@@ -303,7 +378,12 @@ const Home = () => {
                 <Link
                   key={index}
                   to={feature.path}
-                  className="group bg-gray-50 hover:bg-white p-8 rounded-2xl transition-all duration-500 hover:shadow-2xl border border-transparent hover:border-purple-100 transform hover:-translate-y-2 hover:rotate-y-3"
+                  onClick={() => {
+                    if (feature.scrollToTop) {
+                      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                    }
+                  }}
+                  className="group bg-gray-50 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-700 p-6 sm:p-8 rounded-2xl transition-all duration-500 hover:shadow-2xl border border-transparent hover:border-purple-100 dark:hover:border-purple-400 transform hover:-translate-y-2 hover:rotate-y-3"
                   style={{
                     transformStyle: 'preserve-3d',
                     perspective: '1000px',
@@ -314,10 +394,10 @@ const Home = () => {
                   <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110">
                     <Icon className="w-7 h-7 text-purple-600 group-hover:text-white transition-colors duration-300" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-purple-700 transition-colors transform group-hover:scale-105">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors transform group-hover:scale-105">
                     {feature.title}
                   </h3>
-                  <p className="text-gray-600 mb-4 leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
                     {feature.description}
                   </p>
                   <div className="flex items-center text-purple-600 font-medium text-sm group-hover:text-purple-700">
@@ -488,10 +568,11 @@ const Home = () => {
       {/* Enhanced Final CTA Section */}
       <section
         ref={(el) => (sectionsRef.current[4] = el)}
-        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 relative overflow-hidden flex items-center"
+        className="py-20 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 relative overflow-hidden flex items-center"
         style={{
           transform: `translateZ(${Math.max(0, scrollY - 2400) * 0.005}px)`,
-          transition: 'transform 0.1s ease-out'
+          transition: 'transform 0.1s ease-out',
+          minHeight: '60vh'
         }}
       >
         {/* Subtle Background Elements */}
@@ -512,7 +593,7 @@ const Home = () => {
             }`}
           >
             {/* Main Heading */}
-            <div className="mb-8">
+            <div className="mb-16">
               <h2
                 className={`text-4xl md:text-5xl font-bold text-gray-900 mb-6 transform transition-all duration-1000 ${
                   activeSection === 4 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
@@ -521,7 +602,8 @@ const Home = () => {
                   background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
+                  backgroundClip: 'text',
+                  paddingBottom: '4px'
                 }}
               >
                 Ready to accelerate your career?
@@ -545,6 +627,9 @@ const Home = () => {
               </Link>
               <Link
                 to="/post-job"
+                onClick={() => {
+                  setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                }}
                 className="group inline-flex items-center px-8 py-4 border-2 border-purple-400 text-purple-700 font-semibold rounded-xl hover:bg-purple-50 hover:border-purple-500 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105"
               >
                 <Briefcase className="w-5 h-5 mr-3 text-purple-600" />
