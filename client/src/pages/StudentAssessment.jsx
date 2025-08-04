@@ -6,11 +6,16 @@ import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronD
 import { studentAPI, fitmentAPI } from '../services/api'
 
 const StudentAssessment = () => {
-  // Clear saved state on component mount for fresh start
-  useEffect(() => {
-    localStorage.removeItem('studentAssessmentState')
-    localStorage.removeItem('studentAssessmentFormData')
-  }, [])
+  // Generate session ID for this assessment session
+  const [sessionId] = useState(() => {
+    const existingSessionId = localStorage.getItem('studentAssessmentSessionId')
+    if (!existingSessionId) {
+      const newSessionId = Date.now().toString()
+      localStorage.setItem('studentAssessmentSessionId', newSessionId)
+      return newSessionId
+    }
+    return existingSessionId
+  })
 
   // Add CSS animations for 3D assessment title effect and slider animations
   useEffect(() => {
@@ -58,11 +63,15 @@ const StudentAssessment = () => {
     document.head.appendChild(styleSheet)
     return () => document.head.removeChild(styleSheet)
   }, [])
-  // Load saved state from localStorage on component mount
+
+  // Load saved state from localStorage on component mount (only for current session)
   const loadSavedState = () => {
     try {
       const savedState = localStorage.getItem('studentAssessmentState')
-      if (savedState) {
+      const savedSessionId = localStorage.getItem('studentAssessmentSessionId')
+      
+      // Only load saved state if it's from the same session
+      if (savedState && savedSessionId === sessionId) {
         const parsed = JSON.parse(savedState)
         return {
           currentStep: parsed.currentStep || 1,
@@ -210,32 +219,16 @@ const StudentAssessment = () => {
   const clearSavedState = () => {
     localStorage.removeItem('studentAssessmentState')
     localStorage.removeItem('studentAssessmentFormData')
+    localStorage.removeItem('studentAssessmentSessionId')
   }
 
   // Reset assessment to start over
   const resetAssessment = () => {
     clearSavedState()
-    setCurrentStep(1)
-    setSelectedCoreValues([])
-    setSliderValues({
-      independence: 50,
-      routine: 50,
-      pace: 50,
-      focus: 50,
-      approach: 50
-    })
-    setBubbleAnswers({
-      q1: null,
-      q2: null,
-      q3: null,
-      q4: null,
-      q5: null,
-      q6: null,
-      q7: null,
-      q8: null,
-      q9: null,
-      q10: null
-    })
+    // Generate new session ID for fresh start
+    const newSessionId = Date.now().toString()
+    localStorage.setItem('studentAssessmentSessionId', newSessionId)
+    window.location.reload() // Reload to start completely fresh
   }
   
   const steps = [
@@ -305,13 +298,21 @@ const StudentAssessment = () => {
       const assessmentScore = calculateAssessmentScore(data)
       
       const studentData = {
-        ...data,
-        coreValues: selectedCoreValues,
-        assessmentScore,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
         education: {
           degree: data.degree,
-          institution: data.institution
-        }
+          field: data.degree, // Using degree as field since we don't have a separate field
+          institution: data.institution,
+          graduationYear: new Date().getFullYear() // Default to current year
+        },
+        careerGoals: "Career advancement and professional growth", // Default career goal
+        experienceYears: 0, // Default experience
+        assessmentScore,
+        coreValues: selectedCoreValues,
+        workPreferences: sliderValues,
+        workStyle: bubbleAnswers
       }
 
       // 1. POST the assessment to /api/student
@@ -328,16 +329,21 @@ const StudentAssessment = () => {
         minScore: 30 // Only show jobs with at least 30% match
       })
       
-      // 3. Navigate to /career-match with the job match results passed in state
-      navigate('/career-match', {
-        state: {
-          jobs: matchedJobsResponse.data.matchedJobs,
-          student: matchedJobsResponse.data.student,
-          totalJobs: matchedJobsResponse.data.totalJobs,
-          averageScore: matchedJobsResponse.data.averageScore,
-          fromAssessment: true
-        }
-      })
+      // 3. Navigate to career match results with assessment data
+      const assessmentData = {
+        basicDetails: {
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          degree: data.degree,
+          institution: data.institution
+        },
+        coreValues: selectedCoreValues,
+        workPreferences: sliderValues,
+        workStyle: bubbleAnswers
+      }
+      
+      navigate('/career-match-results', { state: { assessmentData } })
     } catch (error) {
       console.error('Assessment submission error:', error)
       if (error.response?.status === 404) {

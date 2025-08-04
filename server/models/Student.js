@@ -22,7 +22,7 @@ const studentSchema = new mongoose.Schema({
     degree: {
       type: String,
       required: true,
-      enum: ['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Other']
+      enum: ['BE', 'BTech', 'MSc', 'MTech', 'MBA', 'BBA', 'BCom', 'BCA', 'MCA']
     },
     field: {
       type: String,

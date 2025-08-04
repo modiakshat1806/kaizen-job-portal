@@ -8,7 +8,7 @@ const validateStudentData = [
   body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
   body('phone').isMobilePhone().withMessage('Please provide a valid phone number'),
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('education.degree').isIn(['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Other']).withMessage('Invalid degree'),
+  body('education.degree').isIn(['BE', 'BTech', 'MSc', 'MTech', 'MBA', 'BBA', 'BCom', 'BCA', 'MCA']).withMessage('Invalid degree'),
   body('education.field').notEmpty().withMessage('Field of study is required'),
   body('education.institution').notEmpty().withMessage('Institution is required'),
   body('education.graduationYear').isInt({ min: 1950, max: new Date().getFullYear() + 10 }).withMessage('Invalid graduation year'),
