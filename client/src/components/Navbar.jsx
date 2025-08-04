@@ -115,6 +115,10 @@ const Navbar = () => {
                       onClick={() => {
                         setDropdownOpen(false)
                         setIsMenuOpen(false)
+                        // Scroll to top for assessment page
+                        if (dropdownItem.path === '/assessment') {
+                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                        }
                       }}
                       className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 dark:text-gray-200 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-600 first:rounded-t-lg last:rounded-b-lg transition-colors duration-200"
                     >

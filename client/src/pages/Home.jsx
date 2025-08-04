@@ -579,21 +579,7 @@ const Home = () => {
           alignItems: 'center'
         }}
       >
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div
-            className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full animate-float"
-            style={{ animationDelay: '0s' }}
-          ></div>
-          <div
-            className="absolute top-32 right-20 w-16 h-16 bg-white/5 rounded-full animate-float"
-            style={{ animationDelay: '2s' }}
-          ></div>
-          <div
-            className="absolute bottom-20 left-1/4 w-12 h-12 bg-white/10 rounded-full animate-float"
-            style={{ animationDelay: '4s' }}
-          ></div>
-        </div>
+
 
         <div className="max-w-6xl mx-auto relative w-full">
           <div
@@ -642,10 +628,22 @@ const Home = () => {
                 onClick={() => {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
                 }}
-                className="group inline-flex items-center px-8 py-4 border-2 border-white text-white font-semibold rounded-xl hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
-                style={{ '--hover-text-color': '#1e5631' }}
-                onMouseEnter={(e) => e.target.style.color = '#1e5631'}
-                onMouseLeave={(e) => e.target.style.color = 'white'}
+                className="group inline-flex items-center px-8 py-4 border-2 font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
+                style={{
+                  borderColor: '#a7f3d0',
+                  color: '#a7f3d0',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#a7f3d0'
+                  e.currentTarget.style.color = '#1e5631'
+                  e.currentTarget.style.borderColor = '#a7f3d0'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = '#a7f3d0'
+                  e.currentTarget.style.borderColor = '#a7f3d0'
+                }}
               >
                 <Briefcase className="w-5 h-5 mr-3" />
                 <span className="text-lg">Post as Company</span>
@@ -658,12 +656,16 @@ const Home = () => {
       {/* Dark Footer Section */}
       <footer className="py-12 px-4 text-white bg-gray-900 dark:bg-gray-800 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col items-center text-center">
-            {/* Logo and Branding */}
-            <div className="mb-6">
-              <div className="flex justify-center mb-4">
+          <div className="flex flex-col md:flex-row items-center md:items-start">
+            {/* Logo Section - Left Side */}
+            <div className="md:w-1/3 mb-6 md:mb-0">
+              <div className="transform scale-150 md:scale-125 origin-left">
                 <Logo />
               </div>
+            </div>
+
+            {/* Content Section - Center */}
+            <div className="md:w-2/3 text-center md:text-left md:pl-8">
               <p className="text-gray-300 text-lg mb-2">
                 Smart matchmaking for August Fest 2025
               </p>
