@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { User, QrCode, Home, Building, X, Menu } from 'lucide-react'
+import { User, Home, Building, X, Menu, ChevronDown, GraduationCap, FileText, BarChart3, Briefcase, Moon, Sun } from 'lucide-react'
+import { useTheme } from '../contexts/ThemeContext'
 // NEW: Import motion for animations
 import { motion, AnimatePresence } from 'framer-motion'
 import Logo from './Logo'
@@ -15,8 +16,12 @@ const getGreeting = () => {
 
 const Navbar = () => {
   const location = useLocation()
+  const { isDarkMode, toggleTheme } = useTheme()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [greeting, setGreeting] = useState('')
+  const [studentsDropdown, setStudentsDropdown] = useState(false)
+  const [companiesDropdown, setCompaniesDropdown] = useState(false)
+  const [dropdownTimeout, setDropdownTimeout] = useState(null)
 
   // Set the greeting only once when the component mounts
   useEffect(() => {
@@ -25,13 +30,110 @@ const Navbar = () => {
 
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
-    { path: '/assessment', label: 'Assessment', icon: User },
-    { path: '/post-job', label: 'For Companies', icon: Building },
-    { path: '/scan', label: 'Scan QR', icon: QrCode },
+    {
+      label: 'For Students',
+      icon: GraduationCap,
+      hasDropdown: true,
+      dropdownItems: [
+        { path: '/assessment', label: 'Take Assessment', icon: FileText },
+        { path: '/career-roles', label: 'Career Roles', icon: User }
+      ]
+    },
+    {
+      label: 'For Companies',
+      icon: Building,
+      hasDropdown: true,
+      dropdownItems: [
+        { path: '/post-job', label: 'Post a Job', icon: Briefcase },
+        { path: '/results', label: 'View Results', icon: BarChart3 }
+      ]
+    },
   ]
 
   const NavLink = ({ item }) => {
     const Icon = item.icon
+
+    if (item.hasDropdown) {
+      const isDropdownOpen = item.label === 'For Students' ? studentsDropdown : companiesDropdown
+      const setDropdownOpen = item.label === 'For Students' ? setStudentsDropdown : setCompaniesDropdown
+
+      return (
+        <div
+          className="relative"
+          onMouseEnter={() => {
+            // Clear any existing timeout
+            if (dropdownTimeout) {
+              clearTimeout(dropdownTimeout)
+              setDropdownTimeout(null)
+            }
+            // Close other dropdowns immediately
+            if (item.label === 'For Students') {
+              setCompaniesDropdown(false)
+            } else {
+              setStudentsDropdown(false)
+            }
+            setDropdownOpen(true)
+          }}
+          onMouseLeave={() => {
+            const timeout = setTimeout(() => setDropdownOpen(false), 200)
+            setDropdownTimeout(timeout)
+          }}
+        >
+          <button
+            onClick={() => {
+              // Toggle dropdown on click - if it's open, keep it open; if closed, open it
+              setDropdownOpen(!isDropdownOpen)
+              // Close other dropdown when clicking
+              if (item.label === 'For Students') {
+                setCompaniesDropdown(false)
+              } else {
+                setStudentsDropdown(false)
+              }
+            }}
+            className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 whitespace-nowrap"
+          >
+            <Icon className="w-4 h-4" />
+            <span>{item.label}</span>
+            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {isDropdownOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute top-full left-0 mt-2 w-48 bg-gray-800 dark:bg-gray-700 rounded-lg shadow-lg border border-gray-700 dark:border-gray-600 z-50"
+              >
+                {item.dropdownItems.map((dropdownItem) => {
+                  const DropdownIcon = dropdownItem.icon
+                  return (
+                    <Link
+                      key={dropdownItem.path}
+                      to={dropdownItem.path}
+                      onClick={() => {
+                        setDropdownOpen(false)
+                        setIsMenuOpen(false)
+                        // Scroll to top for assessment page
+                        if (dropdownItem.path === '/assessment') {
+                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
+                        }
+                      }}
+                      className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 dark:text-gray-200 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-600 first:rounded-t-lg last:rounded-b-lg transition-colors duration-200"
+                    >
+                      <DropdownIcon className="w-4 h-4" />
+                      <span>{dropdownItem.label}</span>
+                    </Link>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )
+    }
+
     const isActive = location.pathname === item.path
     return (
       <Link
@@ -43,7 +145,6 @@ const Navbar = () => {
       >
         <Icon className="w-4 h-4" />
         <span>{item.label}</span>
-        {/* --- Creative Feature: Animated Underline --- */}
         {isActive && (
           <motion.div
             className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"
@@ -57,41 +158,67 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-gray-700/50 shadow-lg">
+    <nav className="sticky top-0 z-50 bg-gray-900 dark:bg-gray-800 backdrop-blur-lg border-b border-gray-700/50 dark:border-gray-600/50 shadow-lg transition-colors duration-300">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo and Dynamic Greeting */}
-          <div className="flex items-center space-x-4">
-            <Link to="/" onClick={() => setIsMenuOpen(false)}>
-              {/* Pass showText={false} to hide the "Jobs" tag */}
-              <Logo showText={false} />
+        <div className="flex items-center h-20">
+          {/* Logo - Left Side */}
+          <div className="flex items-center flex-1">
+            <Link to="/" onClick={() => setIsMenuOpen(false)} className="flex-shrink-0">
+              <Logo />
             </Link>
-            <div className="hidden lg:block text-sm text-gray-400 font-light">
-              {greeting}
-            </div>
           </div>
 
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center space-x-2">
-            {navItems.map((item) => (
-              <NavLink key={item.path} item={item} />
+          {/* Desktop Menu - Center */}
+          <div className="hidden md:flex items-center space-x-6 flex-1 justify-center">
+            {navItems.map((item, index) => (
+              <NavLink key={item.path || index} item={item} />
             ))}
           </div>
 
-          {/* Right side actions - User Profile */}
-          <div className="flex items-center space-x-4">
-             <div className="hidden md:block bg-gray-700/50 text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                Demo Mode
+          {/* Right side - Greeting, Theme Toggle and User Profile */}
+          <div className="flex items-center justify-end space-x-4 flex-1">
+             {/* Greeting */}
+             <div className="hidden lg:block text-sm text-gray-400 dark:text-gray-300 font-light">
+               {greeting}, Admin
              </div>
-             {/* --- Creative Feature: User Profile Mockup --- */}
+
+             {/* Theme Toggle */}
+             <button
+               onClick={toggleTheme}
+               className="p-2 rounded-lg text-gray-300 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors duration-200 hover:bg-gray-800 dark:hover:bg-gray-700"
+               aria-label="Toggle theme"
+             >
+               {isDarkMode ? (
+                 <Sun className="w-5 h-5" />
+               ) : (
+                 <Moon className="w-5 h-5" />
+               )}
+             </button>
+
+             {/* User Profile */}
              <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
                 <User className="w-5 h-5 text-white" />
              </div>
-             {/* Mobile Menu Button */}
-             <div className="md:hidden">
+
+             {/* Mobile Menu Button and Theme Toggle */}
+             <div className="md:hidden flex items-center space-x-2">
+                {/* Mobile Theme Toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-2 rounded-lg text-gray-300 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
+                  aria-label="Toggle theme"
+                >
+                  {isDarkMode ? (
+                    <Sun className="w-5 h-5" />
+                  ) : (
+                    <Moon className="w-5 h-5" />
+                  )}
+                </button>
+
+                {/* Mobile Menu Button */}
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="p-2 rounded-lg text-gray-300 hover:text-white"
+                  className="p-2 rounded-lg text-gray-300 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
                 >
                   {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
                 </button>
@@ -109,7 +236,7 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden overflow-hidden"
           >
-            <div className="px-2 pt-2 pb-4 space-y-2 border-t border-gray-700/50">
+            <div className="px-2 pt-2 pb-4 space-y-2 border-t border-gray-700/50 dark:border-gray-600/50 bg-gray-900 dark:bg-gray-800">
               {navItems.map((item) => (
                 <NavLink key={item.path} item={item} />
               ))}

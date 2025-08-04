@@ -2,10 +2,62 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronDown } from 'lucide-react'
 import { studentAPI, fitmentAPI } from '../services/api'
 
 const StudentAssessment = () => {
+  // Clear saved state on component mount for fresh start
+  useEffect(() => {
+    localStorage.removeItem('studentAssessmentState')
+    localStorage.removeItem('studentAssessmentFormData')
+  }, [])
+
+  // Add CSS animations for 3D assessment title effect and slider animations
+  useEffect(() => {
+    const assessmentAnimationStyles = `
+      @keyframes assessmentTitlePop {
+        0% {
+          transform: scale(0.8) translateY(20px) rotateX(10deg);
+          opacity: 0;
+        }
+        60% {
+          transform: scale(1.05) translateY(-3px) rotateX(-3deg);
+          opacity: 0.9;
+        }
+        100% {
+          transform: scale(1) translateY(0) rotateX(0deg);
+          opacity: 1;
+        }
+      }
+
+      @keyframes sliderBounce {
+        0% {
+          transform: translateX(-50%) scale(0.8);
+        }
+        50% {
+          transform: translateX(-50%) scale(1.1);
+        }
+        100% {
+          transform: translateX(-50%) scale(1);
+        }
+      }
+
+      @keyframes progressPopup {
+        0% {
+          transform: translateY(-20px) scale(0.8);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+    `
+    const styleSheet = document.createElement('style')
+    styleSheet.textContent = assessmentAnimationStyles
+    document.head.appendChild(styleSheet)
+    return () => document.head.removeChild(styleSheet)
+  }, [])
   // Load saved state from localStorage on component mount
   const loadSavedState = () => {
     try {
@@ -71,6 +123,9 @@ const StudentAssessment = () => {
   const [selectedCoreValues, setSelectedCoreValues] = useState(savedState.selectedCoreValues)
   const [sliderValues, setSliderValues] = useState(savedState.sliderValues)
   const [bubbleAnswers, setBubbleAnswers] = useState(savedState.bubbleAnswers)
+  const [degreeDropdownOpen, setDegreeDropdownOpen] = useState(false)
+  const [selectedDegree, setSelectedDegree] = useState('')
+  const [showProgressPopup, setShowProgressPopup] = useState(false)
   const navigate = useNavigate()
   
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm()
@@ -353,6 +408,9 @@ const StudentAssessment = () => {
     
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1)
+      // Show progress saved popup
+      setShowProgressPopup(true)
+      setTimeout(() => setShowProgressPopup(false), 2000)
     }
   }
 
@@ -395,7 +453,7 @@ const StudentAssessment = () => {
           <div className="form-section">
             <h3 className="text-xl font-semibold mb-6">Basic Information</h3>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="form-group">
                 <label className="form-label">Full Name *</label>
                 <input
@@ -444,20 +502,65 @@ const StudentAssessment = () => {
               <div className="form-group">
                 <label className="form-label">Degree *</label>
                 <div className="relative">
-                  <select className="input-field" {...register('degree', { required: 'Degree is required' })}>
-                    <option value="">Select Degree</option>
-                    <option value="BE">BE</option>
-                    <option value="BTech">BTech</option>
-                    <option value="MSc">MSc</option>
-                    <option value="MTech">MTech</option>
-                    <option value="MBA">MBA</option>
-                    <option value="BBA">BBA</option>
-                    <option value="BCom">BCom</option>
-                    <option value="BCA">BCA</option>
-                    <option value="MCA">MCA</option>
-                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setDegreeDropdownOpen(!degreeDropdownOpen)}
+                    className="input-field flex items-center justify-between w-full text-left"
+                  >
+                    <span className={selectedDegree ? 'text-gray-900' : 'text-gray-500'}>
+                      {selectedDegree || 'Select Degree'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${degreeDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {degreeDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                      {['BE', 'BTech', 'MSc', 'MTech', 'MBA', 'BBA', 'BCom', 'BCA', 'MCA'].map((degree) => (
+                        <button
+                          key={degree}
+                          type="button"
+                          onClick={() => {
+                            setSelectedDegree(degree)
+                            setValue('degree', degree)
+                            setDegreeDropdownOpen(false)
+                          }}
+                          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg"
+                        >
+                          {degree}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <input
+                    type="hidden"
+                    {...register('degree', { required: 'Degree is required' })}
+                    value={selectedDegree}
+                  />
                 </div>
                 {errors.degree && <p className="form-error">{errors.degree.message}</p>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Year of Graduation *</label>
+                <select className="input-field" {...register('graduationYear', { required: 'Graduation year is required' })}>
+                  <option value="">Select Year</option>
+                  {Array.from({ length: 10 }, (_, i) => {
+                    const year = new Date().getFullYear() + 4 - i
+                    return <option key={year} value={year}>{year}</option>
+                  })}
+                </select>
+                {errors.graduationYear && <p className="form-error">{errors.graduationYear.message}</p>}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Specialization *</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g., Computer Science, Mechanical, Finance"
+                  {...register('specialization', { required: 'Specialization is required' })}
+                />
+                {errors.specialization && <p className="form-error">{errors.specialization.message}</p>}
               </div>
 
               <div className="form-group md:col-span-2">
@@ -495,7 +598,7 @@ const StudentAssessment = () => {
                 )}
               </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {coreValues.map((value) => {
                   const isSelected = selectedCoreValues.includes(value)
                   return (
@@ -566,21 +669,28 @@ const StudentAssessment = () => {
                     <span>Independently</span>
                     <span>With Others</span>
                   </div>
-                                     <div className="relative">
-                     <input
-                       type="range"
-                       min="0"
-                       max="100"
-                       value={sliderValues.independence}
-                       onChange={(e) => handleSliderChange('independence', e.target.value)}
-                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                       style={{
-                         background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.independence}%, #e5e7eb ${sliderValues.independence}%, #e5e7eb 100%)`
-                       }}
-                     />
-                   </div>
-                  <div className="text-center text-sm font-medium text-gray-700">
-                    Current Value: {sliderValues.independence}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sliderValues.independence}
+                      onChange={(e) => handleSliderChange('independence', e.target.value)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.independence}%, #e5e7eb ${sliderValues.independence}%, #e5e7eb 100%)`
+                      }}
+                    />
+                    <div
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
+                      style={{
+                        left: `${sliderValues.independence}%`,
+                        transition: 'left 0.1s ease-out'
+                      }}
+                    >
+                      {sliderValues.independence}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-4 border-transparent border-t-purple-600"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -593,21 +703,28 @@ const StudentAssessment = () => {
                     <span>Routines</span>
                     <span>Flexibility</span>
                   </div>
-                                     <div className="relative">
-                     <input
-                       type="range"
-                       min="0"
-                       max="100"
-                       value={sliderValues.routine}
-                       onChange={(e) => handleSliderChange('routine', e.target.value)}
-                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                       style={{
-                         background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.routine}%, #e5e7eb ${sliderValues.routine}%, #e5e7eb 100%)`
-                       }}
-                     />
-                   </div>
-                  <div className="text-center text-sm font-medium text-gray-700">
-                    Current Value: {sliderValues.routine}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sliderValues.routine}
+                      onChange={(e) => handleSliderChange('routine', e.target.value)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.routine}%, #e5e7eb ${sliderValues.routine}%, #e5e7eb 100%)`
+                      }}
+                    />
+                    <div
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
+                      style={{
+                        left: `${sliderValues.routine}%`,
+                        transition: 'left 0.1s ease-out'
+                      }}
+                    >
+                      {sliderValues.routine}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-4 border-transparent border-t-purple-600"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -620,21 +737,28 @@ const StudentAssessment = () => {
                     <span>Steady Pace</span>
                     <span>Fast Pace</span>
                   </div>
-                                     <div className="relative">
-                     <input
-                       type="range"
-                       min="0"
-                       max="100"
-                       value={sliderValues.pace}
-                       onChange={(e) => handleSliderChange('pace', e.target.value)}
-                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                       style={{
-                         background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.pace}%, #e5e7eb ${sliderValues.pace}%, #e5e7eb 100%)`
-                       }}
-                     />
-                   </div>
-                  <div className="text-center text-sm font-medium text-gray-700">
-                    Current Value: {sliderValues.pace}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sliderValues.pace}
+                      onChange={(e) => handleSliderChange('pace', e.target.value)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.pace}%, #e5e7eb ${sliderValues.pace}%, #e5e7eb 100%)`
+                      }}
+                    />
+                    <div
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
+                      style={{
+                        left: `${sliderValues.pace}%`,
+                        transition: 'left 0.1s ease-out'
+                      }}
+                    >
+                      {sliderValues.pace}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-4 border-transparent border-t-purple-600"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -647,21 +771,28 @@ const StudentAssessment = () => {
                     <span>Switching Tasks</span>
                     <span>Deep Focus</span>
                   </div>
-                                     <div className="relative">
-                     <input
-                       type="range"
-                       min="0"
-                       max="100"
-                       value={sliderValues.focus}
-                       onChange={(e) => handleSliderChange('focus', e.target.value)}
-                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                       style={{
-                         background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.focus}%, #e5e7eb ${sliderValues.focus}%, #e5e7eb 100%)`
-                       }}
-                     />
-                   </div>
-                  <div className="text-center text-sm font-medium text-gray-700">
-                    Current Value: {sliderValues.focus}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sliderValues.focus}
+                      onChange={(e) => handleSliderChange('focus', e.target.value)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.focus}%, #e5e7eb ${sliderValues.focus}%, #e5e7eb 100%)`
+                      }}
+                    />
+                    <div
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
+                      style={{
+                        left: `${sliderValues.focus}%`,
+                        transition: 'left 0.1s ease-out'
+                      }}
+                    >
+                      {sliderValues.focus}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-4 border-transparent border-t-purple-600"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -674,21 +805,28 @@ const StudentAssessment = () => {
                     <span>Building Things</span>
                     <span>Big Ideas</span>
                   </div>
-                                     <div className="relative">
-                     <input
-                       type="range"
-                       min="0"
-                       max="100"
-                       value={sliderValues.approach}
-                       onChange={(e) => handleSliderChange('approach', e.target.value)}
-                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                       style={{
-                         background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.approach}%, #e5e7eb ${sliderValues.approach}%, #e5e7eb 100%)`
-                       }}
-                     />
-                   </div>
-                  <div className="text-center text-sm font-medium text-gray-700">
-                    Current Value: {sliderValues.approach}
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={sliderValues.approach}
+                      onChange={(e) => handleSliderChange('approach', e.target.value)}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                      style={{
+                        background: `linear-gradient(to right, #7c3aed 0%, #7c3aed ${sliderValues.approach}%, #e5e7eb ${sliderValues.approach}%, #e5e7eb 100%)`
+                      }}
+                    />
+                    <div
+                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
+                      style={{
+                        left: `${sliderValues.approach}%`,
+                        transition: 'left 0.1s ease-out'
+                      }}
+                    >
+                      {sliderValues.approach}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-4 border-transparent border-t-purple-600"></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -703,16 +841,16 @@ const StudentAssessment = () => {
               <div className="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center">
                 <MapPin className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-xl font-semibold">Work Style Assessment</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Work Style Assessment</h3>
             </div>
-            <p className="text-gray-600 mb-6">Please rate how much you agree with each statement by selecting one bubble for each question.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">Please rate how much you agree with each statement by selecting one bubble for each question.</p>
             
             <div className="space-y-8">
               {/* Question 1 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I prefer working in a team rather than alone</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-4">I prefer working in a team rather than alone</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -729,7 +867,7 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -967,31 +1105,31 @@ const StudentAssessment = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Student Assessment</h1>
-        <p className="text-gray-600">Complete this assessment to help us match you with the best opportunities</p>
+        <h1
+          className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
+          style={{
+            animation: 'assessmentTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+            transformStyle: 'preserve-3d',
+            textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
+        >
+          Student Assessment
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300">Complete this assessment to help us match you with the best opportunities</p>
         
-        {/* Show saved progress indicator */}
-        {currentStep > 1 && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-blue-700 font-medium">
-                  Progress saved • You're on step {currentStep} of {steps.length}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={resetAssessment}
-                className="text-sm text-blue-600 hover:text-blue-800 underline"
-              >
-                Start Over
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Go to Home button */}
+        <div className="mt-4 flex justify-start">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors duration-200"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Go to Home
+          </button>
+        </div>
       </div>
 
       {renderStepIndicator()}
@@ -1046,6 +1184,21 @@ const StudentAssessment = () => {
           )}
         </div>
       </form>
+
+      {/* Progress Saved Popup */}
+      {showProgressPopup && (
+        <div className="fixed top-4 right-4 z-50">
+          <div
+            className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2"
+            style={{
+              animation: 'progressPopup 0.3s ease-out'
+            }}
+          >
+            <Check className="w-5 h-5" />
+            <span className="font-medium">Progress Saved!</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
