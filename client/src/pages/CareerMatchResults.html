@@ -84,6 +84,28 @@
                 transform: translateY(0);
             }
         }
+
+        .fitment-score {
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .fitment-score.excellent {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .fitment-score.good {
+            background-color: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .fitment-score.poor {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
@@ -98,128 +120,113 @@
                 </div>
                 
                 <!-- Spinner -->
-                <div class="flex justify-center">
-                    <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full spinner"></div>
+                <div class="spinner w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto"></div>
+                
+                <!-- Loading Text -->
+                <div class="space-y-4">
+                    <p class="loading-text text-xl text-gray-700">Taking you a step closer towards a better future...</p>
+                    <p class="loading-text text-xl text-gray-700">Analyzing your unique skills...</p>
+                    <p class="loading-text text-xl text-gray-700">Finding the perfect career for you...</p>
                 </div>
                 
                 <!-- Progress Bar -->
                 <div class="w-64 bg-gray-200 rounded-full h-2 mx-auto">
-                    <div id="progressBar" class="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                
-                <!-- Loading Messages -->
-                <div class="space-y-4">
-                    <p class="loading-text text-lg text-gray-700 font-medium">Taking you a step closer towards a better future...</p>
-                    <p class="loading-text text-lg text-gray-700 font-medium">Analyzing your unique skills and preferences...</p>
-                    <p class="loading-text text-lg text-gray-700 font-medium">Finding the perfect career matches for you...</p>
+                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
         </div>
 
         <!-- Results State -->
         <div id="resultsState" class="hidden">
-            <!-- Header -->
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Your Career Matches</h1>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">Your Career Matches</h1>
                 <p class="text-gray-600">Based on your assessment, here are the roles that best fit your profile</p>
             </div>
-
-            <!-- Results Grid -->
-            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <!-- Cards will be dynamically inserted here -->
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <button onclick="retakeAssessment()" class="btnOutline">
-                    Retake Assessment
-                </button>
-                <button onclick="goToHome()" class="btnSecondary">
-                    Go to Home
-                </button>
+            
+            <div id="resultsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Results will be dynamically inserted here -->
             </div>
         </div>
     </div>
 
     <script>
         // Configuration
-        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
-        const apiKey = 'YOUR_GEMINI_API_KEY'; // Will be populated by environment
-
-        // Mock assessment data (will be replaced with real data from URL params)
-        const mockAssessmentData = {
-            basicDetails: {
-                name: "John Doe",
-                email: "john@example.com",
-                phone: "1234567890",
-                degree: "BTech",
-                institution: "Example University"
-            },
-            coreValues: ["Innovation", "Collaboration", "Continuous Learning", "Problem-Solving", "Integrity"],
-            workPreferences: {
-                independence: 75,
-                routine: 30,
-                pace: 80,
-                focus: 60,
-                approach: 70
-            },
-            workStyle: {
-                q1: 4, q2: 3, q3: 4, q4: 2, q5: 5,
-                q6: 3, q7: 4, q8: 3, q9: 4, q10: 2
-            }
-        };
-
-        // Get real job data from the portal
+        const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+        let apiKey = '';
         let realJobData = [];
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-        });
-
-        async function initializeApp() {
-            // Get assessment data from URL params
+        // Get assessment data from URL parameters
+        function getAssessmentDataFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const assessmentDataParam = urlParams.get('assessmentData');
-            
-            let assessmentData = mockAssessmentData;
+            const assessmentDataParam = urlParams.get('data');
             if (assessmentDataParam) {
                 try {
-                    assessmentData = JSON.parse(decodeURIComponent(assessmentDataParam));
+                    return JSON.parse(decodeURIComponent(assessmentDataParam));
                 } catch (error) {
                     console.error('Error parsing assessment data:', error);
+                    return null;
                 }
             }
+            return null;
+        }
 
-            // Fetch real job data from the portal
-            await fetchRealJobData();
+        // Initialize the application
+        async function init() {
+            console.log('Initializing career match results...');
             
-            // Simulate loading progress
+            const assessmentData = getAssessmentDataFromURL();
+            console.log('Assessment data:', assessmentData);
+            
+            if (!assessmentData) {
+                showError('No assessment data found. Please complete the assessment first.');
+                return;
+            }
+
+            // Fetch API key from environment (this will be set by the backend)
+            try {
+                console.log('Fetching API key...');
+                const response = await fetch('/api/openai-key');
+                console.log('API key response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    apiKey = data.apiKey;
+                    console.log('API key received:', apiKey ? 'Yes' : 'No');
+                } else {
+                    const errorText = await response.text();
+                    console.error('API key error response:', errorText);
+                    throw new Error('Failed to get API key');
+                }
+            } catch (error) {
+                console.error('Error getting API key:', error);
+                showError('Unable to initialize career matching service.');
+                return;
+            }
+
+            // Start the process
             simulateLoadingProgress();
+            await fetchRealJobData();
+            console.log('Real job data fetched:', realJobData.length, 'jobs');
             
             // Wait for loading animation
             await new Promise(resolve => setTimeout(resolve, 6000));
             
-            // Call Gemini API
+            // Call OpenAI API
             try {
+                console.log('Calling OpenAI API...');
                 const careerMatches = await getCareerMatches(assessmentData);
+                console.log('Career matches received:', careerMatches);
                 displayResults(careerMatches, assessmentData);
             } catch (error) {
                 console.error('Error getting career matches:', error);
-                // Show error message
-                document.getElementById('loadingState').innerHTML = `
-                    <div class="text-center space-y-4">
-                        <h2 class="text-2xl font-bold text-red-600">Error Loading Results</h2>
-                        <p class="text-gray-600">Unable to generate career matches at this time.</p>
-                        <button onclick="window.location.reload()" class="btnPrimary">Try Again</button>
-                    </div>
-                `;
+                showError('Unable to generate career matches at this time. Please try again.');
             }
         }
 
         async function fetchRealJobData() {
             try {
                 // Fetch jobs from the portal API
-                const response = await fetch('/api/jobs');
+                const response = await fetch('/api/job');
                 if (response.ok) {
                     const data = await response.json();
                     realJobData = data.jobs || [];
@@ -246,71 +253,209 @@
         async function getCareerMatches(assessmentData) {
             const prompt = createPrompt(assessmentData);
             
-            const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+            console.log('Sending request to OpenAI with prompt:', prompt);
+            
+            const response = await fetch(OPENAI_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }]
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are an expert career counselor and job matching specialist. Your task is to analyze a candidate\'s assessment data and provide a list of career matches. You will use your expertise to align the candidate\'s profile to a specific list of roles and present the results in a structured format.'
+                        },
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.7,
+                    max_tokens: 2000
                 })
             });
 
+            console.log('OpenAI response status:', response.status);
+            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                console.error('OpenAI API error:', errorText);
+                throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
             }
 
             const data = await response.json();
-            const responseText = data.candidates[0].content.parts[0].text;
+            console.log('OpenAI response data:', data);
+            
+            const responseText = data.choices[0].message.content;
+            console.log('OpenAI response text:', responseText);
             
             // Extract JSON from the response
             const jsonMatch = responseText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 return JSON.parse(jsonMatch[0]);
             } else {
-                throw new Error('Invalid response format');
+                throw new Error('Invalid response format - no JSON found');
             }
         }
 
         function createPrompt(assessmentData) {
-            return `You are a career counselor analyzing assessment data. Based on the following assessment data, suggest 3-6 job roles that would be a perfect match for this candidate.
+            return `Superset of Roles:
+This is the only list of job roles you are allowed to recommend. For any new role you might think of, you must match it to the closest, most suitable role on this list.
+[
+'Agile Coach'
+'AI Engineer'
+'AI Research Scientist'
+'AI Solutions Architect'
+'Application Developer'
+'Assembly Line Worker'
+'Automation Tester'
+'Back-End Developer'
+'Bank Teller'
+'Big Data Engineer'
+'Business Analyst'
+'Change Management Specialist'
+'Clinical Research Associate'
+'Cloud Administrator'
+'Cloud Developer'
+'Cloud Security Engineer'
+'Cloud Solutions Architect'
+'CNC Machinist'
+'Compliance Analyst'
+'Compliance Engineer'
+'Computer Vision Engineer'
+'Conversational AI Designer'
+'Corporate Loan Analyst'
+'Credit Officer'
+'Cybersecurity Analyst'
+'Cybersecurity Consultant'
+'Data Analyst'
+'Data Engineer'
+'Data Scientist'
+'Data Warehouse Developer'
+'Database Administrator'
+'Database Engineer'
+'Deep Learning Engineer'
+'Desktop Application Developer'
+'DevOps Engineer'
+'Digital Marketing Specialist'
+'Digital Transformation Lead'
+'Documentation Specialist'
+'Electronics Design Engineer'
+'Electronics QA Inspector'
+'Embedded Software Engineer'
+'Enterprise Architect'
+'Ethical Hacker'
+'Front-End Developer'
+'Front-End Web Engineer'
+'Full-Stack Developer'
+'Game Developer'
+'Health & Safety Officer'
+'Healthcare Administrator'
+'Incident Responder'
+'Interaction Designer'
+'Inventory Control Manager'
+'IT Account Manager'
+'IT Auditor'
+'IT Consultant'
+'IT Manager'
+'IT Operations Engineer'
+'IT Risk Analyst'
+'IT Strategy Consultant'
+'IT Support Specialist'
+'Logistics Coordinator'
+'Machine Learning Engineer'
+'Maintenance Technician'
+'Market Access Specialist'
+'Medical Records Technician'
+'Medical Sales Representative'
+'Medical Technologist'
+'Mobile App Developer'
+'Network Administrator'
+'Network Engineer'
+'NLP Engineer'
+'Patient Care Coordinator'
+'Penetration Tester'
+'Performance Tester'
+'Pharmacovigilance Specialist'
+'Physician Assistant'
+'Physiotherapist'
+'Pre-Sales Consultant'
+'Process Consultant'
+'Process Engineer'
+'Procurement Specialist'
+'Product Manager'
+'Production Operator'
+'Production Planner'
+'Production Supervisor'
+'Project Manager'
+'Prototyping Specialist'
+'QA Analyst'
+'QA Engineer'
+'Quality Control Analyst'
+'Quality Inspector'
+'Quantitative Analyst'
+'Radiology Technician'
+'Regulatory Affairs Specialist'
+'Relationship Manager'
+'Reliability Engineer'
+'Research Scientist'
+'Scrum Master'
+'Security Architect'
+'Security Engineer'
+'Site Reliability Engineer'
+'Software Architect'
+'Software Tester'
+'Solutions Consultant'
+'Speech-Language Pathologist'
+'SQL Developer'
+'Staff Nurse'
+'Supply Chain Specialist'
+'System Administrator'
+'Systems Analyst'
+'Technical Product Manager'
+'Technical Sales Engineer'
+'Technical Writer'
+'Technology Analyst'
+'Test Automation Engineer'
+'UI Developer'
+'UI/UX Researcher'
+'UX Designer'
+'UX Engineer'
+'Vulnerability Analyst'
+'Web Developer'
+]
 
-Assessment Data:
-- Basic Details: ${JSON.stringify(assessmentData.basicDetails)}
-- Core Values: ${assessmentData.coreValues.join(', ')}
-- Work Preferences: ${JSON.stringify(assessmentData.workPreferences)}
-- Work Style: ${JSON.stringify(assessmentData.workStyle)}
+Candidate Assessment Data:
+Full Name: ${assessmentData.basicDetails?.name || 'Not provided'}
+Core Values: ${assessmentData.coreValues?.join(', ') || 'Not provided'}
+Work Preferences: ${JSON.stringify(assessmentData.workPreferences) || 'Not provided'}
+Behavioral Answers: ${JSON.stringify(assessmentData.workStyle) || 'Not provided'}
 
-Please analyze this data and return a JSON object with the following schema:
+Task:
+
+Carefully analyze the candidate's core values, work preferences, and behavioral traits.
+
+Select 3-6 of the most suitable internship roles for this candidate from the Superset of Roles list.
+
+For each selected role, provide a jobTitle, a one-line jobDescription for an internship position, a Unicode emoji for a relevantLogo, and three small bullet points in a whyYouMatch array explaining the fit.
+
+Provide a fitmentScore from 0 to 100, where 100 is a perfect match and 0 is no match.
+
+The entire response MUST be a single JSON object that strictly adheres to the following schema:
 {
-  "careerMatches": [
+  "matches": [
     {
-      "jobTitle": "string (e.g., 'Software Developer')",
-      "jobDescription": "string (one-line summary)",
-      "relevantLogo": "string (single Unicode emoji)",
-      "whyYouMatch": ["string", "string", "string"] (3 concise points),
-      "fitmentScore": number (0-100, based on how well the role matches the assessment)
+      "jobTitle": "string",
+      "fitmentScore": "number",
+      "jobDescription": "string",
+      "relevantLogo": "string",
+      "whyYouMatch": ["string", "string", "string"]
     }
   ]
-}
-
-Focus on roles that align with:
-1. The selected core values
-2. Work preferences (independence vs collaboration, pace, etc.)
-3. Work style assessment answers
-4. Educational background
-
-Calculate fitment score based on:
-- Core values alignment (20 points)
-- Work preferences match (30 points)
-- Work style compatibility (30 points)
-- Educational background relevance (20 points)
-
-Return only valid JSON, no additional text.`;
+}`;
         }
 
         function displayResults(careerMatches, assessmentData) {
@@ -320,153 +465,109 @@ Return only valid JSON, no additional text.`;
             // Show results state
             document.getElementById('resultsState').classList.remove('hidden');
             
-            // Filter matches to only show roles that exist in real job data
-            const filteredMatches = filterMatchesWithRealJobs(careerMatches.careerMatches);
+            const resultsGrid = document.getElementById('resultsGrid');
+            resultsGrid.innerHTML = '';
             
-            if (filteredMatches.length === 0) {
-                document.getElementById('resultsGrid').innerHTML = `
+            if (!careerMatches.matches || careerMatches.matches.length === 0) {
+                resultsGrid.innerHTML = `
                     <div class="col-span-full text-center py-12">
-                        <div class="text-6xl mb-4">🔍</div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">No Matching Jobs Found</h3>
-                        <p class="text-gray-600">We couldn't find any current job openings that match your profile.</p>
-                        <p class="text-gray-500 text-sm mt-2">Try checking back later or retake the assessment.</p>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">No matches found</h3>
+                        <p class="text-gray-500">Try completing the assessment again with different answers.</p>
                     </div>
                 `;
                 return;
             }
             
-            // Render career match cards
-            const resultsGrid = document.getElementById('resultsGrid');
-            resultsGrid.innerHTML = '';
-            
-            filteredMatches.forEach((match, index) => {
-                const card = createCareerCard(match, index);
+            careerMatches.matches.forEach((match, index) => {
+                const availableJobs = getAvailableJobsCount(match.jobTitle);
+                const card = createJobCard(match, availableJobs, index);
                 resultsGrid.appendChild(card);
             });
         }
 
-        function filterMatchesWithRealJobs(matches) {
-            // Get unique job titles from real job data
-            const realJobTitles = [...new Set(realJobData.map(job => job.title))];
-            
-            // Filter matches to only include roles that exist in real job data
-            return matches.filter(match => {
-                return realJobTitles.some(realTitle => 
-                    realTitle.toLowerCase().includes(match.jobTitle.toLowerCase()) ||
-                    match.jobTitle.toLowerCase().includes(realTitle.toLowerCase())
-                );
-            });
+        function getAvailableJobsCount(jobTitle) {
+            return realJobData.filter(job => 
+                job.title.toLowerCase().includes(jobTitle.toLowerCase()) ||
+                jobTitle.toLowerCase().includes(job.title.toLowerCase())
+            ).length;
         }
 
-        function createCareerCard(match, index) {
-            // Find matching jobs in real data
-            const matchingJobs = realJobData.filter(job => 
-                job.title.toLowerCase().includes(match.jobTitle.toLowerCase()) ||
-                match.jobTitle.toLowerCase().includes(job.title.toLowerCase())
-            );
-            
-            const availableJobs = matchingJobs.length;
-            const fitmentScore = match.fitmentScore || 85; // Default if not provided
-            
-            // Determine score color
-            let scoreColor, scoreBgColor;
-            if (fitmentScore >= 90) {
-                scoreColor = 'text-green-600';
-                scoreBgColor = 'bg-green-100';
-            } else if (fitmentScore >= 80) {
-                scoreColor = 'text-purple-600';
-                scoreBgColor = 'bg-purple-100';
-            } else {
-                scoreColor = 'text-red-600';
-                scoreBgColor = 'bg-red-100';
-            }
-            
+        function createJobCard(match, availableJobs, index) {
             const card = document.createElement('div');
-            card.className = `card-hover bg-white rounded-lg shadow-md p-4 cursor-pointer fade-in`;
-            card.style.animationDelay = `${index * 0.2}s`;
+            card.className = `bg-white rounded-xl shadow-lg p-6 card-hover fade-in cursor-pointer`;
+            card.style.animationDelay = `${index * 0.1}s`;
+            
+            const fitmentClass = getFitmentClass(match.fitmentScore);
+            const fitmentText = getFitmentText(match.fitmentScore);
             
             card.innerHTML = `
-                <div class="text-center">
-                    <div class="text-4xl mb-3">${match.relevantLogo}</div>
-                    
-                    <!-- Fitment Score -->
-                    <div class="mb-3">
-                        <div class="inline-flex items-center px-3 py-1 rounded-full ${scoreBgColor}">
-                            <span class="text-sm font-bold ${scoreColor}">${fitmentScore}% Match</span>
-                        </div>
-                    </div>
-                    
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">${match.jobTitle}</h3>
-                    <p class="text-sm text-gray-600 mb-3">${match.jobDescription}</p>
-                    
-                    <div class="text-left mb-3">
-                        <h4 class="font-semibold text-gray-900 mb-2 text-sm">Why You Match:</h4>
-                        <ul class="space-y-1">
-                            ${match.whyYouMatch.map(point => `
-                                <li class="text-xs text-gray-600 flex items-start">
-                                    <span class="text-green-500 mr-2 mt-0.5">✓</span>
-                                    <span>${point}</span>
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    
-                    <div class="border-t pt-3">
-                        <p class="text-xs text-gray-500">
-                            ${availableJobs > 0 ? 
-                                `<span class="text-green-600 font-semibold">${availableJobs} role${availableJobs > 1 ? 's' : ''} available</span> on Kaizen Job Portal` : 
-                                'No current openings'
-                            }
-                        </p>
-                    </div>
+                <div class="flex items-start justify-between mb-4">
+                    <div class="text-4xl">${match.relevantLogo}</div>
+                    <div class="fitment-score ${fitmentClass}">${match.fitmentScore}%</div>
+                </div>
+                
+                <h3 class="text-xl font-bold text-gray-900 mb-2">${match.jobTitle}</h3>
+                <p class="text-gray-600 mb-4">${match.jobDescription}</p>
+                
+                <div class="mb-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">Why You Match:</h4>
+                    <ul class="space-y-1">
+                        ${match.whyYouMatch.map(reason => `<li class="text-sm text-gray-600">• ${reason}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500">
+                        ${availableJobs > 0 ? `${availableJobs} job${availableJobs > 1 ? 's' : ''} available` : 'No jobs available'}
+                    </span>
+                    ${availableJobs > 0 ? `
+                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            View Jobs
+                        </span>
+                    ` : `
+                        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">
+                            No Openings
+                        </span>
+                    `}
                 </div>
             `;
             
             // Add click handler
-            card.addEventListener('click', () => {
-                handleCardClick(match.jobTitle, matchingJobs);
-            });
+            if (availableJobs > 0) {
+                card.addEventListener('click', () => {
+                    window.location.href = `/jobs?role=${encodeURIComponent(match.jobTitle)}`;
+                });
+            }
             
             return card;
         }
 
-        function handleCardClick(jobTitle, matchingJobs) {
-            if (matchingJobs.length === 0) {
-                // No matching jobs, show message
-                alert('No current openings for this role. Please check back later.');
-                return;
-            }
-            
-            if (matchingJobs.length === 1) {
-                // Single job, redirect directly to job detail
-                window.location.href = `/job/${matchingJobs[0].jobId}`;
-            } else {
-                // Multiple jobs, redirect to job listings with filter
-                const encodedTitle = encodeURIComponent(jobTitle);
-                window.location.href = `/jobs?role=${encodedTitle}`;
-            }
+        function getFitmentClass(score) {
+            if (score >= 90) return 'excellent';
+            if (score >= 80) return 'good';
+            return 'poor';
         }
 
-        function retakeAssessment() {
-            window.location.href = '/assessment';
+        function getFitmentText(score) {
+            if (score >= 90) return 'Excellent Match';
+            if (score >= 80) return 'Good Match';
+            return 'Fair Match';
         }
 
-        function goToHome() {
-            window.location.href = '/';
+        function showError(message) {
+            document.getElementById('loadingState').innerHTML = `
+                <div class="text-center space-y-4">
+                    <h2 class="text-2xl font-bold text-red-600">Error</h2>
+                    <p class="text-gray-600">${message}</p>
+                    <button onclick="window.location.reload()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Try Again
+                    </button>
+                </div>
+            `;
         }
 
-        // Utility functions for styling
-        function btnPrimary() {
-            return 'bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transform hover:-translate-y-0.5';
-        }
-
-        function btnSecondary() {
-            return 'bg-gradient-to-r from-gray-600 to-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-lg hover:shadow-xl hover:from-gray-700 hover:to-gray-800';
-        }
-
-        function btnOutline() {
-            return 'border-2 border-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50';
-        }
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html> 

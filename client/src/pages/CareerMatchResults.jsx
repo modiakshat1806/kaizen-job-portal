@@ -15,7 +15,7 @@ const CareerMatchResults = () => {
 
     // Pass assessment data via URL parameters
     const encodedData = encodeURIComponent(JSON.stringify(assessmentData))
-    const resultsUrl = `/career-match-results.html?assessmentData=${encodedData}`
+    const resultsUrl = `/career-match-results.html?data=${encodedData}`
     
     // Open the results page in new window/tab
     const newWindow = window.open(resultsUrl, '_blank')
