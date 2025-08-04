@@ -17,10 +17,49 @@ const JobDetail = () => {
   const [fitmentData, setFitmentData] = useState(location.state?.fitmentData || null)
   const [studentPhone, setStudentPhone] = useState('')
   const [showPhoneInput, setShowPhoneInput] = useState(false)
+  const [isJobSaved, setIsJobSaved] = useState(false)
 
   useEffect(() => {
     fetchJob()
+    checkIfJobSaved()
   }, [jobId])
+
+  // Check if job is already saved
+  const checkIfJobSaved = () => {
+    try {
+      const savedJobs = JSON.parse(localStorage.getItem('savedJobs') || '[]')
+      const isSaved = savedJobs.some(savedJob => savedJob._id === jobId)
+      setIsJobSaved(isSaved)
+    } catch (error) {
+      console.error('Error checking saved jobs:', error)
+    }
+  }
+
+  // Save or unsave job
+  const toggleSaveJob = () => {
+    try {
+      const savedJobs = JSON.parse(localStorage.getItem('savedJobs') || '[]')
+
+      if (isJobSaved) {
+        // Remove from saved jobs
+        const updatedJobs = savedJobs.filter(savedJob => savedJob._id !== jobId)
+        localStorage.setItem('savedJobs', JSON.stringify(updatedJobs))
+        setIsJobSaved(false)
+        toast.success('Job removed from saved list')
+      } else {
+        // Add to saved jobs
+        if (job) {
+          const updatedJobs = [...savedJobs, job]
+          localStorage.setItem('savedJobs', JSON.stringify(updatedJobs))
+          setIsJobSaved(true)
+          toast.success('Job saved successfully!')
+        }
+      }
+    } catch (error) {
+      console.error('Error saving job:', error)
+      toast.error('Failed to save job')
+    }
+  }
 
   const fetchJob = async () => {
     try {
@@ -322,8 +361,15 @@ const JobDetail = () => {
               <button className="btn-primary w-full">
                 Apply Now
               </button>
-              <button className="btn-outline w-full">
-                Save Job
+              <button
+                onClick={toggleSaveJob}
+                className={`w-full font-semibold py-2 px-4 rounded-lg transition-all duration-300 ${
+                  isJobSaved
+                    ? 'bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30'
+                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
+                }`}
+              >
+                {isJobSaved ? '✓ Saved' : 'Save Job'}
               </button>
               <button className="btn-outline w-full">
                 Share Job

@@ -36,7 +36,7 @@ const Navbar = () => {
       hasDropdown: true,
       dropdownItems: [
         { path: '/assessment', label: 'Take Assessment', icon: FileText },
-        { path: '/career-roles', label: 'Career Roles', icon: User }
+        { path: '/saved-jobs', label: 'Saved Jobs', icon: User }
       ]
     },
     {
@@ -104,7 +104,7 @@ const Navbar = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 mt-2 w-48 bg-gray-800 dark:bg-gray-700 rounded-lg shadow-lg border border-gray-700 dark:border-gray-600 z-50"
+                className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-50"
               >
                 {item.dropdownItems.map((dropdownItem) => {
                   const DropdownIcon = dropdownItem.icon
@@ -115,12 +115,12 @@ const Navbar = () => {
                       onClick={() => {
                         setDropdownOpen(false)
                         setIsMenuOpen(false)
-                        // Scroll to top for assessment page
-                        if (dropdownItem.path === '/assessment') {
+                        // Scroll to top for specific pages
+                        if (dropdownItem.path === '/assessment' || dropdownItem.path === '/post-job' || dropdownItem.path === '/career-roles' || dropdownItem.path === '/results') {
                           setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
                         }
                       }}
-                      className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 dark:text-gray-200 hover:text-white hover:bg-gray-700 dark:hover:bg-gray-600 first:rounded-t-lg last:rounded-b-lg transition-colors duration-200"
+                      className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg transition-colors duration-200"
                     >
                       <DropdownIcon className="w-4 h-4" />
                       <span>{dropdownItem.label}</span>
@@ -158,7 +158,7 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-gray-900 dark:bg-gray-800 backdrop-blur-lg border-b border-gray-700/50 dark:border-gray-600/50 shadow-lg transition-colors duration-300">
+    <nav className="sticky top-0 z-50 bg-gray-900 backdrop-blur-lg border-b border-gray-700/50 shadow-lg">
       <div className="container mx-auto px-4">
         <div className="flex items-center h-20">
           {/* Logo - Left Side */}
@@ -185,7 +185,7 @@ const Navbar = () => {
              {/* Theme Toggle */}
              <button
                onClick={toggleTheme}
-               className="p-2 rounded-lg text-gray-300 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors duration-200 hover:bg-gray-800 dark:hover:bg-gray-700"
+               className="p-2 rounded-lg text-gray-300 hover:text-white transition-colors duration-200 hover:bg-gray-800"
                aria-label="Toggle theme"
              >
                {isDarkMode ? (
@@ -195,10 +195,15 @@ const Navbar = () => {
                )}
              </button>
 
-             {/* User Profile */}
-             <div className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-             </div>
+             {/* Admin Profile */}
+             <Link
+               to="/admin"
+               className="w-10 h-10 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/25 cursor-pointer group"
+               title="Admin Dashboard"
+               onClick={() => setIsMenuOpen(false)}
+             >
+                <User className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300" />
+             </Link>
 
              {/* Mobile Menu Button and Theme Toggle */}
              <div className="md:hidden flex items-center space-x-2">
@@ -236,7 +241,7 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden overflow-hidden"
           >
-            <div className="px-2 pt-2 pb-4 space-y-2 border-t border-gray-700/50 dark:border-gray-600/50 bg-gray-900 dark:bg-gray-800">
+            <div className="px-2 pt-2 pb-4 space-y-2 border-t border-gray-700/50 bg-gray-900">
               {navItems.map((item) => (
                 <NavLink key={item.path} item={item} />
               ))}

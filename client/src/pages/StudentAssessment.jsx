@@ -3,13 +3,12 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronDown } from 'lucide-react'
-import { studentAPI, fitmentAPI } from '../services/api'
+import { studentAPI, fitmentAPI, recommendationsAPI } from '../services/api'
 
 const StudentAssessment = () => {
-  // Clear saved state on component mount for fresh start
+  // Scroll to top when component mounts
   useEffect(() => {
-    localStorage.removeItem('studentAssessmentState')
-    localStorage.removeItem('studentAssessmentFormData')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
   // Add CSS animations for 3D assessment title effect and slider animations
@@ -303,7 +302,7 @@ const StudentAssessment = () => {
     try {
       // Calculate assessment scores based on form data
       const assessmentScore = calculateAssessmentScore(data)
-      
+
       const studentData = {
         ...data,
         coreValues: selectedCoreValues,
@@ -316,37 +315,55 @@ const StudentAssessment = () => {
 
       // 1. POST the assessment to /api/student
       await studentAPI.saveAssessment(studentData)
-      
+
       // Clear saved state after successful submission
       clearSavedState()
-      
+
       toast.success('Assessment completed successfully!')
-      
-      // 2. GET fitment results from /api/fitment/:studentPhone
-      const matchedJobsResponse = await fitmentAPI.getMatchedJobs(data.phone, {
-        limit: 20,
-        minScore: 30 // Only show jobs with at least 30% match
-      })
-      
-      // 3. Navigate to /career-match with the job match results passed in state
+
+      // 2. Prepare assessment data for OpenAI recommendations
+      const assessmentData = {
+        fullName: data.name,
+        coreValues: selectedCoreValues,
+        workPreferences: sliderValues,
+        behavioralAnswers: bubbleAnswers
+      }
+
+      // 3. Generate job recommendations using OpenAI
+      const recommendationsResponse = await recommendationsAPI.generateRecommendations(assessmentData)
+
+      // 4. Navigate to /career-match with the AI recommendations
       navigate('/career-match', {
         state: {
-          jobs: matchedJobsResponse.data.matchedJobs,
-          student: matchedJobsResponse.data.student,
-          totalJobs: matchedJobsResponse.data.totalJobs,
-          averageScore: matchedJobsResponse.data.averageScore,
-          fromAssessment: true
+          recommendations: recommendationsResponse.data.recommendations,
+          student: {
+            name: data.name,
+            phone: data.phone,
+            education: {
+              degree: data.degree,
+              institution: data.institution
+            },
+            coreValues: selectedCoreValues,
+            assessmentScore
+          },
+          totalRecommendations: recommendationsResponse.data.totalRecommendations,
+          fromAssessment: true,
+          generatedAt: recommendationsResponse.data.generatedAt
         }
       })
     } catch (error) {
       console.error('Assessment submission error:', error)
-      if (error.response?.status === 404) {
-        toast.error('Failed to find matched jobs. Please try again.')
+      if (error.response?.status === 429) {
+        toast.error('AI service is currently busy. Please try again in a few minutes.')
+      } else if (error.response?.status === 401) {
+        toast.error('AI service configuration error. Please contact support.')
       } else if (error.response?.status === 400) {
-        const errorMessage = error.response?.data?.error || 'Validation failed'
+        const errorMessage = error.response?.data?.error || 'Assessment data validation failed'
         toast.error(errorMessage)
+      } else if (error.response?.status === 500) {
+        toast.error('Failed to generate job recommendations. Please try again.')
       } else {
-        toast.error(error.response?.data?.error || 'Failed to save assessment')
+        toast.error(error.response?.data?.error || 'Failed to process assessment')
       }
     } finally {
       setIsSubmitting(false)
@@ -1107,6 +1124,11 @@ const StudentAssessment = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
+            <span className="text-2xl">🎓</span>
+          </div>
+        </div>
         <h1
           className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
           style={{

@@ -38,8 +38,8 @@ const AnimatedCounter = ({ end, duration = 2500, suffix = '' }) => {
         }
       },
       {
-        threshold: 0.1,
-        rootMargin: '50px 0px -50px 0px'
+        threshold: 0.01,
+        rootMargin: '100px 0px -100px 0px'
       }
     )
 
@@ -294,15 +294,15 @@ const Home = () => {
                 activeSection === 0 ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-80'
               }`}
             >
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
                 <MapPin className="w-4 h-4 text-purple-600" />
                 <span>August Fest 2025</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
                 <Users className="w-4 h-4 text-purple-600" />
                 <span>Smart Matching</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-600 text-sm">
+              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
                 <Target className="w-4 h-4 text-purple-600" />
                 <span>Instant Fitment</span>
               </div>
@@ -361,8 +361,8 @@ const Home = () => {
             >
               Everything you need to succeed
             </h2>
-            <p 
-              className={`text-gray-600 text-lg max-w-2xl mx-auto transform transition-all duration-1000 ${
+            <p
+              className={`text-gray-700 dark:text-gray-300 text-lg max-w-2xl mx-auto transform transition-all duration-1000 ${
                 activeSection === 1 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
               }`}
             >
@@ -441,7 +441,7 @@ const Home = () => {
               Simple. Fast. Effective.
             </h2>
             <p
-              className={`text-lg text-gray-600 max-w-3xl mx-auto leading-relaxed transform transition-all duration-1000 ${
+              className={`text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed transform transition-all duration-1000 ${
                 activeSection === 2 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
               }`}
             >
@@ -459,7 +459,7 @@ const Home = () => {
                 <Briefcase className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-purple-600">1. Companies Post</h3>
-              <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Companies create job postings through our simple form and receive unique QR codes for the Opportunity Wall</p>
+              <p className="text-gray-700 dark:text-gray-300 text-sm max-w-xs mx-auto leading-relaxed">Companies create job postings through our simple form and receive unique QR codes for the Opportunity Wall</p>
             </div>
 
             <div className="text-center">
@@ -467,7 +467,7 @@ const Home = () => {
                 <QrCode className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-purple-600">2. Students Scan</h3>
-              <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Students scan QR codes and complete a quick onboarding with education details and personality assessment</p>
+              <p className="text-gray-700 dark:text-gray-300 text-sm max-w-xs mx-auto leading-relaxed">Students scan QR codes and complete a quick onboarding with education details and personality assessment</p>
             </div>
 
             <div className="text-center">
@@ -475,7 +475,7 @@ const Home = () => {
                 <Target className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-semibold mb-3 text-purple-600">3. Smart Matching</h3>
-              <p className="text-gray-600 text-sm max-w-xs mx-auto leading-relaxed">Our AI instantly calculates fitment scores, showing how well students align with each opportunity</p>
+              <p className="text-gray-700 dark:text-gray-300 text-sm max-w-xs mx-auto leading-relaxed">Our AI instantly calculates fitment scores, showing how well students align with each opportunity</p>
             </div>
           </div>
         </div>
@@ -500,7 +500,7 @@ const Home = () => {
               Why Choose Kaizen?
             </h2>
             <p
-              className={`text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed transform transition-all duration-1000 ${
+              className={`text-gray-700 dark:text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed transform transition-all duration-1000 ${
                 activeSection === 3 ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-80'
               }`}
             >
@@ -521,7 +521,7 @@ const Home = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
                 QR Code Magic
               </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 Instant access to opportunities with a simple scan
               </p>
             </div>
@@ -534,7 +534,7 @@ const Home = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
                 Smart Fitment
               </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 AI-powered matching based on personality and skills
               </p>
             </div>
@@ -547,7 +547,7 @@ const Home = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
                 Instant Results
               </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 Get your fitment score immediately after assessment
               </p>
             </div>
@@ -560,7 +560,7 @@ const Home = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
                 Event Exclusive
               </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
                 Designed exclusively for August Fest 2025 participants
               </p>
             </div>
@@ -617,10 +617,9 @@ const Home = () => {
                 onClick={() => {
                   setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
                 }}
-                className="group inline-flex items-center px-8 py-4 bg-white font-semibold rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
-                style={{ color: '#1e5631' }}
+                className="group inline-flex items-center px-8 py-4 bg-white dark:bg-gray-800 font-semibold rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 text-green-800 dark:text-green-300"
               >
-                <QrCode className="w-5 h-5 mr-3" style={{ color: '#1e5631' }} />
+                <QrCode className="w-5 h-5 mr-3 text-green-800 dark:text-green-300" />
                 <span className="text-lg">Start as Student</span>
               </Link>
               <Link

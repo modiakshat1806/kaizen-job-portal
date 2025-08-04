@@ -16,18 +16,19 @@ const CareerMatch = () => {
   const [studentPhone, setStudentPhone] = useState('')
   const [showPhoneInput, setShowPhoneInput] = useState(false)
   const [matchedJobs, setMatchedJobs] = useState([])
+  const [recommendations, setRecommendations] = useState([])
   const [student, setStudent] = useState(null)
   const [fromAssessment, setFromAssessment] = useState(false)
+  const [isAIRecommendations, setIsAIRecommendations] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
 
   useEffect(() => {
-    // Check if we have matched jobs from assessment submission
+    // Check if we have data from assessment submission
     if (location.state?.fromAssessment) {
       try {
-        const jobs = location.state.jobs || []
         const student = location.state.student
-        
+
         // Validate that we have the required data
         if (!student || !student.name || !student.phone) {
           console.error('Invalid student data received:', student)
@@ -35,16 +36,28 @@ const CareerMatch = () => {
           fetchJobs()
           return
         }
-        
-        setMatchedJobs(jobs)
+
         setStudent(student)
         setFromAssessment(true)
         setLoading(false)
-        
-        if (jobs.length > 0) {
-          toast.success(`Found ${location.state.totalJobs || jobs.length} matched jobs for you!`)
+
+        // Check if we have AI recommendations or traditional job matches
+        if (location.state.recommendations) {
+          // New AI recommendations format
+          setRecommendations(location.state.recommendations)
+          setIsAIRecommendations(true)
+          toast.success(`Generated ${location.state.totalRecommendations || location.state.recommendations.length} AI-powered job recommendations!`)
+        } else if (location.state.jobs) {
+          // Legacy job matches format
+          setMatchedJobs(location.state.jobs)
+          setIsAIRecommendations(false)
+          if (location.state.jobs.length > 0) {
+            toast.success(`Found ${location.state.totalJobs || location.state.jobs.length} matched jobs for you!`)
+          } else {
+            toast.info('No matching jobs found for your profile')
+          }
         } else {
-          toast.info('No matching jobs found for your profile')
+          toast.info('No recommendations available')
         }
       } catch (error) {
         console.error('Error processing assessment data:', error)
@@ -126,7 +139,9 @@ const CareerMatch = () => {
   const clearAssessmentView = () => {
     setFromAssessment(false)
     setMatchedJobs([])
+    setRecommendations([])
     setStudent(null)
+    setIsAIRecommendations(false)
     fetchJobs()
   }
 
@@ -144,16 +159,34 @@ const CareerMatch = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Career Match</h1>
         {fromAssessment && student ? (
           <div className="space-y-2">
-            <p className="text-gray-600">Personalized job recommendations for {student.name}</p>
-            <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+            <p className="text-gray-600 dark:text-gray-300">
+              {isAIRecommendations
+                ? `🤖 AI-powered career recommendations for ${student.name}`
+                : `Personalized job recommendations for ${student.name}`
+              }
+            </p>
+            <div className="flex items-center justify-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
               <div className="flex items-center">
                 <User className="w-4 h-4 mr-1" />
                 <span>{student.phone}</span>
               </div>
-              <div className="flex items-center">
-                <Star className="w-4 h-4 mr-1" />
-                <span>Average Match: {location.state?.averageScore || 0}%</span>
-              </div>
+              {isAIRecommendations ? (
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 mr-1" />
+                  <span>{recommendations.length} AI Recommendations</span>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <Star className="w-4 h-4 mr-1" />
+                  <span>Average Match: {location.state?.averageScore || 0}%</span>
+                </div>
+              )}
+              {location.state?.generatedAt && (
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-1" />
+                  <span>Generated: {new Date(location.state.generatedAt).toLocaleTimeString()}</span>
+                </div>
+              )}
             </div>
             <button
               onClick={clearAssessmentView}
@@ -200,8 +233,9 @@ const CareerMatch = () => {
         </div>
       )}
 
-      {/* Search and Filters */}
-      <div className="card mb-6">
+      {/* Search and Filters - Only show for traditional job listings */}
+      {!isAIRecommendations && (
+        <div className="card mb-6">
         <div className="grid md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -252,10 +286,12 @@ const CareerMatch = () => {
             <option value="Hybrid">Hybrid</option>
           </select>
         </div>
-      </div>
+        </div>
+      )}
 
-             {/* Jobs Grid */}
-       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Jobs Grid - Only show for traditional job listings */}
+      {!isAIRecommendations && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
          {filteredJobs.map((job) => {
            // Additional safety check for rendering
            if (!job || !job.title || !job.company || !job.company.name) {
@@ -368,9 +404,82 @@ const CareerMatch = () => {
          )
        })}
        </div>
+      )}
+
+      {/* AI Recommendations Flash Cards */}
+      {isAIRecommendations && recommendations.length > 0 && (
+        <div className="mt-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              🤖 AI-Powered Career Recommendations
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Based on your assessment, here are the best career matches for you
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recommendations.map((recommendation, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  // Navigate to jobs page filtered by this role
+                  navigate(`/jobs?role=${encodeURIComponent(recommendation.jobTitle)}`)
+                }}
+                className="group bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border border-gray-200 dark:border-gray-700 overflow-hidden"
+              >
+                {/* Card Header with Logo and Score */}
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl">{recommendation.relevantLogo}</div>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                      <span className="text-sm font-bold">{recommendation.fitmentScore}% Match</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Card Content */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-purple-600 transition-colors">
+                    {recommendation.jobTitle}
+                  </h3>
+
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 leading-relaxed">
+                    {recommendation.jobDescription}
+                  </p>
+
+                  {/* Why You Match */}
+                  <div className="mb-4">
+                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">Why you're a great fit:</h4>
+                    <ul className="space-y-1">
+                      {recommendation.whyYouMatch.map((reason, reasonIndex) => (
+                        <li key={reasonIndex} className="text-xs text-gray-600 dark:text-gray-400 flex items-start">
+                          <span className="text-green-500 mr-2 mt-0.5">•</span>
+                          <span>{reason}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Available Jobs Count */}
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-600">
+                    <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <Building className="w-4 h-4 mr-1" />
+                      <span>{recommendation.availableJobs || 0} positions available</span>
+                    </div>
+                    <div className="text-purple-600 group-hover:text-purple-700 transition-colors">
+                      <span className="text-sm font-medium">View Jobs →</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Enhanced Fallback UI for different scenarios */}
-      {filteredJobs.length === 0 && !loading && (
+      {filteredJobs.length === 0 && recommendations.length === 0 && !loading && (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
             {fromAssessment ? (

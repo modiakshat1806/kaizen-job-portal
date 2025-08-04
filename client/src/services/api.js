@@ -60,12 +60,52 @@ export const jobAPI = {
 // Fitment API
 export const fitmentAPI = {
   // Calculate fitment score for a specific job
-  calculateFitment: (studentPhone, jobId) => 
+  calculateFitment: (studentPhone, jobId) =>
     api.get(`/fitment/${studentPhone}/${jobId}`),
-  
+
   // Get all matched jobs for a student
-  getMatchedJobs: (studentPhone, params = {}) => 
+  getMatchedJobs: (studentPhone, params = {}) =>
     api.get(`/fitment/${studentPhone}`, { params }),
+}
+
+// Recommendations API
+export const recommendationsAPI = {
+  // Generate job recommendations using OpenAI
+  generateRecommendations: (assessmentData) =>
+    api.post('/recommendations/generate', { assessmentData }),
+
+  // Process voice input using OpenAI Whisper
+  processVoiceInput: (audioBlob) => {
+    const formData = new FormData()
+    formData.append('audio', audioBlob, 'voice-input.webm')
+
+    return api.post('/recommendations/voice-process', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  }
+}
+
+// Admin API
+export const adminAPI = {
+  // Get all jobs for admin dashboard
+  getAllJobs: (params = {}) => api.get('/admin/jobs', { params }),
+
+  // Delete a job
+  deleteJob: (id) => api.delete(`/admin/jobs/${id}`),
+
+  // Toggle job status
+  toggleJobStatus: (id, isActive) => api.put(`/admin/jobs/${id}/status`, { isActive }),
+
+  // Search student by phone
+  searchStudent: (phone) => api.get(`/admin/students/search/${phone}`),
+
+  // Generate student summary
+  generateStudentSummary: (phone) => api.post(`/admin/students/${phone}/summary`),
+
+  // Delete student profile (role deletion)
+  deleteStudent: (phone) => api.delete(`/admin/students/${phone}`)
 }
 
 // Health check
@@ -73,4 +113,4 @@ export const healthAPI = {
   check: () => api.get('/health'),
 }
 
-export default api 
+export default api

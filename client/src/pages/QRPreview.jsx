@@ -12,6 +12,7 @@ const QRPreview = () => {
   const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     fetchJobDetails()
   }, [jobId])
 
