@@ -161,12 +161,53 @@
     -moz-appearance: none;
     appearance: none;
   }
-  
+
   /* Ensure dropdown opens downward */
   select.input-field:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  /* Mobile dropdown fixes */
+  @media (max-width: 768px) {
+    select.input-field {
+      position: relative;
+      z-index: 50;
+    }
+
+    .form-group {
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Ensure dropdown content doesn't overflow */
+    select.input-field option {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  /* Custom dropdown fixes */
+  .degree-dropdown, .year-dropdown {
+    position: relative;
+    z-index: 20;
+  }
+
+  .degree-dropdown .absolute, .year-dropdown .absolute {
+    z-index: 100 !important;
+  }
+
+  /* Ensure native select dropdowns work properly */
+  select.input-field {
+    position: relative;
+    z-index: 30;
+  }
+
+  /* Prevent dropdown conflicts */
+  .form-group:focus-within {
+    z-index: 50;
   }
   
   .card {
@@ -279,7 +320,15 @@
   }
 
   .btn-primary {
-    @apply bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+    @apply bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5;
+  }
+
+  .btn-outline {
+    @apply border-2 border-purple-600 dark:border-purple-500 text-purple-600 dark:text-purple-400 hover:bg-purple-600 dark:hover:bg-purple-500 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 transition-colors duration-300;
   }
 
   .btn-secondary {
