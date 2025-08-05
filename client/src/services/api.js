@@ -87,6 +87,25 @@ export const recommendationsAPI = {
   }
 }
 
+// Voice API
+export const voiceAPI = {
+  // Transcribe audio using OpenAI Whisper
+  transcribe: (audioBlob) => {
+    const formData = new FormData()
+    formData.append('audio', audioBlob, 'audio.webm')
+
+    return api.post('/voice/transcribe', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
+
+  // Extract form fields from transcript
+  extractFields: (transcript, formType = 'student_assessment') =>
+    api.post('/voice/extract-fields', { transcript, formType })
+}
+
 // Admin API
 export const adminAPI = {
   // Get all jobs for admin dashboard
