@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { User, Home, Building, X, Menu, ChevronDown, GraduationCap, FileText, BarChart3, Briefcase, Moon, Sun } from 'lucide-react'
+import { User, Home, Building, X, Menu, GraduationCap, FileText, BarChart3, Briefcase, Moon, Sun } from 'lucide-react'
 import { useTheme } from '../contexts/ThemeContext'
 // NEW: Import motion for animations
 import { motion, AnimatePresence } from 'framer-motion'
@@ -59,7 +59,7 @@ const Navbar = () => {
 
       return (
         <div
-          className="relative z-50 w-full"
+          className="relative z-50 flex justify-center"
           onMouseEnter={() => {
             // Clear any existing timeout
             if (dropdownTimeout) {
@@ -90,11 +90,10 @@ const Navbar = () => {
                 setStudentsDropdown(false)
               }
             }}
-            className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 whitespace-nowrap"
+            className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-300 hover:text-white transition-colors duration-300 whitespace-nowrap w-full md:w-auto"
           >
             <Icon className="w-4 h-4" />
             <span>{item.label}</span>
-            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           <AnimatePresence>
@@ -104,11 +103,9 @@ const Navbar = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="static md:absolute md:top-full md:left-0 mt-2 mb-4 md:mb-0 w-full md:w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-[9999]"
+                className="static md:absolute md:top-full md:left-0 mt-2 mb-4 md:mb-0 w-full md:w-48 bg-gray-800/95 backdrop-blur-sm rounded-lg border border-gray-600/50 z-[9999]"
                 style={{
-                  zIndex: 9999,
-                  maxHeight: '300px',
-                  overflowY: 'auto'
+                  zIndex: 9999
                 }}
               >
                 {item.dropdownItems.map((dropdownItem) => {
@@ -125,7 +122,7 @@ const Navbar = () => {
                           setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
                         }
                       }}
-                      className="flex items-center space-x-2 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg transition-colors duration-200"
+                      className="flex items-center space-x-3 px-4 py-3 text-sm text-gray-300 hover:text-white hover:bg-gray-700 first:rounded-t-lg last:rounded-b-lg transition-all duration-200"
                     >
                       <DropdownIcon className="w-4 h-4" />
                       <span>{dropdownItem.label}</span>
@@ -145,19 +142,11 @@ const Navbar = () => {
         to={item.path}
         onClick={() => setIsMenuOpen(false)}
         className={`relative flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-300 ${
-          isActive ? 'text-white' : 'text-gray-300 hover:text-white'
+          isActive ? 'text-white bg-gray-800' : 'text-gray-300 hover:text-white hover:bg-gray-800'
         }`}
       >
         <Icon className="w-4 h-4" />
         <span>{item.label}</span>
-        {isActive && (
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full"
-            layoutId="underline"
-            initial={false}
-            transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-          />
-        )}
       </Link>
     )
   }
@@ -232,7 +221,7 @@ const Navbar = () => {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden overflow-visible"
           >
-            <div className="px-2 pt-2 pb-4 space-y-3 border-t border-gray-700/50 bg-gray-900 overflow-visible">
+            <div className="px-4 pt-2 pb-4 space-y-2 border-t border-gray-700/50 bg-gray-900 overflow-visible">
               {navItems.map((item, index) => (
                 <div key={item.path || `nav-${index}`} className="w-full">
                   <NavLink item={item} />

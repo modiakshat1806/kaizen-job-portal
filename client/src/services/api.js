@@ -150,6 +150,30 @@ export const jobApplicationAPI = {
     api.delete(`/job-application/saved/${phone}/${jobId}`)
 }
 
+// College API
+export const collegeAPI = {
+  // Search colleges
+  search: (query, limit = 10) => api.get('/college/search', { params: { q: query, limit } }),
+
+  // Get popular colleges
+  getPopular: (limit = 15) => api.get('/college/popular', { params: { limit } }),
+
+  // Get colleges by region
+  getByRegion: (region, limit = 20) => api.get(`/college/region/${region}`, { params: { limit } }),
+
+  // Add new college
+  add: (data) => api.post('/college/add', data),
+
+  // Bulk add colleges
+  bulkAdd: (colleges) => api.post('/college/bulk-add', { colleges }),
+
+  // Get statistics
+  getStats: () => api.get('/college/stats'),
+
+  // Verify college (admin)
+  verify: (id, verified = true) => api.put(`/college/${id}/verify`, { verified })
+}
+
 // Health check
 export const healthAPI = {
   check: () => api.get('/health'),

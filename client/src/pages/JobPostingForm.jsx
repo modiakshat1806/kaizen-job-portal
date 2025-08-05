@@ -246,7 +246,6 @@ const JobPostingForm = () => {
   // Optional fields dropdown states - all closed by default
   const [expandedOptionalFields, setExpandedOptionalFields] = useState({
     location: false,
-    salary: false,
     benefits: false,
     requirements: false,
     responsibilities: false
@@ -604,10 +603,7 @@ const JobPostingForm = () => {
         setValue('location.city', extractedFields.location)
         fieldsPopulated++
       }
-      if (extractedFields.salary) {
-        setValue('salary.min', extractedFields.salary)
-        fieldsPopulated++
-      }
+
       if (extractedFields.requirements) {
         setValue('requirements.experience', extractedFields.requirements)
         fieldsPopulated++
@@ -1072,14 +1068,7 @@ const JobPostingForm = () => {
               <div className="space-y-3 sm:space-y-4">
                 <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Job Details</h4>
                 <div className="space-y-3">
-                  {previewData.salary?.min && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Salary:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(previewData.salary.min)} - {formatCurrency(previewData.salary.max)} {previewData.salary?.period}
-                      </span>
-                    </div>
-                  )}
+
                   {previewData.requirements?.experience?.min && (
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Experience:</span>
@@ -1498,7 +1487,7 @@ const JobPostingForm = () => {
           </div>
 
           <div className="form-group mt-6">
-            <label className="form-label">Job Description</label>
+            <label className="form-label">Job Description *</label>
             <textarea
               className="input-field"
               rows="6"
@@ -1509,7 +1498,7 @@ const JobPostingForm = () => {
           </div>
         </div>
 
-        {/* Location & Salary - Collapsible */}
+        {/* Location - Collapsible */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-300">
           <button
             type="button"
@@ -1518,13 +1507,12 @@ const JobPostingForm = () => {
           >
             <h2 className="text-lg sm:text-xl font-semibold flex items-center text-gray-900 dark:text-white">
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-              <span className="hidden sm:inline">Location & Salary</span>
-              <span className="sm:hidden">Location</span>
+              <span>Location</span>
               <span className="text-gray-500 text-xs sm:text-sm font-normal ml-1 sm:ml-2 hidden sm:inline">(Optional)</span>
             </h2>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                {expandedOptionalFields.location ? 'Hide' : 'Click to Add Location & Salary'}
+                {expandedOptionalFields.location ? 'Hide' : 'Click to Add Location'}
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
                 {expandedOptionalFields.location ? 'Hide' : 'Add'}
@@ -1595,36 +1583,7 @@ const JobPostingForm = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6 mt-6">
-            <div className="form-group">
-              <label className="form-label">Minimum Salary (₹)</label>
-              <input
-                type="number"
-                className="input-field"
-                placeholder="500000"
-                {...register('salary.min', { min: 0 })}
-              />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">Maximum Salary (₹)</label>
-              <input
-                type="number"
-                className="input-field"
-                placeholder="800000"
-                {...register('salary.max', { min: 0 })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Salary Period</label>
-              <select className="input-field" {...register('salary.period')}>
-                <option value="Yearly">Yearly</option>
-                <option value="Monthly">Monthly</option>
-                <option value="Hourly">Hourly</option>
-              </select>
-            </div>
-                </div>
               </div>
             </div>
           )}

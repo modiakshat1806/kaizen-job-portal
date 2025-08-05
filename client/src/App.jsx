@@ -15,6 +15,8 @@ import JobListings from './pages/JobListings'
 import AdminDashboard from './pages/AdminDashboard'
 import CompanyResults from './pages/CompanyResults'
 import StudentSavedJobs from './pages/StudentSavedJobs'
+import AutocompleteDemo from './pages/AutocompleteDemo'
+import CollegeDataManager from './pages/CollegeDataManager'
 
 function App() {
   return (
@@ -75,6 +77,16 @@ function App() {
           <Route path="/saved-jobs" element={
             <main className="container mx-auto px-4 py-8">
               <StudentSavedJobs />
+            </main>
+          } />
+          <Route path="/autocomplete-demo" element={
+            <main className="container mx-auto px-4 py-8">
+              <AutocompleteDemo />
+            </main>
+          } />
+          <Route path="/college-manager" element={
+            <main className="container mx-auto px-4 py-8">
+              <CollegeDataManager />
             </main>
           } />
         </Routes>
