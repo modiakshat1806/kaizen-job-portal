@@ -7,10 +7,14 @@ import StudentAssessment from './pages/StudentAssessment'
 import CareerMatch from './pages/CareerMatch'
 import JobPostingForm from './pages/JobPostingForm'
 import JobDetail from './pages/JobDetail'
-import SavedJobs from './pages/SavedJobs'
+
 import QRScanner from './pages/QRScanner'
 import QRPreview from './pages/QRPreview'
+import CareerMatchResults from './pages/CareerMatchResults'
+import JobListings from './pages/JobListings'
 import AdminDashboard from './pages/AdminDashboard'
+import CompanyResults from './pages/CompanyResults'
+import StudentSavedJobs from './pages/StudentSavedJobs'
 
 function App() {
   return (
@@ -18,45 +22,61 @@ function App() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
         <Navbar />
         <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/assessment" element={
-          <main className="container mx-auto px-4 py-8">
-            <StudentAssessment />
-          </main>
-        } />
-        <Route path="/career-match" element={
-          <main className="container mx-auto px-4 py-8">
-            <CareerMatch />
-          </main>
-        } />
-        <Route path="/post-job" element={
-          <main className="container mx-auto px-4 py-8">
-            <JobPostingForm />
-          </main>
-        } />
-        <Route path="/job/:jobId" element={
-          <main className="container mx-auto px-4 py-8">
-            <JobDetail />
-          </main>
-        } />
-        <Route path="/saved-jobs" element={
-          <main className="container mx-auto px-4 py-8">
-            <SavedJobs />
-          </main>
-        } />
-        <Route path="/scan" element={
-          <main className="container mx-auto px-4 py-8">
-            <QRScanner />
-          </main>
-        } />
-        <Route path="/qr-preview/:jobId" element={
-          <main className="container mx-auto px-4 py-8">
-            <QRPreview />
-          </main>
-        } />
-        <Route path="/admin" element={
-          <AdminDashboard />
-        } />
+          <Route path="/" element={<Home />} />
+          <Route path="/assessment" element={
+            <main className="container mx-auto px-4 py-8">
+              <StudentAssessment />
+            </main>
+          } />
+          <Route path="/career-match" element={
+            <main className="container mx-auto px-4 py-8">
+              <CareerMatch />
+            </main>
+          } />
+          <Route path="/post-job" element={
+            <main className="container mx-auto px-4 py-8">
+              <JobPostingForm />
+            </main>
+          } />
+          <Route path="/job/:jobId" element={
+            <main className="container mx-auto px-4 py-8">
+              <JobDetail />
+            </main>
+          } />
+
+          <Route path="/scan" element={
+            <main className="container mx-auto px-4 py-8">
+              <QRScanner />
+            </main>
+          } />
+          <Route path="/qr-preview/:jobId" element={
+            <main className="container mx-auto px-4 py-8">
+              <QRPreview />
+            </main>
+          } />
+          <Route path="/career-match-results" element={
+            <main className="container mx-auto px-4 py-8">
+              <CareerMatchResults />
+            </main>
+          } />
+          <Route path="/jobs" element={
+            <main className="container mx-auto px-4 py-8">
+              <JobListings />
+            </main>
+          } />
+          <Route path="/admin" element={
+            <AdminDashboard />
+          } />
+          <Route path="/company-results" element={
+            <main className="container mx-auto px-4 py-8">
+              <CompanyResults />
+            </main>
+          } />
+          <Route path="/saved-jobs" element={
+            <main className="container mx-auto px-4 py-8">
+              <StudentSavedJobs />
+            </main>
+          } />
         </Routes>
         <Toaster
           position="top-right"
@@ -79,4 +99,4 @@ function App() {
   )
 }
 
-export default App 
+export default App

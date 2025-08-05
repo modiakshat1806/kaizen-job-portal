@@ -127,6 +127,29 @@ export const adminAPI = {
   deleteStudent: (phone) => api.delete(`/admin/students/${phone}`)
 }
 
+// Job Application API
+export const jobApplicationAPI = {
+  // Apply for a job
+  applyForJob: (studentPhone, jobId, fitmentScore) =>
+    api.post('/job-application/apply', { studentPhone, jobId, fitmentScore }),
+
+  // Save a job
+  saveJob: (studentPhone, jobId) =>
+    api.post('/job-application/save', { studentPhone, jobId }),
+
+  // Get saved jobs for a student
+  getSavedJobs: (phone) =>
+    api.get(`/job-application/saved/${phone}`),
+
+  // Get all applications for a company
+  getCompanyApplications: (companyName) =>
+    api.get(`/job-application/company/${companyName}`),
+
+  // Remove a saved job
+  removeSavedJob: (phone, jobId) =>
+    api.delete(`/job-application/saved/${phone}/${jobId}`)
+}
+
 // Health check
 export const healthAPI = {
   check: () => api.get('/health'),

@@ -236,12 +236,21 @@ Please analyze this candidate's profile and provide job recommendations.`;
     // Parse the response
     const responseContent = completion.choices[0].message.content;
     let recommendations;
-    
+
     try {
-      recommendations = JSON.parse(responseContent);
+      // Clean the response content - remove markdown code blocks if present
+      let cleanContent = responseContent.trim();
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '');
+      }
+
+      recommendations = JSON.parse(cleanContent);
     } catch (parseError) {
       console.error('Error parsing OpenAI response:', parseError);
-      return res.status(500).json({ 
+      console.error('Raw response content:', responseContent);
+      return res.status(500).json({
         error: 'Failed to parse AI recommendations',
         details: 'The AI response was not in valid JSON format'
       });

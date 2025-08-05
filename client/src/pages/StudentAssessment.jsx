@@ -6,12 +6,43 @@ import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronD
 import { studentAPI, fitmentAPI, recommendationsAPI } from '../services/api'
 
 const StudentAssessment = () => {
+  const navigate = useNavigate()
+  const { register, handleSubmit, watch, formState: { errors }, setValue, reset } = useForm()
+
+  // State management
+  const [currentStep, setCurrentStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showLoadingModal, setShowLoadingModal] = useState(false)
+  const [selectedCoreValues, setSelectedCoreValues] = useState([])
+  const [sliderValues, setSliderValues] = useState({
+    independence: 50,
+    routine: 50,
+    pace: 50,
+    focus: 50,
+    approach: 50
+  })
+  const [bubbleAnswers, setBubbleAnswers] = useState({
+    q1: null,
+    q2: null,
+    q3: null,
+    q4: null,
+    q5: null,
+    q6: null,
+    q7: null,
+    q8: null,
+    q9: null,
+    q10: null
+  })
+  const [degreeDropdownOpen, setDegreeDropdownOpen] = useState(false)
+  const [selectedDegree, setSelectedDegree] = useState('')
+  const [showProgressPopup, setShowProgressPopup] = useState(false)
+
   // Scroll to top when component mounts
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
-  // Add CSS animations for 3D assessment title effect and slider animations
+  // Add CSS animations
   useEffect(() => {
     const assessmentAnimationStyles = `
       @keyframes assessmentTitlePop {
@@ -57,191 +88,20 @@ const StudentAssessment = () => {
     document.head.appendChild(styleSheet)
     return () => document.head.removeChild(styleSheet)
   }, [])
-  // Load saved state from localStorage on component mount
-  const loadSavedState = () => {
-    try {
-      const savedState = localStorage.getItem('studentAssessmentState')
-      if (savedState) {
-        const parsed = JSON.parse(savedState)
-        return {
-          currentStep: parsed.currentStep || 1,
-          selectedCoreValues: parsed.selectedCoreValues || [],
-          sliderValues: parsed.sliderValues || {
-            independence: 50,
-            routine: 50,
-            pace: 50,
-            focus: 50,
-            approach: 50
-          },
-          bubbleAnswers: parsed.bubbleAnswers || {
-            q1: null,
-            q2: null,
-            q3: null,
-            q4: null,
-            q5: null,
-            q6: null,
-            q7: null,
-            q8: null,
-            q9: null,
-            q10: null
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading saved state:', error)
-    }
-    return {
-      currentStep: 1,
-      selectedCoreValues: [],
-      sliderValues: {
-        independence: 50,
-        routine: 50,
-        pace: 50,
-        focus: 50,
-        approach: 50
-      },
-      bubbleAnswers: {
-        q1: null,
-        q2: null,
-        q3: null,
-        q4: null,
-        q5: null,
-        q6: null,
-        q7: null,
-        q8: null,
-        q9: null,
-        q10: null
-      }
-    }
-  }
 
-  const savedState = loadSavedState()
-  
-  const [currentStep, setCurrentStep] = useState(savedState.currentStep)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedCoreValues, setSelectedCoreValues] = useState(savedState.selectedCoreValues)
-  const [sliderValues, setSliderValues] = useState(savedState.sliderValues)
-  const [bubbleAnswers, setBubbleAnswers] = useState(savedState.bubbleAnswers)
-  const [degreeDropdownOpen, setDegreeDropdownOpen] = useState(false)
-  const [selectedDegree, setSelectedDegree] = useState('')
-  const [showProgressPopup, setShowProgressPopup] = useState(false)
-  const navigate = useNavigate()
-  
-  const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm()
-
-  // Save state to localStorage whenever it changes
-  const saveState = (newState) => {
-    try {
-      const stateToSave = {
-        currentStep: newState.currentStep,
-        selectedCoreValues: newState.selectedCoreValues,
-        sliderValues: newState.sliderValues,
-        bubbleAnswers: newState.bubbleAnswers
-      }
-      localStorage.setItem('studentAssessmentState', JSON.stringify(stateToSave))
-    } catch (error) {
-      console.error('Error saving state:', error)
-    }
-  }
-
-  // Save state whenever any state changes
+  // Clear any existing saved state on component mount
   useEffect(() => {
-    saveState({
-      currentStep,
-      selectedCoreValues,
-      sliderValues,
-      bubbleAnswers
-    })
-  }, [currentStep, selectedCoreValues, sliderValues, bubbleAnswers])
-
-  // Restore form values from saved state
-  useEffect(() => {
-    const savedState = loadSavedState()
-    if (savedState.currentStep > 1) {
-      // Restore form values if we have saved data
-      const savedFormData = localStorage.getItem('studentAssessmentFormData')
-      if (savedFormData) {
-        try {
-          const formData = JSON.parse(savedFormData)
-          Object.keys(formData).forEach(key => {
-            setValue(key, formData[key])
-          })
-        } catch (error) {
-          console.error('Error restoring form data:', error)
-        }
-      }
-    }
-  }, [setValue])
-
-  // Save form data whenever it changes
-  useEffect(() => {
-    const subscription = watch((value) => {
-      try {
-        localStorage.setItem('studentAssessmentFormData', JSON.stringify(value))
-      } catch (error) {
-        console.error('Error saving form data:', error)
-      }
-    })
-    return () => subscription.unsubscribe()
-  }, [watch])
-
-  // Handle page visibility changes (when user switches tabs)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // Save state immediately when user switches away
-        saveState({
-          currentStep,
-          selectedCoreValues,
-          sliderValues,
-          bubbleAnswers
-        })
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [currentStep, selectedCoreValues, sliderValues, bubbleAnswers])
-
-  // Clear saved state when assessment is completed
-  const clearSavedState = () => {
     localStorage.removeItem('studentAssessmentState')
     localStorage.removeItem('studentAssessmentFormData')
-  }
+    localStorage.removeItem('studentAssessmentSessionId')
+    reset() // Reset form to initial state
+  }, [reset])
 
-  // Reset assessment to start over
-  const resetAssessment = () => {
-    clearSavedState()
-    setCurrentStep(1)
-    setSelectedCoreValues([])
-    setSliderValues({
-      independence: 50,
-      routine: 50,
-      pace: 50,
-      focus: 50,
-      approach: 50
-    })
-    setBubbleAnswers({
-      q1: null,
-      q2: null,
-      q3: null,
-      q4: null,
-      q5: null,
-      q6: null,
-      q7: null,
-      q8: null,
-      q9: null,
-      q10: null
-    })
-  }
-  
   const steps = [
     { id: 1, title: 'Basic Information', icon: User },
     { id: 2, title: 'Core Values', icon: Heart },
-    { id: 3, title: 'Step 3', icon: Target },
-    { id: 4, title: 'Step 4', icon: MapPin }
+    { id: 3, title: 'Work Preferences', icon: Target },
+    { id: 4, title: 'Work Style Assessment', icon: MapPin }
   ]
 
   const coreValues = [
@@ -297,81 +157,8 @@ const StudentAssessment = () => {
     return Object.values(bubbleAnswers).every(value => value !== null)
   }
 
-  const onSubmit = async (data) => {
-    setIsSubmitting(true)
-    try {
-      // Calculate assessment scores based on form data
-      const assessmentScore = calculateAssessmentScore(data)
-
-      const studentData = {
-        ...data,
-        coreValues: selectedCoreValues,
-        assessmentScore,
-        education: {
-          degree: data.degree,
-          institution: data.institution
-        }
-      }
-
-      // 1. POST the assessment to /api/student
-      await studentAPI.saveAssessment(studentData)
-
-      // Clear saved state after successful submission
-      clearSavedState()
-
-      toast.success('Assessment completed successfully!')
-
-      // 2. Prepare assessment data for OpenAI recommendations
-      const assessmentData = {
-        fullName: data.name,
-        coreValues: selectedCoreValues,
-        workPreferences: sliderValues,
-        behavioralAnswers: bubbleAnswers
-      }
-
-      // 3. Generate job recommendations using OpenAI
-      const recommendationsResponse = await recommendationsAPI.generateRecommendations(assessmentData)
-
-      // 4. Navigate to /career-match with the AI recommendations
-      navigate('/career-match', {
-        state: {
-          recommendations: recommendationsResponse.data.recommendations,
-          student: {
-            name: data.name,
-            phone: data.phone,
-            education: {
-              degree: data.degree,
-              institution: data.institution
-            },
-            coreValues: selectedCoreValues,
-            assessmentScore
-          },
-          totalRecommendations: recommendationsResponse.data.totalRecommendations,
-          fromAssessment: true,
-          generatedAt: recommendationsResponse.data.generatedAt
-        }
-      })
-    } catch (error) {
-      console.error('Assessment submission error:', error)
-      if (error.response?.status === 429) {
-        toast.error('AI service is currently busy. Please try again in a few minutes.')
-      } else if (error.response?.status === 401) {
-        toast.error('AI service configuration error. Please contact support.')
-      } else if (error.response?.status === 400) {
-        const errorMessage = error.response?.data?.error || 'Assessment data validation failed'
-        toast.error(errorMessage)
-      } else if (error.response?.status === 500) {
-        toast.error('Failed to generate job recommendations. Please try again.')
-      } else {
-        toast.error(error.response?.data?.error || 'Failed to process assessment')
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   const calculateAssessmentScore = (data) => {
-    // Simple scoring algorithm - in real app, this would be more sophisticated
     let technical = 50
     let communication = 50
     let problemSolving = 50
@@ -381,7 +168,6 @@ const StudentAssessment = () => {
     const educationLevels = { 'High School': 30, 'Bachelor': 60, 'Master': 80, 'PhD': 90 }
     technical += educationLevels[data.degree] || 0
 
-    // Cap scores at 100
     return {
       technical: Math.min(technical, 100),
       communication: Math.min(communication, 100),
@@ -392,31 +178,29 @@ const StudentAssessment = () => {
 
   const nextStep = () => {
     if (currentStep === 1) {
-      // Validate step 1 fields
       const name = watch('name')
       const email = watch('email')
       const phone = watch('phone')
       const degree = watch('degree')
+      const graduationYear = watch('graduationYear')
+      const specialization = watch('specialization')
       const institution = watch('institution')
       
-      if (!name || !email || !phone || !degree || !institution) {
+      if (!name || !email || !phone || !degree || !graduationYear || !specialization || !institution) {
         toast.error('Please fill in all required fields')
         return
       }
     } else if (currentStep === 2) {
-      // Validate step 2 - must have exactly 5 core values
       if (selectedCoreValues.length !== 5) {
         toast.error('Please select exactly 5 core values')
         return
       }
     } else if (currentStep === 3) {
-      // Validate step 3 - all sliders must be moved from 50
       if (!areAllSlidersMoved()) {
         toast.error('Please adjust all sliders from their default values')
         return
       }
     } else if (currentStep === 4) {
-      // Validate step 4 - all bubbles must be selected
       if (!areAllBubblesSelected()) {
         toast.error('Please answer all questions before proceeding')
         return
@@ -424,16 +208,139 @@ const StudentAssessment = () => {
     }
     
     if (currentStep < steps.length) {
+      console.log('Moving to next step:', currentStep + 1)
       setCurrentStep(currentStep + 1)
-      // Show progress saved popup
       setShowProgressPopup(true)
-      setTimeout(() => setShowProgressPopup(false), 2000)
+      console.log('Progress popup shown')
+      setTimeout(() => {
+        setShowProgressPopup(false)
+        console.log('Progress popup hidden')
+      }, 2000)
     }
   }
 
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+    }
+  }
+
+  const onSubmit = async (data) => {
+    console.log('Form submitted with data:', data)
+    console.log('Current state:', { selectedCoreValues, sliderValues, bubbleAnswers })
+    setIsSubmitting(true)
+    try {
+      const assessmentScore = calculateAssessmentScore(data)
+
+      const studentData = {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        education: {
+          degree: data.degree,
+          field: data.specialization || data.field || 'General',
+          institution: data.institution,
+          graduationYear: parseInt(data.graduationYear)
+        },
+        careerGoals: data.careerGoals || "Career advancement and professional growth",
+        experienceYears: parseInt(data.experienceYears) || 0,
+        assessmentScore,
+        coreValues: selectedCoreValues,
+        workPreferences: sliderValues,
+        workStyle: bubbleAnswers
+      }
+
+      console.log('Sending student data to API:', JSON.stringify(studentData, null, 2))
+
+      await studentAPI.saveAssessment(studentData)
+
+      toast.success('Assessment completed successfully!')
+
+      // Show loading modal for career matching
+      setShowLoadingModal(true)
+
+      // Check if user came from a job page
+      const returnToJob = localStorage.getItem('returnToJob')
+
+      if (returnToJob) {
+        const jobInfo = JSON.parse(returnToJob)
+        localStorage.removeItem('returnToJob')
+
+        // Navigate back to job page with phone number for fitment calculation
+        navigate(`/job/${jobInfo.jobId}`, {
+          state: {
+            fromAssessment: true,
+            studentPhone: data.phone
+          }
+        })
+      } else {
+        // Try to generate recommendations using the AI API first
+        try {
+          const assessmentData = {
+            fullName: data.name,
+            coreValues: selectedCoreValues,
+            workPreferences: sliderValues,
+            behavioralAnswers: bubbleAnswers
+          }
+
+          const recommendationsResponse = await recommendationsAPI.generateRecommendations(assessmentData)
+
+          // Navigate to /career-match with the AI recommendations
+          navigate('/career-match', {
+            state: {
+              recommendations: recommendationsResponse.data.recommendations,
+              student: {
+                name: data.name,
+                phone: data.phone,
+                education: {
+                  degree: data.degree,
+                  institution: data.institution,
+                  graduationYear: data.graduationYear,
+                  specialization: data.specialization
+                },
+                coreValues: selectedCoreValues,
+                assessmentScore
+              },
+              totalRecommendations: recommendationsResponse.data.totalRecommendations,
+              fromAssessment: true,
+              generatedAt: recommendationsResponse.data.generatedAt
+            }
+          })
+        } catch (recommendationError) {
+          console.log('Recommendations API failed, falling back to career-match-results:', recommendationError)
+
+          // Fallback to the original career-match-results approach
+          const assessmentData = {
+            basicDetails: {
+              name: data.name,
+              email: data.email,
+              phone: data.phone,
+              degree: data.degree,
+              graduationYear: data.graduationYear,
+              specialization: data.specialization,
+              institution: data.institution
+            },
+            coreValues: selectedCoreValues,
+            workPreferences: sliderValues,
+            workStyle: bubbleAnswers
+          }
+
+          navigate('/career-match-results', { state: { assessmentData } })
+        }
+      }
+    } catch (error) {
+      console.error('Assessment submission error:', error)
+      console.error('Error response:', error.response?.data)
+      if (error.response?.status === 400) {
+        const errorMessage = error.response?.data?.error || 'Validation failed'
+        console.error('Validation error details:', error.response?.data?.details)
+        toast.error(errorMessage)
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to save assessment')
+      }
+    } finally {
+      setIsSubmitting(false)
+      setShowLoadingModal(false)
     }
   }
 
@@ -1175,7 +1082,7 @@ const StudentAssessment = () => {
               type="button"
               onClick={nextStep}
               disabled={
-                (currentStep === 1 && (!watch('name') || !watch('email') || !watch('phone') || !watch('degree') || !watch('institution'))) ||
+                (currentStep === 1 && (!watch('name') || !watch('email') || !watch('phone') || !watch('degree') || !watch('graduationYear') || !watch('specialization') || !watch('institution'))) ||
                 (currentStep === 2 && selectedCoreValues.length !== 5) ||
                 (currentStep === 3 && !areAllSlidersMoved()) ||
                 (currentStep === 4 && !areAllBubblesSelected())
@@ -1188,7 +1095,7 @@ const StudentAssessment = () => {
           ) : (
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !areAllBubblesSelected()}
               className="btn-primary flex items-center space-x-2 disabled:opacity-50"
             >
               {isSubmitting ? (
@@ -1196,12 +1103,12 @@ const StudentAssessment = () => {
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Submitting...</span>
                 </>
-                             ) : (
-                 <>
-                   <Check className="w-4 h-4" />
-                   <span>View Results</span>
-                 </>
-               )}
+              ) : (
+                <>
+                  <Check className="w-4 h-4" />
+                  <span>View Results</span>
+                </>
+              )}
             </button>
           )}
         </div>
@@ -1218,6 +1125,35 @@ const StudentAssessment = () => {
           >
             <Check className="w-5 h-5" />
             <span className="font-medium">Progress Saved!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Modal for Career Matching */}
+      {showLoadingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div className="mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 mx-auto mb-6">
+                  <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                  <div className="absolute inset-2 border-4 border-blue-400 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                  <div className="absolute inset-4 border-4 border-blue-300 rounded-full border-l-transparent animate-spin" style={{animationDuration: '2s'}}></div>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                🎯 Finding Your Perfect Career Matches
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Analyzing your assessment results and matching with the best opportunities...
+              </p>
+              <div className="space-y-2 text-sm text-blue-600 font-medium">
+                <div>✨ Evaluating your skills and preferences</div>
+                <div>🔍 Searching through thousands of opportunities</div>
+                <div>🎉 Preparing your personalized results</div>
+              </div>
+            </div>
           </div>
         </div>
       )}
