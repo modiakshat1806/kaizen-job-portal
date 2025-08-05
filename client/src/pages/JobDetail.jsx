@@ -6,7 +6,7 @@ import {
   Star, TrendingUp, ArrowLeft, CheckCircle, XCircle,
   GraduationCap, Briefcase, Target, Award
 } from 'lucide-react'
-import { jobAPI, fitmentAPI, studentAPI } from '../services/api'
+import { jobAPI, fitmentAPI, studentAPI, jobApplicationAPI } from '../services/api'
 
 const JobDetail = () => {
   const { jobId } = useParams()
@@ -19,6 +19,12 @@ const JobDetail = () => {
   const [showPhoneInput, setShowPhoneInput] = useState(false)
   const [showNewUserModal, setShowNewUserModal] = useState(false)
   const [isJobSaved, setIsJobSaved] = useState(false)
+  const [showApplyModal, setShowApplyModal] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [applying, setApplying] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [calculatingFitment, setCalculatingFitment] = useState(false)
 
   // Check if accessed via QR code (no referrer or direct access)
   const isQRAccess = !document.referrer || document.referrer === '' ||
@@ -89,6 +95,7 @@ const JobDetail = () => {
   }
 
   const handleCheckFitmentWithPhone = async (phone) => {
+    setCalculatingFitment(true)
     try {
       // First check if student exists
       const studentResponse = await studentAPI.getByPhone(phone)
@@ -107,6 +114,8 @@ const JobDetail = () => {
       } else {
         toast.error('Error checking fitment. Please try again.')
       }
+    } finally {
+      setCalculatingFitment(false)
     }
   }
 
@@ -128,6 +137,71 @@ const JobDetail = () => {
 
     // Navigate to assessment
     navigate('/assessment')
+  }
+
+  const handleApplyJob = async () => {
+    if (!studentPhone) {
+      toast.error('Please check your fitment score first')
+      return
+    }
+
+    if (!fitmentData) {
+      toast.error('Please check your fitment score before applying')
+      return
+    }
+
+    setApplying(true)
+    try {
+      await jobApplicationAPI.applyForJob(studentPhone, jobId, fitmentData.score)
+      setShowApplyModal(true)
+    } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('already applied')) {
+        toast.error('You have already applied for this job')
+      } else if (error.response?.status === 404) {
+        toast.error('Please complete the assessment first')
+      } else {
+        toast.error('Failed to apply for job. Please try again.')
+      }
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  const handleSaveJob = async () => {
+    if (!studentPhone) {
+      toast.error('Please check your fitment score first')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await jobApplicationAPI.saveJob(studentPhone, jobId)
+      setIsJobSaved(true)
+      setShowSaveModal(true)
+    } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('already saved')) {
+        toast.error('Job already saved')
+        setIsJobSaved(true)
+      } else {
+        toast.error('Failed to save job. Please try again.')
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleShareJob = () => {
+    setShowShareModal(true)
+  }
+
+  const copyJobUrl = () => {
+    const jobUrl = `${window.location.origin}/job/${jobId}`
+    navigator.clipboard.writeText(jobUrl).then(() => {
+      toast.success('Job URL copied to clipboard!')
+      setShowShareModal(false)
+    }).catch(() => {
+      toast.error('Failed to copy URL')
+    })
   }
 
   const getMatchColor = (score) => {
@@ -172,6 +246,32 @@ const JobDetail = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Fitment Calculation Loading Modal */}
+      {calculatingFitment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div className="mb-6">
+              <div className="relative">
+                <div className="w-20 h-20 mx-auto mb-4">
+                  <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                  <div className="absolute inset-2 border-4 border-blue-400 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Calculating Your Fitment Score
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Analyzing your profile against job requirements...
+              </p>
+              <div className="text-sm text-blue-600 font-medium">
+                This may take a few moments
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Phone Input Modal */}
       {showPhoneInput && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -477,20 +577,28 @@ const JobDetail = () => {
             <div className="card">
               <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button className="btn-primary w-full">
-                  Apply Now
+                <button
+                  onClick={handleApplyJob}
+                  disabled={applying || !fitmentData}
+                  className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {applying ? 'Applying...' : 'Apply Now'}
                 </button>
                 <button
-                  onClick={toggleSaveJob}
-                  className={`w-full font-semibold py-2 px-4 rounded-lg transition-all duration-300 ${
+                  onClick={handleSaveJob}
+                  disabled={saving}
+                  className={`w-full font-semibold py-2 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
                     isJobSaved
                       ? 'bg-green-100 text-green-700 border border-green-300 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30'
                       : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700'
                   }`}
                 >
-                  {isJobSaved ? '✓ Saved' : 'Save Job'}
+                  {saving ? 'Saving...' : (isJobSaved ? '✓ Saved' : 'Save Job')}
                 </button>
-                <button className="btn-outline w-full">
+                <button
+                  onClick={handleShareJob}
+                  className="btn-outline w-full"
+                >
                   Share Job
                 </button>
               </div>
@@ -516,6 +624,77 @@ const JobDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Apply Success Modal */}
+      {showApplyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Successfully Applied!</h3>
+              <p className="text-gray-600 mb-6">
+                Your details have been sent to the company. They will review your application and contact you if you're a good fit.
+              </p>
+              <button
+                onClick={() => setShowApplyModal(false)}
+                className="btn-primary w-full"
+              >
+                Great!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Success Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <Star className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Job Saved Successfully!</h3>
+              <p className="text-gray-600 mb-6">
+                This job has been added to your saved list. Check under "Saved Jobs" section to view all your saved opportunities.
+              </p>
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="btn-primary w-full"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Share This Job</h3>
+            <p className="text-gray-600 mb-4">
+              Share this job opportunity with others:
+            </p>
+            <div className="bg-gray-100 p-3 rounded-lg mb-4 break-all text-sm">
+              {`${window.location.origin}/job/${jobId}`}
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="btn-outline flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={copyJobUrl}
+                className="btn-primary flex-1"
+              >
+                Copy URL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

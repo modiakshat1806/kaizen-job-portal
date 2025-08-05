@@ -25,16 +25,14 @@ import toast from 'react-hot-toast'
 // Animated Counter Component with 3D effects
 const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = '' }) => {
   const [count, setCount] = useState(0)
-  const [hasAnimated, setHasAnimated] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true)
+        if (entry.isIntersecting) {
           let startTime = null
-          const startValue = 0
+          const startValue = count
           const endValue = end
 
           const animate = (currentTime) => {
@@ -67,14 +65,14 @@ const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = '' }) => 
         observer.unobserve(ref.current)
       }
     }
-  }, [end, duration, hasAnimated])
+  }, [end, duration, count])
 
   return (
     <span
       ref={ref}
       className="inline-block"
       style={{
-        transform: hasAnimated ? 'scale(1)' : 'scale(0.8)',
+        transform: 'scale(1)',
         transition: 'transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         textShadow: '0 2px 4px rgba(0,0,0,0.1)'
       }}
@@ -228,6 +226,8 @@ const AdminDashboard = () => {
     fetchJobs(currentPage)
   }, [searchTerm, statusFilter, industryFilter, jobTypeFilter, currentPage])
 
+
+
   // Handle job deletion
   const handleDeleteJob = async (jobId, jobTitle) => {
     if (!window.confirm(`Are you sure you want to delete "${jobTitle}"? This action cannot be undone.`)) {
@@ -256,51 +256,29 @@ const AdminDashboard = () => {
     }
   }
 
-  // Handle QR code printing
-  const handlePrintQR = (job) => {
-    const printWindow = window.open('', '_blank')
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>QR Code - ${job.title}</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              text-align: center; 
-              padding: 20px; 
-            }
-            .qr-container { 
-              border: 2px solid #333; 
-              padding: 20px; 
-              margin: 20px auto; 
-              width: fit-content; 
-            }
-            img { 
-              max-width: 300px; 
-              height: auto; 
-            }
-            h2 { 
-              margin-bottom: 10px; 
-            }
-            p { 
-              margin: 5px 0; 
-              color: #666; 
-            }
-          </style>
-        </head>
-        <body>
-          <div class="qr-container">
-            <h2>${job.title}</h2>
-            <p><strong>${job.company.name}</strong></p>
-            <p>Job ID: ${job.jobId}</p>
-            <img src="${job.qrCode}" alt="QR Code for ${job.title}" />
-            <p>Scan to view job details</p>
-          </div>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.print()
+  // Handle QR code download as PNG
+  const handleDownloadQR = async (job) => {
+    try {
+      if (!job.qrCode) {
+        toast.error('QR code not available for this job')
+        return
+      }
+
+      // Create a temporary link element
+      const link = document.createElement('a')
+      link.href = job.qrCode
+      link.download = `QR_${job.jobId}_${job.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`
+
+      // Append to body, click, and remove
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast.success(`QR code downloaded for ${job.title}`)
+    } catch (error) {
+      console.error('Error downloading QR code:', error)
+      toast.error('Failed to download QR code')
+    }
   }
 
   // Handle student search
@@ -596,9 +574,9 @@ const AdminDashboard = () => {
                           
                           <div className="flex flex-col gap-2 ml-4">
                             <button
-                              onClick={() => handlePrintQR(job)}
+                              onClick={() => handleDownloadQR(job)}
                               className="admin-button flex items-center px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                              title="Print QR Code"
+                              title="Download QR Code"
                             >
                               <QrCode className="w-4 h-4 mr-1" />
                               QR

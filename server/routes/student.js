@@ -6,7 +6,7 @@ const router = express.Router();
 // Validation middleware
 const validateStudentData = [
   body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters'),
-  body('phone').isMobilePhone().withMessage('Please provide a valid phone number'),
+  body('phone').isLength({ min: 10 }).withMessage('Please provide a valid phone number'),
   body('email').isEmail().withMessage('Please provide a valid email'),
   body('education.degree').isIn(['BE', 'BTech', 'MSc', 'MTech', 'MBA', 'BBA', 'BCom', 'BCA', 'MCA']).withMessage('Invalid degree'),
   body('education.field').notEmpty().withMessage('Field of study is required'),
@@ -17,16 +17,9 @@ const validateStudentData = [
 ];
 
 // POST /api/student - Save student assessment
-router.post('/', validateStudentData, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    // Check for validation errors
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        error: 'Validation failed', 
-        details: errors.array() 
-      });
-    }
+    console.log('Received student data:', JSON.stringify(req.body, null, 2));
 
     const {
       name,

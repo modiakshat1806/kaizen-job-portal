@@ -20,6 +20,7 @@ const CareerMatch = () => {
   const [student, setStudent] = useState(null)
   const [fromAssessment, setFromAssessment] = useState(false)
   const [isAIRecommendations, setIsAIRecommendations] = useState(false)
+
   const navigate = useNavigate()
   const location = useLocation()
 

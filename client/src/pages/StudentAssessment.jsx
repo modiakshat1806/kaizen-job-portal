@@ -12,6 +12,7 @@ const StudentAssessment = () => {
   // State management
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showLoadingModal, setShowLoadingModal] = useState(false)
   const [selectedCoreValues, setSelectedCoreValues] = useState([])
   const [sliderValues, setSliderValues] = useState({
     independence: 50,
@@ -230,28 +231,33 @@ const StudentAssessment = () => {
     setIsSubmitting(true)
     try {
       const assessmentScore = calculateAssessmentScore(data)
-      
+
       const studentData = {
         name: data.name,
         email: data.email,
         phone: data.phone,
         education: {
           degree: data.degree,
-          field: data.specialization,
+          field: data.specialization || data.field || 'General',
           institution: data.institution,
-          graduationYear: data.graduationYear
+          graduationYear: parseInt(data.graduationYear)
         },
-        careerGoals: "Career advancement and professional growth",
-        experienceYears: 0,
+        careerGoals: data.careerGoals || "Career advancement and professional growth",
+        experienceYears: parseInt(data.experienceYears) || 0,
         assessmentScore,
         coreValues: selectedCoreValues,
         workPreferences: sliderValues,
         workStyle: bubbleAnswers
       }
 
+      console.log('Sending student data to API:', JSON.stringify(studentData, null, 2))
+
       await studentAPI.saveAssessment(studentData)
 
       toast.success('Assessment completed successfully!')
+
+      // Show loading modal for career matching
+      setShowLoadingModal(true)
 
       // Check if user came from a job page
       const returnToJob = localStorage.getItem('returnToJob')
@@ -268,7 +274,7 @@ const StudentAssessment = () => {
           }
         })
       } else {
-        // Try to generate recommendations using the teammate's API first
+        // Try to generate recommendations using the AI API first
         try {
           const assessmentData = {
             fullName: data.name,
@@ -334,6 +340,7 @@ const StudentAssessment = () => {
       }
     } finally {
       setIsSubmitting(false)
+      setShowLoadingModal(false)
     }
   }
 
@@ -1118,6 +1125,35 @@ const StudentAssessment = () => {
           >
             <Check className="w-5 h-5" />
             <span className="font-medium">Progress Saved!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Loading Modal for Career Matching */}
+      {showLoadingModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
+            <div className="mb-6">
+              <div className="relative">
+                <div className="w-24 h-24 mx-auto mb-6">
+                  <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
+                  <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+                  <div className="absolute inset-2 border-4 border-blue-400 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                  <div className="absolute inset-4 border-4 border-blue-300 rounded-full border-l-transparent animate-spin" style={{animationDuration: '2s'}}></div>
+                </div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                🎯 Finding Your Perfect Career Matches
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Analyzing your assessment results and matching with the best opportunities...
+              </p>
+              <div className="space-y-2 text-sm text-blue-600 font-medium">
+                <div>✨ Evaluating your skills and preferences</div>
+                <div>🔍 Searching through thousands of opportunities</div>
+                <div>🎉 Preparing your personalized results</div>
+              </div>
+            </div>
           </div>
         </div>
       )}

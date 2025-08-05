@@ -1058,11 +1058,20 @@ const JobPostingForm = () => {
         requirements: {
           ...data.requirements,
           skills: requiredSkills.filter(skill => skill.trim())
-        },
-        salary: {
-          ...data.salary,
-          currency: 'INR' // Always use INR (Rupees)
         }
+      }
+
+      // Only include salary if min or max is provided
+      if (data.salary?.min || data.salary?.max) {
+        jobData.salary = {
+          ...data.salary,
+          currency: 'INR'
+        }
+      }
+
+      // Only include location details if provided
+      if (data.location?.type || data.location?.city || data.location?.state || data.location?.country) {
+        jobData.location = data.location
       }
 
       const response = await jobAPI.createJob(jobData)

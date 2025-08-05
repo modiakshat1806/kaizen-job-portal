@@ -6,12 +6,14 @@ import StudentAssessment from './pages/StudentAssessment'
 import CareerMatch from './pages/CareerMatch'
 import JobPostingForm from './pages/JobPostingForm'
 import JobDetail from './pages/JobDetail'
-import SavedJobs from './pages/SavedJobs'
+
 import QRScanner from './pages/QRScanner'
 import QRPreview from './pages/QRPreview'
 import CareerMatchResults from './pages/CareerMatchResults'
 import JobListings from './pages/JobListings'
 import AdminDashboard from './pages/AdminDashboard'
+import CompanyResults from './pages/CompanyResults'
+import StudentSavedJobs from './pages/StudentSavedJobs'
 
 function App() {
   return (
@@ -40,11 +42,7 @@ function App() {
               <JobDetail />
             </main>
           } />
-          <Route path="/saved-jobs" element={
-            <main className="container mx-auto px-4 py-8">
-              <SavedJobs />
-            </main>
-          } />
+
           <Route path="/scan" element={
             <main className="container mx-auto px-4 py-8">
               <QRScanner />
@@ -67,6 +65,16 @@ function App() {
           } />
           <Route path="/admin" element={
             <AdminDashboard />
+          } />
+          <Route path="/company-results" element={
+            <main className="container mx-auto px-4 py-8">
+              <CompanyResults />
+            </main>
+          } />
+          <Route path="/saved-jobs" element={
+            <main className="container mx-auto px-4 py-8">
+              <StudentSavedJobs />
+            </main>
           } />
         </Routes>
       </div>
