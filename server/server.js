@@ -13,6 +13,7 @@ const recommendationsRoutes = require('./routes/recommendations');
 const adminRoutes = require('./routes/admin');
 const voiceRoutes = require('./routes/voice');
 const jobApplicationRoutes = require('./routes/jobApplication');
+const collegeRoutes = require('./routes/college');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,6 +42,7 @@ app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/voice', voiceRoutes);
 app.use('/api/job-application', jobApplicationRoutes);
+app.use('/api/college', collegeRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

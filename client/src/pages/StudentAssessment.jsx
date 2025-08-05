@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { ChevronLeft, ChevronRight, Check, User, Heart, Target, MapPin, ChevronDown } from 'lucide-react'
 import { studentAPI, fitmentAPI, recommendationsAPI } from '../services/api'
+import InstitutionAutocomplete from '../components/InstitutionAutocomplete'
 
 const StudentAssessment = () => {
   const navigate = useNavigate()
@@ -60,6 +61,11 @@ const StudentAssessment = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
+
+  // Register institution field with validation
+  useEffect(() => {
+    register('institution', { required: 'Institution is required' })
+  }, [register])
 
   // Add CSS animations
   useEffect(() => {
@@ -584,13 +590,14 @@ const StudentAssessment = () => {
 
               <div className="form-group md:col-span-2">
                 <label className="form-label">Institution *</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  placeholder="Enter your institution name"
-                  {...register('institution', { required: 'Institution is required' })}
+                <InstitutionAutocomplete
+                  value={watch('institution') || ''}
+                  onChange={(value) => setValue('institution', value)}
+                  placeholder="Enter your institution name (e.g., BITS Hyderabad)"
+                  error={errors.institution?.message}
+                  required={true}
+                  studentPhone={watch('phone')}
                 />
-                {errors.institution && <p className="form-error">{errors.institution.message}</p>}
               </div>
             </div>
           </div>
