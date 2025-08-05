@@ -196,6 +196,74 @@ const AdminDashboard = () => {
   const [studentSummary, setStudentSummary] = useState('')
   const [studentLoading, setStudentLoading] = useState(false)
   const [summaryLoading, setSummaryLoading] = useState(false)
+  const [showSummaryModal, setShowSummaryModal] = useState(false)
+
+  // Function to format LLM response
+  const formatSummary = (rawSummary) => {
+    if (!rawSummary) return []
+
+    // Split by sections and clean up
+    const sections = rawSummary
+      .split(/(?=\d+\.\s|\*\*|\n\n)/)
+      .filter(section => section.trim().length > 0)
+      .map(section => {
+        // Clean up special characters and formatting
+        let cleaned = section
+          .replace(/\*\*/g, '') // Remove bold markdown
+          .replace(/\*/g, '') // Remove asterisks
+          .replace(/#{1,6}\s/g, '') // Remove markdown headers
+          .replace(/^\d+\.\s/, '') // Remove numbered list markers
+          .replace(/^-\s/, '') // Remove dash list markers
+          .trim()
+
+        // Identify section type
+        let type = 'content'
+        let title = ''
+
+        if (cleaned.toLowerCase().includes('behavioral trait') ||
+            cleaned.toLowerCase().includes('core behavioral')) {
+          type = 'behavioral'
+          title = 'Core Behavioral Traits'
+        } else if (cleaned.toLowerCase().includes('technical competenc') ||
+                   cleaned.toLowerCase().includes('technical skill')) {
+          type = 'technical'
+          title = 'Technical Competencies'
+        } else if (cleaned.toLowerCase().includes('communication') ||
+                   cleaned.toLowerCase().includes('interpersonal')) {
+          type = 'communication'
+          title = 'Communication & Interpersonal Skills'
+        } else if (cleaned.toLowerCase().includes('problem-solving') ||
+                   cleaned.toLowerCase().includes('problem solving')) {
+          type = 'problem-solving'
+          title = 'Problem-Solving Approach'
+        } else if (cleaned.toLowerCase().includes('teamwork') ||
+                   cleaned.toLowerCase().includes('collaboration')) {
+          type = 'teamwork'
+          title = 'Teamwork & Collaboration'
+        } else if (cleaned.toLowerCase().includes('career readiness') ||
+                   cleaned.toLowerCase().includes('career potential')) {
+          type = 'career'
+          title = 'Career Readiness & Potential'
+        } else if (cleaned.toLowerCase().includes('recommended') ||
+                   cleaned.toLowerCase().includes('career path')) {
+          type = 'recommendations'
+          title = 'Recommended Career Paths'
+        } else if (cleaned.toLowerCase().includes('development') ||
+                   cleaned.toLowerCase().includes('suggestion')) {
+          type = 'development'
+          title = 'Development Suggestions'
+        }
+
+        return {
+          type,
+          title,
+          content: cleaned
+        }
+      })
+      .filter(section => section.content.length > 20) // Filter out very short sections
+
+    return sections
+  }
 
   // Fetch jobs data
   const fetchJobs = async (page = 1) => {
@@ -256,20 +324,284 @@ const AdminDashboard = () => {
     }
   }
 
-  // Handle QR code download as PNG
-  const handleDownloadQR = async (job) => {
+  // Handle complete job details download as PNG image
+  const handleDownloadJobDetails = async (job) => {
     try {
       if (!job.qrCode) {
         toast.error('QR code not available for this job')
         return
       }
 
-      // Create a temporary link element
+      // Create a canvas to draw the job details
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      // Set canvas size (A4 proportions)
+      canvas.width = 800
+      canvas.height = 1200
+
+      // Fill background
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Helper function to draw text with word wrapping
+      const drawWrappedText = (text, x, y, maxWidth, lineHeight, fontSize = 16, color = '#333333') => {
+        ctx.fillStyle = color
+        ctx.font = `${fontSize}px Arial`
+
+        const words = text.split(' ')
+        let line = ''
+        let currentY = y
+
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' '
+          const metrics = ctx.measureText(testLine)
+          const testWidth = metrics.width
+
+          if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, x, currentY)
+            line = words[n] + ' '
+            currentY += lineHeight
+          } else {
+            line = testLine
+          }
+        }
+        ctx.fillText(line, x, currentY)
+        return currentY + lineHeight
+      }
+
+      let currentY = 40
+
+      // Header - Logo and Title
+      ctx.fillStyle = '#7c3aed'
+      ctx.font = 'bold 24px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('🚀 Kaizen Job Portal', canvas.width / 2, currentY)
+      currentY += 40
+
+      // Job Title
+      ctx.fillStyle = '#1f2937'
+      ctx.font = 'bold 32px Arial'
+      ctx.fillText(job.title, canvas.width / 2, currentY)
+      currentY += 40
+
+      // Company Name
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '20px Arial'
+      ctx.fillText(job.company?.name || 'Company Name', canvas.width / 2, currentY)
+      currentY += 30
+
+      // Status Badge
+      const statusText = job.isActive ? 'ACTIVE' : 'INACTIVE'
+      const statusColor = job.isActive ? '#065f46' : '#991b1b'
+      const statusBgColor = job.isActive ? '#d1fae5' : '#fee2e2'
+
+      ctx.fillStyle = statusBgColor
+      ctx.fillRect(canvas.width / 2 - 40, currentY - 15, 80, 25)
+      ctx.fillStyle = statusColor
+      ctx.font = 'bold 12px Arial'
+      ctx.fillText(statusText, canvas.width / 2, currentY)
+      currentY += 50
+
+      // Draw a line separator
+      ctx.strokeStyle = '#7c3aed'
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.moveTo(50, currentY)
+      ctx.lineTo(canvas.width - 50, currentY)
+      ctx.stroke()
+      currentY += 30
+
+      // Job Information Grid
+      ctx.textAlign = 'left'
+      const leftCol = 60
+      const rightCol = 420
+      const infoSpacing = 35
+
+      // Left column info
+      ctx.fillStyle = '#374151'
+      ctx.font = 'bold 16px Arial'
+      ctx.fillText('Job ID:', leftCol, currentY)
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '16px Arial'
+      ctx.fillText(job.jobId, leftCol + 80, currentY)
+
+      ctx.fillStyle = '#374151'
+      ctx.font = 'bold 16px Arial'
+      ctx.fillText('Industry:', rightCol, currentY)
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '16px Arial'
+      ctx.fillText(job.company?.industry || 'Not specified', rightCol + 80, currentY)
+      currentY += infoSpacing
+
+      ctx.fillStyle = '#374151'
+      ctx.font = 'bold 16px Arial'
+      ctx.fillText('Job Type:', leftCol, currentY)
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '16px Arial'
+      ctx.fillText(job.jobType || 'Not specified', leftCol + 80, currentY)
+
+      ctx.fillStyle = '#374151'
+      ctx.font = 'bold 16px Arial'
+      ctx.fillText('Location:', rightCol, currentY)
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '16px Arial'
+      ctx.fillText(job.location?.city || 'Not specified', rightCol + 80, currentY)
+      currentY += infoSpacing
+
+      ctx.fillStyle = '#374151'
+      ctx.font = 'bold 16px Arial'
+      ctx.fillText('Posted:', leftCol, currentY)
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '16px Arial'
+      ctx.fillText(new Date(job.createdAt).toLocaleDateString(), leftCol + 80, currentY)
+
+      if (job.salary?.min && job.salary?.max) {
+        ctx.fillStyle = '#374151'
+        ctx.font = 'bold 16px Arial'
+        ctx.fillText('Salary:', rightCol, currentY)
+        ctx.fillStyle = '#6b7280'
+        ctx.font = '16px Arial'
+        const salaryText = `${job.salary.currency || '$'}${job.salary.min.toLocaleString()} - ${job.salary.currency || '$'}${job.salary.max.toLocaleString()}`
+        ctx.fillText(salaryText, rightCol + 80, currentY)
+      }
+      currentY += 50
+
+      // Job Description Section
+      if (job.description) {
+        ctx.fillStyle = '#374151'
+        ctx.font = 'bold 18px Arial'
+        ctx.fillText('📋 Job Description', leftCol, currentY)
+        currentY += 25
+
+        currentY = drawWrappedText(job.description, leftCol, currentY, canvas.width - 120, 22, 16, '#4b5563')
+        currentY += 20
+      }
+
+      // Requirements Section
+      if (job.requirements && job.requirements.length > 0) {
+        ctx.fillStyle = '#374151'
+        ctx.font = 'bold 18px Arial'
+        ctx.fillText('✅ Requirements', leftCol, currentY)
+        currentY += 25
+
+        job.requirements.forEach(req => {
+          ctx.fillStyle = '#10b981'
+          ctx.font = 'bold 16px Arial'
+          ctx.fillText('✓', leftCol, currentY)
+
+          currentY = drawWrappedText(req, leftCol + 25, currentY, canvas.width - 145, 22, 16, '#4b5563')
+          currentY += 5
+        })
+        currentY += 20
+      }
+
+      // Contact Information
+      if (job.contactInfo) {
+        ctx.fillStyle = '#374151'
+        ctx.font = 'bold 18px Arial'
+        ctx.fillText('📞 Contact Information', leftCol, currentY)
+        currentY += 25
+
+        if (job.contactInfo.name) {
+          currentY = drawWrappedText(`Contact Person: ${job.contactInfo.name}`, leftCol, currentY, canvas.width - 120, 22, 16, '#4b5563')
+        }
+        if (job.contactInfo.email) {
+          currentY = drawWrappedText(`Email: ${job.contactInfo.email}`, leftCol, currentY, canvas.width - 120, 22, 16, '#4b5563')
+        }
+        if (job.contactInfo.phone) {
+          currentY = drawWrappedText(`Phone: ${job.contactInfo.phone}`, leftCol, currentY, canvas.width - 120, 22, 16, '#4b5563')
+        }
+        currentY += 20
+      }
+
+      // QR Code Section
+      const qrImg = new Image()
+      qrImg.crossOrigin = 'anonymous'
+
+      qrImg.onload = () => {
+        // QR Section Background
+        const qrSectionY = currentY
+        const qrSectionHeight = 200
+
+        // Create gradient background
+        const gradient = ctx.createLinearGradient(0, qrSectionY, 0, qrSectionY + qrSectionHeight)
+        gradient.addColorStop(0, '#667eea')
+        gradient.addColorStop(1, '#764ba2')
+
+        ctx.fillStyle = gradient
+        ctx.fillRect(50, qrSectionY, canvas.width - 100, qrSectionHeight)
+
+        // QR Section Text
+        ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 20px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('📱 Scan QR Code to Apply', canvas.width / 2, qrSectionY + 30)
+
+        ctx.font = '14px Arial'
+        ctx.fillText('Students can scan this QR code to access the job posting instantly', canvas.width / 2, qrSectionY + 55)
+
+        // Draw QR Code
+        const qrSize = 120
+        const qrX = canvas.width / 2 - qrSize / 2
+        const qrY = qrSectionY + 70
+
+        // White background for QR
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20)
+
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
+
+        currentY += qrSectionHeight + 30
+
+        // Footer
+        ctx.fillStyle = '#6b7280'
+        ctx.font = '12px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, canvas.width / 2, currentY)
+        currentY += 20
+        ctx.fillText('Kaizen Job Portal - August Fest 2025 | Smart Career Matching Platform', canvas.width / 2, currentY)
+
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `JobDetails_${job.jobId}_${job.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`
+
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+
+          URL.revokeObjectURL(url)
+          toast.success(`Job details image downloaded for ${job.title}`)
+        }, 'image/png', 1.0)
+      }
+
+      qrImg.onerror = () => {
+        toast.error('Failed to load QR code image')
+      }
+
+      qrImg.src = job.qrCode
+
+    } catch (error) {
+      console.error('Error downloading job details:', error)
+      toast.error('Failed to download job details')
+    }
+  }
+
+  // Handle QR code only download (original functionality)
+  const handleDownloadQROnly = async (job) => {
+    try {
+      if (!job.qrCode) {
+        toast.error('QR code not available for this job')
+        return
+      }
+
       const link = document.createElement('a')
       link.href = job.qrCode
       link.download = `QR_${job.jobId}_${job.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`
 
-      // Append to body, click, and remove
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -311,7 +643,10 @@ const AdminDashboard = () => {
 
   // Handle student summary generation
   const handleGenerateSummary = async () => {
-    if (!studentData) return
+    if (!studentData) {
+      toast.error('No student data available')
+      return
+    }
 
     try {
       setSummaryLoading(true)
@@ -326,23 +661,26 @@ const AdminDashboard = () => {
     }
   }
 
-  // Handle student role deletion
+  // Handle student data deletion
   const handleDeleteStudent = async () => {
-    if (!studentData) return
+    if (!studentData) {
+      toast.error('No student data available')
+      return
+    }
 
-    if (!window.confirm(`Are you sure you want to delete the profile for ${studentData.name}? This action cannot be undone.`)) {
+    if (!window.confirm(`Are you sure you want to delete all data for ${studentData.name}? This will allow them to retake the assessment. This action cannot be undone.`)) {
       return
     }
 
     try {
       await adminAPI.deleteStudent(studentData.phone)
-      toast.success('Student profile deleted successfully')
+      toast.success('Student data deleted successfully! They can now retake the assessment.')
       setStudentData(null)
       setStudentSummary('')
       setStudentPhone('')
     } catch (error) {
       console.error('Error deleting student:', error)
-      toast.error('Failed to delete student profile')
+      toast.error('Failed to delete student data')
     }
   }
 
@@ -574,9 +912,18 @@ const AdminDashboard = () => {
                           
                           <div className="flex flex-col gap-2 ml-4">
                             <button
-                              onClick={() => handleDownloadQR(job)}
+                              onClick={() => handleDownloadJobDetails(job)}
                               className="admin-button flex items-center px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                              title="Download QR Code"
+                              title="Download Complete Job Details as PNG Image"
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              Details
+                            </button>
+
+                            <button
+                              onClick={() => handleDownloadQROnly(job)}
+                              className="admin-button flex items-center px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
+                              title="Download QR Code Only"
                             >
                               <QrCode className="w-4 h-4 mr-1" />
                               QR
@@ -712,15 +1059,44 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <span className="font-medium text-gray-700 dark:text-gray-300">Experience:</span>
-                        <span className="ml-2 text-gray-900 dark:text-white">{studentData.experience.years} years</span>
+                        <span className="ml-2 text-gray-900 dark:text-white">{studentData.experienceYears || 0} years</span>
                       </div>
                     </div>
                     
-                    <div className="space-y-3 mt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       <button
-                        onClick={handleGenerateSummary}
+                        type="button"
+                        onClick={async () => {
+                          if (!studentData) {
+                            toast.error('No student data available')
+                            return
+                          }
+
+                          try {
+                            setSummaryLoading(true)
+                            const response = await fetch(`/api/admin/students/${studentData.phone}/summary`, {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json'
+                              }
+                            })
+
+                            if (response.ok) {
+                              const data = await response.json()
+                              setStudentSummary(data.summary)
+                              setShowSummaryModal(true)
+                            } else {
+                              throw new Error('Failed to generate summary')
+                            }
+                          } catch (error) {
+                            console.error('Error:', error)
+                            toast.error('Failed to generate student summary. Please try again.')
+                          } finally {
+                            setSummaryLoading(false)
+                          }
+                        }}
                         disabled={summaryLoading}
-                        className="admin-button w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                       >
                         {summaryLoading ? (
                           <>
@@ -736,12 +1112,41 @@ const AdminDashboard = () => {
                       </button>
 
                       <button
-                        onClick={handleDeleteStudent}
-                        className="admin-button w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
-                        title="Delete Student Profile"
+                        type="button"
+                        onClick={async () => {
+                          if (!studentData) {
+                            toast.error('No student data available')
+                            return
+                          }
+
+                          if (!confirm(`Are you sure you want to delete all data for ${studentData.name}? This will allow them to retake the assessment. This action cannot be undone.`)) {
+                            return
+                          }
+
+                          try {
+                            const response = await fetch(`/api/admin/students/${studentData.phone}`, {
+                              method: 'DELETE'
+                            })
+
+                            if (response.ok) {
+                              setStudentData(null)
+                              setStudentSummary('')
+                              setStudentPhone('')
+                              setShowSummaryModal(false)
+                              toast.success('Student data deleted successfully! They can now retake the assessment.')
+                            } else {
+                              throw new Error('Failed to delete student')
+                            }
+                          } catch (error) {
+                            console.error('Error:', error)
+                            toast.error('Failed to delete student data. Please try again.')
+                          }
+                        }}
+                        className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center"
+                        title="Delete Student Data - Student can retake assessment"
                       >
                         <UserX className="w-4 h-4 mr-2" />
-                        Delete Role
+                        Delete Student Data
                       </button>
                     </div>
                   </div>
@@ -765,6 +1170,105 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Summary Modal */}
+      {showSummaryModal && studentSummary && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  AI-Generated Student Analysis
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Comprehensive behavioral and skills assessment for {studentData?.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {formatSummary(studentSummary).map((section, index) => (
+                <div key={index} className="mb-6 last:mb-0">
+                  {section.title && (
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                      {section.type === 'behavioral' && (
+                        <div className="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'technical' && (
+                        <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'communication' && (
+                        <div className="w-3 h-3 bg-purple-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'problem-solving' && (
+                        <div className="w-3 h-3 bg-orange-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'teamwork' && (
+                        <div className="w-3 h-3 bg-pink-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'career' && (
+                        <div className="w-3 h-3 bg-indigo-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'recommendations' && (
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'development' && (
+                        <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                      )}
+                      {section.type === 'content' && (
+                        <div className="w-3 h-3 bg-gray-500 rounded-full mr-3"></div>
+                      )}
+                      {section.title}
+                    </h4>
+                  )}
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                      {section.content}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Generated on {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    const summaryText = formatSummary(studentSummary)
+                      .map(section => `${section.title ? section.title + '\n' : ''}${section.content}`)
+                      .join('\n\n')
+                    navigator.clipboard.writeText(summaryText)
+                    alert('Summary copied to clipboard!')
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Copy Summary
+                </button>
+                <button
+                  onClick={() => setShowSummaryModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

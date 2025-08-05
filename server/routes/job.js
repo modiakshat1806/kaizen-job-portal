@@ -6,15 +6,28 @@ const router = express.Router();
 
 // Validation middleware
 const validateJobData = [
+  // Required fields
   body('title').trim().isLength({ min: 3 }).withMessage('Job title must be at least 3 characters'),
   body('company.name').trim().isLength({ min: 2 }).withMessage('Company name must be at least 2 characters'),
   body('description').isLength({ min: 10 }).withMessage('Job description must be at least 10 characters'),
-  body('requirements.education').optional().isIn(['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Any']).withMessage('Invalid education requirement'),
-  body('jobType').optional().isIn(['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance']).withMessage('Invalid job type'),
-  body('industry').optional().notEmpty().withMessage('Industry is required'),
-  body('location.type').optional().isIn(['Remote', 'On-site', 'Hybrid']).withMessage('Invalid location type'),
   body('contactPerson.name').trim().isLength({ min: 2 }).withMessage('Contact person name must be at least 2 characters'),
-  body('contactPerson.phone').trim().isLength({ min: 10 }).withMessage('Contact person phone must be at least 10 characters')
+  body('contactPerson.phone').trim().isLength({ min: 10 }).withMessage('Contact person phone must be at least 10 characters'),
+
+  // Optional fields - only validate if present
+  body('requirements.education').optional({ nullable: true, checkFalsy: true }).isIn(['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Any']).withMessage('Invalid education requirement'),
+  body('jobType').optional({ nullable: true, checkFalsy: true }).isIn(['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance']).withMessage('Invalid job type'),
+  body('industry').optional({ nullable: true, checkFalsy: true }).isLength({ min: 1 }).withMessage('Industry cannot be empty if provided'),
+  body('location.type').optional({ nullable: true, checkFalsy: true }).isIn(['Remote', 'On-site', 'Hybrid']).withMessage('Invalid location type'),
+  body('location.city').optional({ nullable: true, checkFalsy: true }).isLength({ min: 1 }).withMessage('City cannot be empty if provided'),
+  body('location.state').optional({ nullable: true, checkFalsy: true }).isLength({ min: 1 }).withMessage('State cannot be empty if provided'),
+  body('location.country').optional({ nullable: true, checkFalsy: true }).isLength({ min: 1 }).withMessage('Country cannot be empty if provided'),
+  body('salary.min').optional({ nullable: true, checkFalsy: true }).isNumeric().withMessage('Minimum salary must be a number'),
+  body('salary.max').optional({ nullable: true, checkFalsy: true }).isNumeric().withMessage('Maximum salary must be a number'),
+  body('salary.period').optional({ nullable: true, checkFalsy: true }).isIn(['Hourly', 'Monthly', 'Yearly']).withMessage('Invalid salary period'),
+  body('requirements.skills').optional({ nullable: true, checkFalsy: true }).isArray().withMessage('Skills must be an array'),
+  body('requirements.certifications').optional({ nullable: true, checkFalsy: true }).isArray().withMessage('Certifications must be an array'),
+  body('responsibilities').optional({ nullable: true, checkFalsy: true }).isArray().withMessage('Responsibilities must be an array'),
+  body('benefits').optional({ nullable: true, checkFalsy: true }).isArray().withMessage('Benefits must be an array')
 ];
 
 // POST /api/job - Create new job posting

@@ -776,27 +776,76 @@ const JobPostingForm = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true)
     try {
+      // Helper function to clean empty strings and undefined values
+      const cleanValue = (value) => {
+        if (value === '' || value === undefined || value === null) return undefined
+        if (typeof value === 'string') return value.trim() || undefined
+        return value
+      }
+
+      // Clean and prepare job data
       const jobData = {
-        ...data,
+        // Required fields
+        title: cleanValue(data.title),
+        company: {
+          name: cleanValue(data.company?.name),
+          description: cleanValue(data.company?.description),
+          website: cleanValue(data.company?.website)
+        },
+        contactPerson: {
+          name: cleanValue(data.contactPerson?.name),
+          phone: cleanValue(data.contactPerson?.phone)
+        },
+        description: cleanValue(data.description),
+
+        // Optional fields - only include if they have values
         responsibilities: responsibilities.filter(item => item.trim()),
         benefits: benefits.filter(item => item.trim()),
         requirements: {
-          ...data.requirements,
-          skills: requiredSkills.filter(skill => skill.trim())
+          education: cleanValue(data.requirements?.education),
+          skills: requiredSkills.filter(skill => skill.trim()),
+          certifications: data.requirements?.certifications?.filter(cert => cert.trim()) || []
         }
       }
 
-      // Only include salary if min or max is provided
-      if (data.salary?.min || data.salary?.max) {
+      // Only include optional fields if they have meaningful values
+      if (cleanValue(data.jobType)) {
+        jobData.jobType = cleanValue(data.jobType)
+      }
+
+      if (cleanValue(data.industry)) {
+        jobData.industry = cleanValue(data.industry)
+      }
+
+      if (cleanValue(data.department)) {
+        jobData.department = cleanValue(data.department)
+      }
+
+      // Only include salary if min or max is provided and not empty
+      if ((data.salary?.min && data.salary.min > 0) || (data.salary?.max && data.salary.max > 0)) {
         jobData.salary = {
-          ...data.salary,
-          currency: 'INR'
+          min: data.salary?.min || undefined,
+          max: data.salary?.max || undefined,
+          currency: 'INR',
+          period: cleanValue(data.salary?.period) || 'Yearly'
         }
       }
 
-      // Only include location details if provided
-      if (data.location?.type || data.location?.city || data.location?.state || data.location?.country) {
-        jobData.location = data.location
+      // Only include location details if any location field is provided
+      const hasLocationData = data.location?.type || data.location?.city || data.location?.state || data.location?.country
+      if (hasLocationData) {
+        jobData.location = {
+          type: cleanValue(data.location?.type),
+          city: cleanValue(data.location?.city),
+          state: cleanValue(data.location?.state),
+          country: cleanValue(data.location?.country),
+          address: cleanValue(data.location?.address)
+        }
+      }
+
+      // Only include application deadline if provided
+      if (data.applicationDeadline) {
+        jobData.applicationDeadline = data.applicationDeadline
       }
 
       const response = await jobAPI.createJob(jobData)
@@ -843,18 +892,76 @@ const JobPostingForm = () => {
       return
     }
 
+    // Helper function to clean empty strings and undefined values
+    const cleanValue = (value) => {
+      if (value === '' || value === undefined || value === null) return undefined
+      if (typeof value === 'string') return value.trim() || undefined
+      return value
+    }
+
+    // Clean and prepare preview data using the same logic as onSubmit
     const previewJobData = {
-      ...formData,
+      // Required fields
+      title: cleanValue(formData.title),
+      company: {
+        name: cleanValue(formData.company?.name),
+        description: cleanValue(formData.company?.description),
+        website: cleanValue(formData.company?.website)
+      },
+      contactPerson: {
+        name: cleanValue(formData.contactPerson?.name),
+        phone: cleanValue(formData.contactPerson?.phone)
+      },
+      description: cleanValue(formData.description),
+
+      // Optional fields - only include if they have values
       responsibilities: responsibilities.filter(item => item.trim()),
       benefits: benefits.filter(item => item.trim()),
       requirements: {
-        ...formData.requirements,
-        skills: requiredSkills.filter(skill => skill.trim())
-      },
-      salary: {
-        ...formData.salary,
-        currency: 'INR'
+        education: cleanValue(formData.requirements?.education),
+        skills: requiredSkills.filter(skill => skill.trim()),
+        certifications: formData.requirements?.certifications?.filter(cert => cert.trim()) || []
       }
+    }
+
+    // Only include optional fields if they have meaningful values
+    if (cleanValue(formData.jobType)) {
+      previewJobData.jobType = cleanValue(formData.jobType)
+    }
+
+    if (cleanValue(formData.industry)) {
+      previewJobData.industry = cleanValue(formData.industry)
+    }
+
+    if (cleanValue(formData.department)) {
+      previewJobData.department = cleanValue(formData.department)
+    }
+
+    // Only include salary if min or max is provided and not empty
+    if ((formData.salary?.min && formData.salary.min > 0) || (formData.salary?.max && formData.salary.max > 0)) {
+      previewJobData.salary = {
+        min: formData.salary?.min || undefined,
+        max: formData.salary?.max || undefined,
+        currency: 'INR',
+        period: cleanValue(formData.salary?.period) || 'Yearly'
+      }
+    }
+
+    // Only include location details if any location field is provided
+    const hasLocationData = formData.location?.type || formData.location?.city || formData.location?.state || formData.location?.country
+    if (hasLocationData) {
+      previewJobData.location = {
+        type: cleanValue(formData.location?.type),
+        city: cleanValue(formData.location?.city),
+        state: cleanValue(formData.location?.state),
+        country: cleanValue(formData.location?.country),
+        address: cleanValue(formData.location?.address)
+      }
+    }
+
+    // Only include application deadline if provided
+    if (formData.applicationDeadline) {
+      previewJobData.applicationDeadline = formData.applicationDeadline
     }
     console.log('Preview job data:', previewJobData) // Debug log
     setPreviewData(previewJobData)

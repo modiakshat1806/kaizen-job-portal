@@ -223,48 +223,79 @@ router.post('/students/:phone/summary', async (req, res) => {
       });
     }
 
-    // Prepare student data for LLM analysis
-    const studentData = {
-      name: student.name,
-      education: student.education,
-      skills: student.skills,
-      experience: student.experience,
-      interests: student.interests,
-      careerGoals: student.careerGoals,
-      preferredLocation: student.preferredLocation,
-      salaryExpectation: student.salaryExpectation,
-      assessmentScore: student.assessmentScore
-    };
+    // Create comprehensive prompt for student analysis
+    const systemPrompt = `You are an expert HR analyst and career counselor. Analyze the student's profile and provide a comprehensive behavioral and skills assessment that would be valuable for recruiters and career guidance.
 
-    // Create prompt for LLM summary
-    const systemPrompt = `You are an expert HR analyst and career counselor. Your task is to analyze a student's profile and provide a comprehensive, professional summary that would be useful for recruiters and HR professionals.
+Focus on:
+1. Core Behavioral Traits (based on assessment scores and profile)
+2. Technical Competencies (strengths and areas for development)
+3. Communication & Interpersonal Skills
+4. Problem-Solving Approach
+5. Teamwork & Collaboration Style
+6. Career Readiness & Potential
+7. Recommended Career Paths
+8. Development Suggestions
 
-Please provide a structured analysis that includes:
-1. Professional Summary (2-3 sentences overview)
-2. Key Strengths (top 3-4 strengths based on skills and assessment)
-3. Experience Level (assessment of their experience and readiness)
-4. Career Alignment (how well their goals align with their profile)
-5. Recommendations (2-3 actionable recommendations for the student)
-6. Recruiter Notes (what recruiters should know about this candidate)
+Provide actionable insights without any fitment scores. Focus on the student's inherent capabilities, work style, and potential.`;
 
-Keep the tone professional but engaging, and focus on actionable insights.`;
+    // Build dynamic user prompt based on available data
+    let userPrompt = `Analyze this student profile and provide a comprehensive behavioral and skills assessment:
 
-    const userPrompt = `Please analyze this student profile and provide a comprehensive summary:
+STUDENT PROFILE:
+- Name: ${student.name}
+- Education: ${student.education.degree} in ${student.education.field} from ${student.education.institution} (Graduating: ${student.education.graduationYear})
+- Experience: ${student.experienceYears || student.experience?.years || 0} years
+- Career Goals: ${student.careerGoals}
 
-Student Profile:
-- Name: ${studentData.name}
-- Education: ${studentData.education.degree} in ${studentData.education.field} from ${studentData.education.institution} (${studentData.education.graduationYear})
-- Skills: ${studentData.skills.map(skill => `${skill.name} (${skill.level})`).join(', ')}
-- Experience: ${studentData.experience.years} years
-- Internships: ${studentData.experience.internships.map(int => `${int.role} at ${int.company}`).join(', ') || 'None'}
-- Projects: ${studentData.experience.projects.map(proj => proj.title).join(', ') || 'None'}
-- Interests: ${studentData.interests.join(', ')}
-- Career Goals: ${studentData.careerGoals}
-- Preferred Locations: ${studentData.preferredLocation.join(', ')}
-- Salary Expectation: ${studentData.salaryExpectation.min}-${studentData.salaryExpectation.max} ${studentData.salaryExpectation.currency}
-- Assessment Scores: Technical: ${studentData.assessmentScore.technical}%, Communication: ${studentData.assessmentScore.communication}%, Problem Solving: ${studentData.assessmentScore.problemSolving}%, Teamwork: ${studentData.assessmentScore.teamwork}%
+ASSESSMENT SCORES (Key Behavioral Indicators):
+- Technical Skills: ${student.assessmentScore.technical}/100
+- Communication Skills: ${student.assessmentScore.communication}/100
+- Problem-Solving Ability: ${student.assessmentScore.problemSolving}/100
+- Teamwork & Collaboration: ${student.assessmentScore.teamwork}/100`;
 
-Please provide the structured analysis as requested.`;
+    // Add core values if available
+    if (student.coreValues && student.coreValues.length > 0) {
+      userPrompt += `\n- Core Values: ${student.coreValues.join(', ')}`;
+    }
+
+    // Add work preferences if available
+    if (student.workPreferences) {
+      userPrompt += `\n\nWORK STYLE PREFERENCES:`;
+      if (student.workPreferences.independence !== undefined) {
+        userPrompt += `\n- Independence Level: ${student.workPreferences.independence}/100`;
+      }
+      if (student.workPreferences.routine !== undefined) {
+        userPrompt += `\n- Routine Preference: ${student.workPreferences.routine}/100`;
+      }
+      if (student.workPreferences.pace !== undefined) {
+        userPrompt += `\n- Work Pace: ${student.workPreferences.pace}/100`;
+      }
+      if (student.workPreferences.focus !== undefined) {
+        userPrompt += `\n- Focus Style: ${student.workPreferences.focus}/100`;
+      }
+      if (student.workPreferences.approach !== undefined) {
+        userPrompt += `\n- Collaborative Approach: ${student.workPreferences.approach}/100`;
+      }
+    }
+
+    // Add additional fields if they exist
+    if (student.skills && student.skills.length > 0) {
+      userPrompt += `\n\nTECHNICAL SKILLS: ${student.skills.map(skill => `${skill.name} (${skill.level})`).join(', ')}`;
+    }
+
+    if (student.interests && student.interests.length > 0) {
+      userPrompt += `\n\nINTERESTS: ${student.interests.join(', ')}`;
+    }
+
+    if (student.experience?.projects && student.experience.projects.length > 0) {
+      userPrompt += `\n\nPROJECTS: ${student.experience.projects.map(proj => proj.title).join(', ')}`;
+    }
+
+    if (student.experience?.internships && student.experience.internships.length > 0) {
+      userPrompt += `\n\nINTERNSHIPS: ${student.experience.internships.map(int => `${int.role} at ${int.company}`).join(', ')}`;
+    }
+
+    userPrompt += `\n\nPlease provide a detailed behavioral and skills analysis focusing on the student's core competencies, work style, and career potential. Structure your response with clear sections and actionable insights.`;
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({

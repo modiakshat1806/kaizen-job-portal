@@ -642,7 +642,7 @@ const Home = () => {
       </section>
 
       {/* Dark Footer Section */}
-      <footer className="py-8 sm:py-12 px-4 text-white bg-gray-900 dark:bg-gray-800 transition-colors duration-300">
+      <footer className="py-8 sm:py-12 px-4 text-white bg-gray-900">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0">
             {/* Logo Section - Left Side */}
