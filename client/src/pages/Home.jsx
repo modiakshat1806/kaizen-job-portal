@@ -419,7 +419,7 @@ const Home = () => {
       {/* Simple. Fast. Effective. Section */}
       <section
         ref={(el) => (sectionsRef.current[2] = el)}
-        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 relative"
+        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 dark:from-purple-900 dark:via-purple-800 dark:to-indigo-900 relative"
         style={{
           transform: `translateZ(${Math.max(0, scrollY - 1200) * 0.005}px)`,
           transition: 'transform 0.1s ease-out'

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Building, MapPin, DollarSign, Users, FileText, Plus, X, Eye, Edit, Trash2, Download, Share2, ChevronDown, Mic, MicOff, Volume2 } from 'lucide-react'
+import { Building, MapPin, DollarSign, Users, FileText, Plus, X, Eye, Edit, Trash2, Download, Share2, Mic, MicOff, Volume2, ChevronDown } from 'lucide-react'
 import { jobAPI, voiceAPI } from '../services/api'
 
 const JobPostingForm = () => {
@@ -29,7 +29,49 @@ const JobPostingForm = () => {
         }
       }
 
+      @keyframes voiceButtonFloat {
+        0%, 100% {
+          transform: translateY(0px) rotateY(0deg);
+        }
+        50% {
+          transform: translateY(-2px) rotateY(5deg);
+        }
+      }
 
+      @keyframes voicePulse {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+        }
+        70% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+        }
+      }
+
+      @keyframes micRotate {
+        0% { transform: rotateY(0deg) rotateX(0deg); }
+        25% { transform: rotateY(90deg) rotateX(10deg); }
+        50% { transform: rotateY(180deg) rotateX(0deg); }
+        75% { transform: rotateY(270deg) rotateX(-10deg); }
+        100% { transform: rotateY(360deg) rotateX(0deg); }
+      }
+
+      .voice-button-active {
+        animation: voicePulse 2s infinite, voiceButtonFloat 3s ease-in-out infinite;
+      }
+
+      .voice-button-inactive:hover {
+        animation: voiceButtonFloat 1s ease-in-out infinite;
+      }
+
+      .mic-icon-active {
+        animation: micRotate 2s linear infinite;
+      }
 
       @keyframes slideInRight {
         0% {
@@ -133,90 +175,6 @@ const JobPostingForm = () => {
         transform: translateX(3px) translateZ(5px) perspective(1000px) rotateY(2deg);
         box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15);
       }
-
-      @keyframes voiceButtonFloat {
-        0%, 100% {
-          transform: translateY(0px) rotateY(0deg);
-        }
-        50% {
-          transform: translateY(-2px) rotateY(5deg);
-        }
-      }
-
-      @keyframes voicePulse {
-        0% {
-          transform: scale(1);
-          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
-        }
-        70% {
-          transform: scale(1.05);
-          box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
-        }
-        100% {
-          transform: scale(1);
-          box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
-        }
-      }
-
-      @keyframes micRotate {
-        0% { transform: rotateY(0deg) rotateX(0deg); }
-        25% { transform: rotateY(90deg) rotateX(10deg); }
-        50% { transform: rotateY(180deg) rotateX(0deg); }
-        75% { transform: rotateY(270deg) rotateX(-10deg); }
-        100% { transform: rotateY(360deg) rotateX(0deg); }
-      }
-
-      .voice-button-active {
-        animation: voicePulse 2s infinite, voiceButtonFloat 3s ease-in-out infinite;
-      }
-
-      .voice-button-inactive:hover {
-        animation: voiceButtonFloat 1s ease-in-out infinite;
-      }
-
-      .mic-icon-active {
-        animation: micRotate 2s linear infinite;
-      }
-
-      /* Enhanced mobile responsiveness for voice button */
-      @media (max-width: 640px) {
-        .voice-button-active,
-        .voice-button-inactive {
-          min-height: 44px;
-          min-width: 44px;
-        }
-      }
-
-      /* 3D Preview Animations */
-      @keyframes cardFloat {
-        0%, 100% { transform: translateY(0px) rotateY(0deg); }
-        50% { transform: translateY(-3px) rotateY(1deg); }
-      }
-
-      @keyframes skillPulse {
-        0%, 100% { transform: scale(1) rotateZ(0deg); }
-        50% { transform: scale(1.05) rotateZ(1deg); }
-      }
-
-      @keyframes benefitGlow {
-        0%, 100% { box-shadow: 0 0 5px rgba(168, 85, 247, 0.3); }
-        50% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); }
-      }
-
-      .preview-card-3d {
-        transform-style: preserve-3d;
-        animation: cardFloat 4s ease-in-out infinite;
-      }
-
-      .skill-badge-3d {
-        animation: skillPulse 2s ease-in-out infinite;
-        animation-delay: calc(var(--delay) * 0.2s);
-      }
-
-      .benefit-item-3d {
-        animation: benefitGlow 3s ease-in-out infinite;
-        animation-delay: calc(var(--delay) * 0.3s);
-      }
     `
     const styleSheet = document.createElement('style')
     styleSheet.textContent = jobAnimationStyles
@@ -232,14 +190,17 @@ const JobPostingForm = () => {
   const [previewData, setPreviewData] = useState(null)
   const navigate = useNavigate()
 
-
+  // Voice functionality state
+  const [isRecording, setIsRecording] = useState(false)
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+  const streamRef = useRef(null)
 
   const { register, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm()
 
   // Watch location type to disable location fields for remote jobs
   const locationType = watch('location.type')
-
-
 
 
 
@@ -256,17 +217,6 @@ const JobPostingForm = () => {
   const [jobTitleSuggestions, setJobTitleSuggestions] = useState([])
   const [showJobTitleSuggestions, setShowJobTitleSuggestions] = useState(false)
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
-
-  // Voice functionality state
-  const [isRecording, setIsRecording] = useState(false)
-  const [isProcessingVoice, setIsProcessingVoice] = useState(false)
-  const [voiceProgress, setVoiceProgress] = useState(0)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [showAnswerPopup, setShowAnswerPopup] = useState(null)
-  const mediaRecorderRef = useRef(null)
-  const audioChunksRef = useRef([])
-  const streamRef = useRef(null)
-  const recordingIntervalRef = useRef(null)
 
   // Job title suggestions database - Comprehensive career roles list
   const jobTitleDatabase = [
@@ -491,8 +441,6 @@ const JobPostingForm = () => {
   const startVoiceRecording = async () => {
     try {
       setIsRecording(true)
-      setVoiceProgress(10)
-      setRecordingTime(0)
       audioChunksRef.current = []
 
       // Request microphone access
@@ -526,24 +474,18 @@ const JobPostingForm = () => {
       }
 
       mediaRecorderRef.current.start()
-      setVoiceProgress(25)
       toast.success('🎤 Recording started! Speak your job details clearly.')
 
-      // Start recording timer
-      recordingIntervalRef.current = setInterval(() => {
-        setRecordingTime(prev => {
-          const newTime = prev + 1
-          if (newTime >= 30) { // Auto-stop after 30 seconds
-            stopVoiceRecording()
-          }
-          return newTime
-        })
-      }, 1000)
+      // Auto-stop after 30 seconds
+      setTimeout(() => {
+        if (isRecording) {
+          stopVoiceRecording()
+        }
+      }, 30000)
 
     } catch (error) {
       console.error('Voice recording error:', error)
       setIsRecording(false)
-      setVoiceProgress(0)
 
       if (error.name === 'NotAllowedError') {
         toast.error('Microphone access denied. Please allow microphone access.')
@@ -557,8 +499,204 @@ const JobPostingForm = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
-      setVoiceProgress(50)
       toast.info('Processing your voice input...')
+    }
+  }
+
+  const listenForComprehensiveResponse = () => {
+    return new Promise((resolve) => {
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        toast.error('Speech recognition not supported in this browser')
+        setIsVoiceActive(false)
+        resolve()
+        return
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+      const recognition = new SpeechRecognition()
+
+      // Enhanced settings for Indian accents and noise handling
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang = 'en-IN' // Indian English
+      recognition.maxAlternatives = 3 // Multiple alternatives for better accuracy
+
+      // Additional settings for noise robustness
+      if (recognition.serviceURI) {
+        recognition.serviceURI = 'wss://speech.googleapis.com/v1/speech:recognize'
+      }
+
+      setIsListening(true)
+      setVoiceProgress(25)
+
+      let finalTranscript = ''
+      let interimTranscript = ''
+
+      recognition.onresult = async (event) => {
+        // Handle both interim and final results for better accuracy
+        interimTranscript = ''
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i]
+          const transcript = result[0].transcript
+
+          if (result.isFinal) {
+            finalTranscript += transcript + ' '
+          } else {
+            interimTranscript += transcript
+          }
+        }
+
+        // Show interim results to user
+        if (interimTranscript) {
+          console.log('Interim:', interimTranscript)
+        }
+
+        // Process when we have substantial final transcript
+        if (finalTranscript.trim().length > 10) {
+          console.log('Final transcript:', finalTranscript)
+          setVoiceProgress(50)
+
+          // Process the comprehensive response
+          await processComprehensiveResponse(finalTranscript.trim())
+
+          setIsListening(false)
+          setVoiceProgress(100)
+
+          setTimeout(() => {
+            setIsVoiceActive(false)
+            setVoiceProgress(0)
+            toast.success('Voice entry completed!')
+          }, 1500)
+
+          recognition.stop()
+          resolve()
+        }
+      }
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error)
+        setIsListening(false)
+        setIsVoiceActive(false)
+
+        if (event.error === 'no-speech') {
+          toast.error('No speech detected. Please try again.')
+        } else {
+          toast.error('Speech recognition error. Please try again.')
+        }
+
+        resolve()
+      }
+
+      recognition.start()
+
+      // Auto-stop after 20 seconds for better user experience
+      setTimeout(() => {
+        if (recognition && !finalTranscript.trim()) {
+          recognition.stop()
+          toast.info('Voice timeout. Please speak all details in one go and try again.')
+        }
+      }, 20000)
+    })
+  }
+
+  const startRecording = async (stream) => {
+    return new Promise((resolve, reject) => {
+      try {
+        audioChunksRef.current = []
+
+        console.log('Starting MediaRecorder...') // Debug log
+
+        // Check supported MIME types
+        let mimeType = 'audio/webm;codecs=opus'
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/webm'
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/mp4'
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+              mimeType = '' // Let browser choose
+            }
+          }
+        }
+
+        console.log('Using MIME type:', mimeType) // Debug log
+
+        // Create MediaRecorder with optimal settings
+        const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {})
+
+        mediaRecorderRef.current = mediaRecorder
+        setIsRecording(true)
+        setVoiceProgress(25)
+
+      // Start recording timer
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => {
+          const newTime = prev + 1
+          if (newTime >= 15) { // Auto-stop after 15 seconds
+            stopRecording()
+          }
+          return newTime
+        })
+      }, 1000)
+
+        mediaRecorder.ondataavailable = (event) => {
+          console.log('Data available, size:', event.data.size) // Debug log
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data)
+          }
+        }
+
+        mediaRecorder.onstop = async () => {
+          console.log('Recording stopped') // Debug log
+          setIsRecording(false)
+          setVoiceProgress(50)
+
+          // Stop the stream
+          stream.getTracks().forEach(track => track.stop())
+
+          // Create audio blob
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' })
+          console.log('Audio blob created, size:', audioBlob.size) // Debug log
+
+          // Process with OpenAI
+          await processAudioWithOpenAI(audioBlob)
+          resolve()
+        }
+
+        mediaRecorder.onerror = (event) => {
+          console.error('MediaRecorder error:', event.error)
+          toast.error('Recording error occurred')
+          setIsRecording(false)
+          setIsVoiceActive(false)
+          stream.getTracks().forEach(track => track.stop())
+          reject(event.error)
+        }
+
+        console.log('Starting recording...') // Debug log
+        mediaRecorder.start()
+
+        // Auto-stop after 15 seconds
+        setTimeout(() => {
+          if (mediaRecorder.state === 'recording') {
+            console.log('Auto-stopping recording after 15 seconds') // Debug log
+            mediaRecorder.stop()
+          }
+        }, 15000)
+
+      } catch (error) {
+        console.error('Error in startRecording:', error)
+        toast.error('Failed to start recording')
+        setIsRecording(false)
+        setIsVoiceActive(false)
+        stream.getTracks().forEach(track => track.stop())
+        reject(error)
+      }
+    })
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop()
     }
     if (recordingIntervalRef.current) {
       clearInterval(recordingIntervalRef.current)
@@ -568,24 +706,21 @@ const JobPostingForm = () => {
   const processVoiceInput = async (audioBlob) => {
     try {
       setIsProcessingVoice(true)
-      setVoiceProgress(60)
 
       // Step 1: Transcribe audio using Whisper
       const transcriptionResponse = await voiceAPI.transcribe(audioBlob)
       const transcript = transcriptionResponse.data.transcript
 
       console.log('Transcription:', transcript)
-      setVoiceProgress(80)
       toast.success('Voice transcribed successfully!')
 
-      // Step 2: Extract fields from transcript for job posting
+      // Step 2: Extract fields from transcript
       const extractionResponse = await voiceAPI.extractFields(transcript, 'job_posting')
       const extractedFields = extractionResponse.data.extractedFields
 
       console.log('Extracted fields:', extractedFields)
-      setVoiceProgress(90)
 
-      // Step 3: Populate form fields with smart mapping
+      // Step 3: Populate form fields
       let fieldsPopulated = 0
 
       if (extractedFields.title) {
@@ -612,140 +747,14 @@ const JobPostingForm = () => {
         setValue('requirements.experience', extractedFields.requirements)
         fieldsPopulated++
       }
-
-      // Smart mapping for Industry
       if (extractedFields.industry) {
-        const industryMapping = {
-          // Technology variations
-          'technology': 'Technology',
-          'tech': 'Technology',
-          'it': 'Technology',
-          'software': 'Technology',
-          'industrial technology': 'Technology',
-          'information technology': 'Technology',
-          'computer': 'Technology',
-          'digital': 'Technology',
-
-          // Healthcare variations
-          'healthcare': 'Healthcare',
-          'health': 'Healthcare',
-          'medical': 'Healthcare',
-          'pharma': 'Healthcare',
-          'pharmaceutical': 'Healthcare',
-
-          // Finance variations
-          'finance': 'Finance',
-          'financial': 'Finance',
-          'banking': 'Finance',
-          'fintech': 'Finance',
-
-          // Education variations
-          'education': 'Education',
-          'educational': 'Education',
-          'teaching': 'Education',
-          'academic': 'Education',
-
-          // Other industries
-          'retail': 'Retail',
-          'sales': 'Retail',
-          'manufacturing': 'Manufacturing',
-          'production': 'Manufacturing',
-          'consulting': 'Consulting',
-          'marketing': 'Marketing',
-          'advertising': 'Marketing',
-          'government': 'Government',
-          'public': 'Government',
-          'nonprofit': 'Non-profit',
-          'ngo': 'Non-profit',
-          'non-profit': 'Non-profit'
-        }
-
-        const normalizedIndustry = extractedFields.industry.toLowerCase().trim()
-        let mappedIndustry = industryMapping[normalizedIndustry]
-
-        // If no exact match, check if it contains key words
-        if (!mappedIndustry) {
-          if (normalizedIndustry.includes('tech') || normalizedIndustry.includes('software') || normalizedIndustry.includes('it') || normalizedIndustry.includes('computer')) {
-            mappedIndustry = 'Technology'
-          } else if (normalizedIndustry.includes('health') || normalizedIndustry.includes('medical')) {
-            mappedIndustry = 'Healthcare'
-          } else if (normalizedIndustry.includes('finance') || normalizedIndustry.includes('bank')) {
-            mappedIndustry = 'Finance'
-          } else if (normalizedIndustry.includes('education') || normalizedIndustry.includes('teach')) {
-            mappedIndustry = 'Education'
-          } else {
-            // If still no match, use the original value (might be already correct)
-            mappedIndustry = extractedFields.industry
-          }
-        }
-
-        setValue('industry', mappedIndustry)
+        setValue('industry', extractedFields.industry)
         fieldsPopulated++
-        console.log('Industry mapped:', extractedFields.industry, '->', mappedIndustry)
       }
-
-      // Smart mapping for Job Type
       if (extractedFields.jobType) {
-        const jobTypeMapping = {
-          // Full-time variations
-          'full-time': 'Full-time',
-          'fulltime': 'Full-time',
-          'full time': 'Full-time',
-          'permanent': 'Full-time',
-          'regular': 'Full-time',
-
-          // Part-time variations
-          'part-time': 'Part-time',
-          'parttime': 'Part-time',
-          'part time': 'Part-time',
-          'partial': 'Part-time',
-
-          // Contract variations
-          'contract': 'Contract',
-          'contractual': 'Contract',
-          'temporary': 'Contract',
-          'temp': 'Contract',
-          'consultant': 'Contract',
-
-          // Internship variations
-          'internship': 'Internship',
-          'intern': 'Internship',
-          'trainee': 'Internship',
-          'apprentice': 'Internship',
-          'student': 'Internship',
-
-          // Freelance variations
-          'freelance': 'Freelance',
-          'freelancer': 'Freelance',
-          'independent': 'Freelance'
-        }
-
-        const normalizedJobType = extractedFields.jobType.toLowerCase().trim()
-        let mappedJobType = jobTypeMapping[normalizedJobType]
-
-        // If no exact match, check if it contains key words
-        if (!mappedJobType) {
-          if (normalizedJobType.includes('full') || normalizedJobType.includes('permanent')) {
-            mappedJobType = 'Full-time'
-          } else if (normalizedJobType.includes('part')) {
-            mappedJobType = 'Part-time'
-          } else if (normalizedJobType.includes('intern') || normalizedJobType.includes('trainee')) {
-            mappedJobType = 'Internship'
-          } else if (normalizedJobType.includes('contract') || normalizedJobType.includes('temp')) {
-            mappedJobType = 'Contract'
-          } else if (normalizedJobType.includes('freelance')) {
-            mappedJobType = 'Freelance'
-          } else {
-            // If still no match, use the original value (might be already correct)
-            mappedJobType = extractedFields.jobType
-          }
-        }
-
-        setValue('jobType', mappedJobType)
+        setValue('jobType', extractedFields.jobType)
         fieldsPopulated++
-        console.log('Job Type mapped:', extractedFields.jobType, '->', mappedJobType)
       }
-
       if (extractedFields.contactName) {
         setValue('contactPerson.name', extractedFields.contactName)
         fieldsPopulated++
@@ -755,22 +764,298 @@ const JobPostingForm = () => {
         fieldsPopulated++
       }
 
-      setVoiceProgress(100)
       toast.success(`🎉 ${fieldsPopulated} form fields populated from voice input!`)
 
-      // Reset progress after a delay
-      setTimeout(() => {
-        setVoiceProgress(0)
-        setRecordingTime(0)
-      }, 2000)
+      toast.success('Form fields populated from voice input!')
 
     } catch (error) {
       console.error('Voice processing error:', error)
       toast.error('Failed to process voice input. Please try again.')
-      setVoiceProgress(0)
     } finally {
       setIsProcessingVoice(false)
     }
+  }
+
+  const applyExtractedDataToForm = async (extractedData, transcription = '') => {
+    console.log('Applying extracted data to form:', extractedData) // Debug log
+
+    const detected = {}
+    let detectedCount = 0
+
+    // Map the extracted data to form fields
+    if (extractedData.title) {
+      setValue('title', extractedData.title)
+      detected.title = extractedData.title
+      detectedCount++
+      console.log('Set title:', extractedData.title) // Debug log
+    }
+
+    if (extractedData.companyName) {
+      setValue('company.name', extractedData.companyName)
+      detected['company.name'] = extractedData.companyName
+      detectedCount++
+      console.log('Set company name:', extractedData.companyName) // Debug log
+    }
+
+    if (extractedData.jobType) {
+      setValue('jobType', extractedData.jobType)
+      detected.jobType = extractedData.jobType
+      detectedCount++
+      console.log('Set job type:', extractedData.jobType) // Debug log
+    }
+
+    if (extractedData.industry) {
+      setValue('industry', extractedData.industry)
+      detected.industry = extractedData.industry
+      detectedCount++
+      console.log('Set industry:', extractedData.industry) // Debug log
+    }
+
+    if (extractedData.contactPersonName) {
+      setValue('contactPerson.name', extractedData.contactPersonName)
+      detected['contactPerson.name'] = extractedData.contactPersonName
+      detectedCount++
+      console.log('Set contact name:', extractedData.contactPersonName) // Debug log
+    }
+
+    if (extractedData.contactPersonPhone) {
+      setValue('contactPerson.phone', extractedData.contactPersonPhone)
+      detected['contactPerson.phone'] = extractedData.contactPersonPhone
+      detectedCount++
+      console.log('Set contact phone:', extractedData.contactPersonPhone) // Debug log
+    }
+
+    setDetectedAnswers(detected)
+
+    // Show success message with details
+    if (detectedCount > 0) {
+      const detectedFields = Object.keys(detected).map(field => {
+        const fieldConfig = voiceFields.find(f => f.field === field)
+        return fieldConfig ? fieldConfig.label : field
+      }).join(', ')
+
+      toast.success(`✅ Detected ${detectedCount} fields: ${detectedFields}`)
+
+      // Show transcription in console for debugging
+      if (transcription) {
+        console.log('Original transcription:', transcription)
+      }
+    } else {
+      toast.warning(`No fields detected from: "${transcription}". Please try speaking more clearly.`)
+    }
+  }
+
+  const processComprehensiveResponse = async (transcript) => {
+    const detected = {}
+
+    console.log('Processing transcript:', transcript) // Debug log
+
+    // Process each field to extract information
+    for (const field of voiceFields) {
+      const extractedValue = await extractFieldFromTranscript(transcript, field)
+      console.log(`Field ${field.field}:`, extractedValue) // Debug log
+
+      if (extractedValue) {
+        detected[field.field] = extractedValue
+
+        // Set form value
+        setValue(field.field, extractedValue)
+
+        // Show popup for detected answer
+        showAnswerDetectedPopup(field.label, extractedValue)
+      }
+    }
+
+    setDetectedAnswers(detected)
+
+    // Show summary of detected fields with details
+    const detectedCount = Object.keys(detected).length
+    const detectedFields = Object.keys(detected).map(field => {
+      const fieldConfig = voiceFields.find(f => f.field === field)
+      return fieldConfig ? fieldConfig.label : field
+    }).join(', ')
+
+    if (detectedCount > 0) {
+      toast.success(`Detected ${detectedCount} fields: ${detectedFields}`)
+    } else {
+      toast.warning('No fields detected. Try: "Software Engineer at Google, full-time, technology, I am John, 9876543210"')
+    }
+  }
+
+  const extractFieldFromTranscript = async (transcript, field) => {
+    // Enhanced extraction for Indian English patterns and noise handling
+    const lowerTranscript = transcript.toLowerCase()
+
+    // Clean transcript - remove common noise words and filler sounds
+    const cleanedTranscript = lowerTranscript
+      .replace(/\b(um|uh|ah|er|like|you know|actually|basically|so)\b/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    // Look for field-specific patterns with Indian English variations
+    switch (field.field) {
+      case 'title':
+        // Enhanced job title patterns for Indian English
+        const titlePatterns = [
+          /(?:job title is|position is|role is|title is|post is|designation is)\s+([^,\.]+)/i,
+          /(?:for|as|seeking|applying for|looking for)\s+(?:a\s+|the\s+)?([^,\.]+?)(?:\s+at|\s+in|\s+with|\s+post|\s+position|,|$)/i,
+          /(?:i am|i'm)\s+(?:a\s+|an\s+)?([^,\.]+?)(?:\s+at|\s+in|\s+with|,|$)/i,
+          /([a-zA-Z\s]+?)(?:\s+at|\s+in)\s+[a-zA-Z\s]+/i, // Extract title before "at company"
+          /^([^,\.]+?)(?:\s+at|\s+in|\s+with|\s+for|,)/i, // First phrase before preposition
+          /(?:job|position|role)\s+(?:is\s+)?([^,\.]+)/i // Simple job patterns
+        ]
+        for (const pattern of titlePatterns) {
+          const match = cleanedTranscript.match(pattern)
+          if (match && match[1] && match[1].trim().length > 2) {
+            const title = match[1].trim().replace(/\b(the|a|an|job|position|role)\b/gi, '').trim()
+            if (title.length > 1) return title
+          }
+        }
+        break
+
+      case 'company.name':
+        // Enhanced company name patterns for Indian English
+        const companyPatterns = [
+          /(?:company is|company name is|working at|working in|at|with|for)\s+([^,\.]+?)(?:\s+it's|\s+its|\s+the|\s+and|\s+company|,|$)/i,
+          /(?:in|at)\s+([A-Z][a-zA-Z\s&]+?)(?:\s+company|\s+limited|\s+ltd|\s+pvt|\s+private|,|$)/i,
+          /(?:company|organization|firm)\s+(?:is\s+)?([^,\.]+)/i,
+          /(?:at|in|with|for)\s+([A-Z][a-zA-Z\s&\.]+?)(?:\s+company|\s+limited|\s+ltd|\s+pvt|\s+private|\s+technologies|\s+solutions|,|$)/i,
+          /(?:from|representing)\s+([A-Z][a-zA-Z\s&\.]+)/i
+        ]
+        for (const pattern of companyPatterns) {
+          const match = cleanedTranscript.match(pattern)
+          if (match && match[1] && match[1].trim().length > 1) {
+            const company = match[1].trim().replace(/\b(company|limited|ltd|pvt|private|technologies|solutions)\b/gi, '').trim()
+            if (company.length > 1) return company
+          }
+        }
+        break
+
+      case 'jobType':
+        // Enhanced job type patterns with Indian English variations
+        if (/\b(full time|fulltime|full-time|permanent|regular)\b/i.test(cleanedTranscript)) return 'Full-time'
+        if (/\b(part time|parttime|part-time|partial)\b/i.test(cleanedTranscript)) return 'Part-time'
+        if (/\b(contract|contractual|temporary|temp)\b/i.test(cleanedTranscript)) return 'Contract'
+        if (/\b(internship|intern|trainee|apprentice)\b/i.test(cleanedTranscript)) return 'Internship'
+        if (/\b(freelance|freelancer|consultant)\b/i.test(cleanedTranscript)) return 'Freelance'
+        break
+
+      case 'industry':
+        // Enhanced industry recognition with Indian context
+        const industryMap = {
+          'technology': ['technology', 'tech', 'it', 'software', 'computer', 'digital'],
+          'finance': ['finance', 'banking', 'financial', 'bank', 'investment', 'insurance'],
+          'healthcare': ['healthcare', 'health', 'medical', 'hospital', 'pharma', 'pharmaceutical'],
+          'education': ['education', 'educational', 'teaching', 'school', 'college', 'university'],
+          'retail': ['retail', 'shopping', 'ecommerce', 'e-commerce', 'sales'],
+          'manufacturing': ['manufacturing', 'production', 'factory', 'industrial', 'automobile', 'auto'],
+          'marketing': ['marketing', 'advertising', 'promotion', 'branding'],
+          'consulting': ['consulting', 'consultancy', 'advisory', 'services']
+        }
+
+        for (const [industry, keywords] of Object.entries(industryMap)) {
+          for (const keyword of keywords) {
+            if (cleanedTranscript.includes(keyword)) {
+              return industry.charAt(0).toUpperCase() + industry.slice(1)
+            }
+          }
+        }
+        break
+
+      case 'contactPerson.name':
+        // Enhanced name patterns for Indian names
+        const namePatterns = [
+          /(?:my name is|i am|i'm|name is|myself)\s+([^,\.]+?)(?:\s+and|\s+my|\s+from|,|$)/i,
+          /(?:contact person is|recruiter is|hr is)\s+([^,\.]+)/i,
+          /(?:this is|speaking)\s+([^,\.]+?)(?:\s+from|\s+calling|,|$)/i,
+          /(?:i'm|i am)\s+([A-Z][a-zA-Z\s]+?)(?:\s+from|\s+and|\s+calling|,|$)/i,
+          /(?:contact|call|reach)\s+([A-Z][a-zA-Z\s]+?)(?:\s+at|\s+on|,|$)/i
+        ]
+        for (const pattern of namePatterns) {
+          const match = cleanedTranscript.match(pattern)
+          if (match && match[1] && match[1].trim().length > 1) {
+            const name = match[1].trim().replace(/\b(sir|madam|ji|sahib|mister|mr|mrs|ms)\b/gi, '').trim()
+            if (name.length > 1) return name
+          }
+        }
+        break
+
+      case 'contactPerson.phone':
+        // Enhanced phone number patterns for Indian numbers
+        const phonePatterns = [
+          /(\+91[-.\s]?\d{10})/g, // Indian format with +91
+          /(\d{10})/g, // 10-digit Indian mobile
+          /(\+?\d{1,3}[-.\s]?\d{3,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4})/g, // International format
+          /(?:number is|contact is|phone is|mobile is)\s*(\+?\d[\d\s\-\.]{8,15})/i
+        ]
+        for (const pattern of phonePatterns) {
+          const phoneMatch = cleanedTranscript.match(pattern)
+          if (phoneMatch) {
+            let phone = phoneMatch[1].replace(/[^\d\+]/g, '')
+            if (phone.length === 10 && !phone.startsWith('+')) {
+              phone = '+91' + phone // Add Indian country code
+            }
+            return phone
+          }
+        }
+        break
+    }
+
+    return null
+  }
+
+  const showAnswerDetectedPopup = (fieldLabel, value) => {
+    setShowAnswerPopup({ field: fieldLabel, value })
+    setTimeout(() => setShowAnswerPopup(null), 3000)
+  }
+
+  const speakPrompt = (text) => {
+    return new Promise((resolve) => {
+      setIsSpeaking(true)
+      const utterance = new SpeechSynthesisUtterance(text)
+
+      // Configure voice settings for professional male voice
+      const voices = speechSynthesis.getVoices()
+      const maleVoice = voices.find(voice =>
+        voice.name.includes('Male') ||
+        voice.name.includes('David') ||
+        voice.name.includes('Mark') ||
+        voice.lang.includes('en-US')
+      )
+
+      if (maleVoice) utterance.voice = maleVoice
+      utterance.rate = 0.9
+      utterance.pitch = 0.8
+      utterance.volume = 0.8
+
+      utterance.onend = () => {
+        setIsSpeaking(false)
+        resolve()
+      }
+
+      speechSynthesis.speak(utterance)
+    })
+  }
+
+
+
+  const stopVoiceEntry = () => {
+    // Stop recording if active
+    stopRecording()
+
+    // Reset all states
+    setIsVoiceActive(false)
+    setIsRecording(false)
+    setIsProcessing(false)
+    setVoiceProgress(0)
+    setRecordingTime(0)
+
+    // Clear intervals
+    if (recordingIntervalRef.current) {
+      clearInterval(recordingIntervalRef.current)
+    }
+
+    toast.info('Voice entry stopped')
   }
 
   const onSubmit = async (data) => {
@@ -907,109 +1192,115 @@ const JobPostingForm = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1
+            className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
+            style={{
+              animation: 'jobTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+              transformStyle: 'preserve-3d',
+              textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+            }}
+          >
             Job Preview
           </h1>
           <p className="text-gray-600 dark:text-gray-300">Review your job posting before publishing</p>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform hover:scale-[1.02] transition-all duration-500" style={{ transformStyle: 'preserve-3d' }}>
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-8 py-6 text-white relative overflow-hidden">
-            {/* 3D Background Elements */}
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 px-6 py-8 text-white relative overflow-hidden">
+            {/* Background decoration */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-            <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between">
-              <div className="mb-4 sm:mb-0 transform hover:scale-105 transition-transform duration-300">
-                <h2 className="text-3xl font-bold mb-2 drop-shadow-lg" style={{
-                  textShadow: '0 4px 8px rgba(0,0,0,0.3)'
-                }}>{previewData.title}</h2>
-                <p className="text-purple-100 text-lg font-medium drop-shadow-md">{previewData.company?.name}</p>
-                <p className="text-purple-200 text-sm mt-1">{previewData.industry}</p>
+
+            <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between">
+              <div className="mb-4 sm:mb-0">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2">{previewData.title}</h2>
+                <p className="text-purple-100 text-lg">{previewData.company?.name}</p>
               </div>
-              <div className="text-left sm:text-right transform hover:scale-105 transition-transform duration-300">
-                <span className="inline-block bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-2 shadow-lg hover:bg-white/30 transition-all duration-300">
+              <div className="text-left sm:text-right">
+                <span className="inline-block bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-2">
                   {previewData.jobType}
                 </span>
-                {previewData.location?.city && (
-                  <div className="text-purple-100 text-sm flex items-center justify-end">
-                    <span className="mr-1">📍</span>
-                    {previewData.location.city}
-                    {previewData.location?.state && `, ${previewData.location.state}`}
-                  </div>
-                )}
+                <div className="mt-2 text-blue-100 text-sm">
+                  {previewData.location?.type === 'Remote' ? '🌐 Remote' : 
+                   previewData.location?.type === 'Hybrid' ? '🏢 Hybrid' : '🏢 On-site'}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-8 space-y-6">
-            {/* Job Description */}
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Job Description</h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{previewData.description}</p>
+          <div className="p-6 sm:p-8 space-y-8">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 transition-colors duration-300">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <Building className="w-5 h-5 mr-2 text-purple-600" />
+                  Job Details
+                </h3>
+                <div className="space-y-3 text-sm">
+                   <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                     <span className="text-gray-600 dark:text-gray-400">Industry:</span>
+                     <span className="font-medium text-gray-900 dark:text-white">{previewData.industry}</span>
+                   </div>
+                   <div className="flex justify-between items-center py-2 border-b border-gray-200 dark:border-gray-600">
+                     <span className="text-gray-600 dark:text-gray-400">Location:</span>
+                     <span className="font-medium text-gray-900 dark:text-white">
+                       {previewData.location?.type === 'Remote' ? 'Remote' :
+                        `${previewData.location?.city || ''}, ${previewData.location?.state || ''}, ${previewData.location?.country || ''}`}
+                     </span>
+                   </div>
+                   {previewData.salary?.min && (
+                     <div className="flex justify-between items-center">
+                       <span className="text-gray-600">Salary:</span>
+                       <span className="font-medium">
+                         {formatCurrency(previewData.salary.min)} - {formatCurrency(previewData.salary.max)} {previewData.salary?.period}
+                       </span>
+                     </div>
+                   )}
+                                       <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Job ID:</span>
+                      <span className="font-medium font-mono text-gray-500">Will be generated after posting</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Contact Person:</span>
+                      <span className="font-medium">{previewData.contactPerson?.name}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Contact Phone:</span>
+                      <span className="font-medium">{previewData.contactPerson?.phone}</span>
+                    </div>
+                 </div>
+              </div>
+
+                             <div>
+                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Requirements</h3>
+                 <div className="space-y-2 text-sm">
+                   <div className="flex justify-between items-center">
+                     <span className="text-gray-600">Education:</span>
+                     <span className="font-medium">{previewData.requirements?.education}</span>
+                   </div>
+                   <div className="flex justify-between items-center">
+                     <span className="text-gray-600">Experience:</span>
+                     <span className="font-medium">{previewData.requirements?.experience?.min || 0} years</span>
+                   </div>
+                 </div>
+               </div>
             </div>
 
-            {/* Key Information Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Job Details */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Job Details</h4>
-                <div className="space-y-3">
-                  {previewData.salary?.min && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Salary:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(previewData.salary.min)} - {formatCurrency(previewData.salary.max)} {previewData.salary?.period}
-                      </span>
-                    </div>
-                  )}
-                  {previewData.requirements?.experience?.min && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Experience:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{previewData.requirements.experience.min} years</span>
-                    </div>
-                  )}
-                  {previewData.requirements?.education && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600 dark:text-gray-400">Education:</span>
-                      <span className="font-medium text-gray-900 dark:text-white">{previewData.requirements.education}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Contact Information */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Contact Person:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{previewData.contactPerson?.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Phone:</span>
-                    <span className="font-medium text-gray-900 dark:text-white">{previewData.contactPerson?.phone}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 dark:text-gray-400">Job ID:</span>
-                    <span className="font-medium text-gray-500 dark:text-gray-400 text-sm">Generated after posting</span>
-                  </div>
-                </div>
-              </div>
+            {/* Description */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Job Description</h3>
+              <p className="text-gray-700 leading-relaxed">{previewData.description}</p>
             </div>
 
             {/* Skills */}
             {previewData.requirements?.skills?.length > 0 && (
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Required Skills</h4>
-                <div className="flex flex-wrap gap-3">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Required Skills</h3>
+                <div className="flex flex-wrap gap-2">
                   {previewData.requirements.skills.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="skill-badge-3d bg-gradient-to-r from-purple-100 to-purple-200 dark:from-purple-800 dark:to-purple-700 text-purple-800 dark:text-purple-200 px-4 py-2 rounded-full text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
-                      style={{ '--delay': index }}
-                    >
+                    <span key={index} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                       {skill}
                     </span>
                   ))}
@@ -1020,12 +1311,12 @@ const JobPostingForm = () => {
             {/* Responsibilities */}
             {previewData.responsibilities?.length > 0 && (
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Key Responsibilities</h4>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Responsibilities</h3>
                 <ul className="space-y-2">
                   {previewData.responsibilities.map((responsibility, index) => (
                     <li key={index} className="flex items-start">
-                      <span className="text-blue-500 mr-3 mt-1">•</span>
-                      <span className="text-gray-700 dark:text-gray-300">{responsibility}</span>
+                      <span className="text-blue-500 mr-2">•</span>
+                      <span className="text-gray-700">{responsibility}</span>
                     </li>
                   ))}
                 </ul>
@@ -1035,16 +1326,12 @@ const JobPostingForm = () => {
             {/* Benefits */}
             {previewData.benefits?.length > 0 && (
               <div>
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Benefits & Perks</h4>
-                <ul className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Benefits</h3>
+                <ul className="space-y-2">
                   {previewData.benefits.map((benefit, index) => (
-                    <li
-                      key={index}
-                      className="benefit-item-3d flex items-start p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 transform hover:scale-105 transition-all duration-300"
-                      style={{ '--delay': index }}
-                    >
-                      <span className="text-green-500 mr-3 mt-1 text-lg animate-pulse">✓</span>
-                      <span className="text-gray-700 dark:text-gray-300 font-medium">{benefit}</span>
+                    <li key={index} className="flex items-start">
+                      <span className="text-green-500 mr-2">✓</span>
+                      <span className="text-gray-700">{benefit}</span>
                     </li>
                   ))}
                 </ul>
@@ -1053,21 +1340,21 @@ const JobPostingForm = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 px-8 py-6 flex items-center justify-between border-t border-purple-200 dark:border-purple-700">
+          <div className="bg-gray-50 px-6 py-4 flex items-center justify-between">
             <button
               type="button"
               onClick={handleEdit}
-              className="px-6 py-3 border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-all duration-300 flex items-center transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="btn-outline flex items-center"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit Job
             </button>
-
+            
             <div className="flex space-x-3">
               <button
                 type="button"
                 onClick={() => setShowPreview(false)}
-                className="px-6 py-3 border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-all duration-300 transform hover:scale-105"
+                className="btn-outline"
               >
                 Cancel
               </button>
@@ -1075,7 +1362,7 @@ const JobPostingForm = () => {
                 type="button"
                 onClick={handlePostJob}
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 flex items-center disabled:opacity-50 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                className="btn-primary flex items-center"
               >
                 {isSubmitting ? (
                   <>
@@ -1182,6 +1469,7 @@ const JobPostingForm = () => {
                       : '0 8px 25px rgba(139, 92, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 0 15px rgba(139, 92, 246, 0.1)',
                     minHeight: '44px' // iOS touch target minimum
                   }}
+                  disabled={isSubmitting}
                 >
                   {/* 3D Button Background Effect */}
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-b from-white/20 to-transparent opacity-50"></div>
@@ -1199,7 +1487,7 @@ const JobPostingForm = () => {
 
                   {/* Text with 3D effect - responsive */}
                   <span className="relative z-10 drop-shadow-sm hidden sm:inline">
-                    {isRecording ? 'Stop Recording' : isProcessingVoice ? 'Processing...' : 'Fill with Voice'}
+                    {isRecording ? 'Stop Recording' : isProcessingVoice ? 'Processing...' : 'Voice Input'}
                   </span>
                   <span className="relative z-10 drop-shadow-sm sm:hidden">
                     {isRecording ? 'Stop' : isProcessingVoice ? '...' : 'Voice'}
@@ -1220,7 +1508,10 @@ const JobPostingForm = () => {
           {!isRecording && !isProcessingVoice && (
             <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-700">
               <p className="text-sm text-purple-800 dark:text-purple-200">
-                <strong>🎤 AI Voice Input:</strong> "Software Engineer at Google, Technology industry, Full-time job, contact John Smith at 9876543210"
+                <strong>🎤 AI Voice Input:</strong> "Software Engineer at Google, full-time, technology, I am John Smith, 9876543210"
+              </p>
+              <p className="text-xs text-purple-600 dark:text-purple-300 mt-1">
+                Powered by OpenAI Whisper for accurate speech recognition
               </p>
             </div>
           )}
@@ -1233,7 +1524,7 @@ const JobPostingForm = () => {
                   Voice Entry Progress
                 </span>
                 <span className="text-xs text-blue-600 dark:text-blue-300">
-                  {isRecording ? `Recording: ${recordingTime}/30 seconds` : 'Processing...'}
+                  {currentVoiceField !== null ? `Field ${currentVoiceField + 1} of ${voiceFields.length}` : 'Initializing...'}
                 </span>
               </div>
               <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
@@ -1244,14 +1535,14 @@ const JobPostingForm = () => {
               </div>
               <div className="flex justify-between items-center mt-2">
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  {isRecording ? 'Speak clearly about the job details...' :
-                   isProcessingVoice ? 'Processing with OpenAI...' :
+                  {isRecording ? `Recording: ${recordingTime}/15 seconds` :
+                   isProcessing ? 'Processing with OpenAI...' :
                    'Voice input active'}
                 </p>
                 {isRecording && (
                   <button
                     type="button"
-                    onClick={stopVoiceRecording}
+                    onClick={stopRecording}
                     className="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
                   >
                     Stop Recording

@@ -469,7 +469,7 @@ const StudentAssessment = () => {
         return (
           <div className="form-section">
             <h3 className="text-xl font-semibold mb-6">Basic Information</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               <div className="form-group">
                 <label className="form-label">Full Name *</label>
@@ -524,14 +524,14 @@ const StudentAssessment = () => {
                     onClick={() => setDegreeDropdownOpen(!degreeDropdownOpen)}
                     className="input-field flex items-center justify-between w-full text-left"
                   >
-                    <span className={selectedDegree ? 'text-gray-900' : 'text-gray-500'}>
+                    <span className={selectedDegree ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-300'}>
                       {selectedDegree || 'Select Degree'}
                     </span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${degreeDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
 
                   {degreeDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                       {['BE', 'BTech', 'MSc', 'MTech', 'MBA', 'BBA', 'BCom', 'BCA', 'MCA'].map((degree) => (
                         <button
                           key={degree}
@@ -603,7 +603,7 @@ const StudentAssessment = () => {
               </div>
               <h3 className="text-xl font-semibold">Core Values Assessment</h3>
             </div>
-            <p className="text-gray-600 mb-6">Select the 5 core values that matter most to you from the list below.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">Select the 5 core values that matter most to you from the list below.</p>
             
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
@@ -626,7 +626,7 @@ const StudentAssessment = () => {
                       className={`p-3 rounded-lg border-2 transition-all duration-200 text-sm font-medium ${
                         isSelected
                           ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
-                          : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50'
+                          : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
                       } ${
                         !isSelected && selectedCoreValues.length >= 5
                           ? 'opacity-50 cursor-not-allowed'
@@ -675,14 +675,14 @@ const StudentAssessment = () => {
               </div>
               <h3 className="text-xl font-semibold">Work Preferences Assessment</h3>
             </div>
-            <p className="text-gray-600 mb-6">Please adjust each slider to reflect your work preferences. All sliders must be moved from their default position to continue.</p>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">Please adjust each slider to reflect your work preferences. All sliders must be moved from their default position to continue.</p>
             
             <div className="space-y-8">
               {/* Question 1 */}
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">Do you prefer working independently or with others?</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Independently</span>
                     <span>With Others</span>
                   </div>
@@ -716,7 +716,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">Do you thrive on routines or flexibility?</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Routines</span>
                     <span>Flexibility</span>
                   </div>
@@ -750,7 +750,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">What work pace energizes you most?</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Steady Pace</span>
                     <span>Fast Pace</span>
                   </div>
@@ -784,7 +784,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">Do you like switching tasks or going deep into one?</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Switching Tasks</span>
                     <span>Deep Focus</span>
                   </div>
@@ -818,7 +818,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">Do you like building things or thinking about big ideas?</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Building Things</span>
                     <span>Big Ideas</span>
                   </div>
@@ -877,7 +877,7 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q1 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
@@ -892,7 +892,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I enjoy taking on leadership roles in projects</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -902,14 +902,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q2 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -917,7 +917,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I'm comfortable with ambiguous or unclear tasks</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -927,14 +927,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q3 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -942,7 +942,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I prefer structured, well-defined processes</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -952,14 +952,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q4 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -967,7 +967,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I enjoy learning new technologies and tools</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -977,14 +977,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q5 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -992,7 +992,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I work better under pressure and tight deadlines</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -1002,14 +1002,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q6 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -1017,7 +1017,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I prefer creative problem-solving over following procedures</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -1027,14 +1027,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q7 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -1042,7 +1042,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I enjoy mentoring and helping others grow</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -1052,14 +1052,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q8 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -1067,7 +1067,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I'm motivated by challenging, complex problems</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -1077,14 +1077,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q9 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
@@ -1092,7 +1092,7 @@ const StudentAssessment = () => {
               <div className="space-y-4">
                 <h4 className="font-medium text-gray-900">I value work-life balance over career advancement</h4>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Strongly Disagree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
@@ -1102,14 +1102,14 @@ const StudentAssessment = () => {
                         className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                           bubbleAnswers.q10 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
-                            : 'border-gray-300 bg-white text-gray-700 hover:border-primary-400'
+                            : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
                         }`}
                       >
                         {value}
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">Strongly Agree</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
             </div>

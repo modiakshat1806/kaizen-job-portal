@@ -1,6 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const { SpeechConfig, AudioConfig, SpeechRecognizer, SpeechSynthesizer } = require('microsoft-cognitiveservices-speech-sdk');
 const OpenAI = require('openai');
 const router = express.Router();
 
@@ -8,10 +7,11 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 25 * 1024 * 1024 // 25MB limit for Whisper
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('audio/')) {
+    // Accept audio files and video files (for webm)
+    if (file.mimetype.startsWith('audio/') || file.mimetype.includes('webm')) {
       cb(null, true);
     } else {
       cb(new Error('Only audio files are allowed'));
@@ -19,306 +19,156 @@ const upload = multer({
   }
 });
 
-// Initialize Azure Speech and OpenAI clients
-const speechConfig = SpeechConfig.fromSubscription(
-  process.env.AZURE_SPEECH_KEY,
-  process.env.AZURE_SPEECH_REGION
-);
-
+// Initialize OpenAI client
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Configure speech recognition for noise robustness and Indian accents
-speechConfig.speechRecognitionLanguage = "en-IN";
-speechConfig.setProperty("SpeechServiceConnection_EnableAudioLogging", "false");
-speechConfig.setProperty("SpeechServiceConnection_InitialSilenceTimeoutMs", "5000");
-speechConfig.setProperty("SpeechServiceConnection_EndSilenceTimeoutMs", "2000");
-
-// POST /api/voice/synthesize - Text to Speech
-router.post('/synthesize', async (req, res) => {
-  try {
-    const { text, voiceConfig = {} } = req.body;
-
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
-    }
-
-    // Configure voice settings for professional male voice
-    const synthesizer = new SpeechSynthesizer(speechConfig);
-    
-    // Use SSML for better voice control
-    const ssml = `
-      <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
-        <voice name="en-US-DavisNeural">
-          <prosody rate="${voiceConfig.rate || '0.9'}" pitch="${voiceConfig.pitch || '-5%'}">
-            ${text}
-          </prosody>
-        </voice>
-      </speak>
-    `;
-
-    synthesizer.speakSsmlAsync(
-      ssml,
-      (result) => {
-        if (result.reason === 1) { // Success
-          res.set({
-            'Content-Type': 'audio/wav',
-            'Content-Length': result.audioData.byteLength
-          });
-          res.send(Buffer.from(result.audioData));
-        } else {
-          res.status(500).json({ error: 'Speech synthesis failed' });
-        }
-        synthesizer.close();
-      },
-      (error) => {
-        console.error('TTS Error:', error);
-        res.status(500).json({ error: 'Speech synthesis error' });
-        synthesizer.close();
-      }
-    );
-
-  } catch (error) {
-    console.error('TTS Route Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// POST /api/voice/recognize - Speech to Text with noise handling
-router.post('/recognize', upload.single('audio'), async (req, res) => {
+// POST /api/voice/transcribe - Speech to Text using OpenAI Whisper
+router.post('/transcribe', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Audio file is required' });
     }
 
-    const { noiseProfile = 'conference', accentHint = 'indian' } = req.body;
+    console.log('Received audio file:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size
+    });
 
-    // Configure audio input from buffer
-    const audioConfig = AudioConfig.fromWavFileInput(req.file.buffer);
-    
-    // Configure recognition for specific scenarios
-    const recognitionConfig = { ...speechConfig };
-    
-    // Adjust for noise environment
-    switch (noiseProfile) {
-      case 'conference':
-        recognitionConfig.setProperty("SpeechServiceConnection_SingleShotMode", "true");
-        recognitionConfig.setProperty("SpeechServiceConnection_EnableAudioLogging", "false");
-        break;
-      case 'crowd':
-        recognitionConfig.setProperty("SpeechServiceConnection_InitialSilenceTimeoutMs", "3000");
-        recognitionConfig.setProperty("SpeechServiceConnection_EndSilenceTimeoutMs", "1500");
-        break;
-    }
+    // Create a File object for OpenAI Whisper
+    const audioFile = new File([req.file.buffer], req.file.originalname || 'audio.webm', {
+      type: req.file.mimetype
+    });
 
-    // Adjust for accent hints
-    if (accentHint === 'indian') {
-      recognitionConfig.speechRecognitionLanguage = "en-IN";
-    }
+    // Use OpenAI Whisper for transcription
+    const transcription = await openai.audio.transcriptions.create({
+      file: audioFile,
+      model: 'whisper-1',
+      language: 'en', // English with support for Indian accents
+      response_format: 'verbose_json', // Get detailed response with confidence
+      temperature: 0.2 // Lower temperature for more accurate transcription
+    });
 
-    const recognizer = new SpeechRecognizer(recognitionConfig, audioConfig);
+    console.log('Whisper transcription result:', transcription);
 
-    recognizer.recognizeOnceAsync(
-      (result) => {
-        if (result.reason === 3) { // RecognizedSpeech
-          res.json({
-            transcript: result.text,
-            confidence: result.properties.getProperty('SpeechServiceResponse_JsonResult') || 0.8,
-            duration: result.duration / 10000000, // Convert to seconds
-            language: recognitionConfig.speechRecognitionLanguage
-          });
-        } else {
-          res.status(400).json({ 
-            error: 'Speech not recognized',
-            reason: result.reason,
-            errorDetails: result.errorDetails
-          });
-        }
-        recognizer.close();
-      },
-      (error) => {
-        console.error('STT Error:', error);
-        res.status(500).json({ error: 'Speech recognition error' });
-        recognizer.close();
-      }
-    );
+    res.json({
+      transcript: transcription.text,
+      language: transcription.language,
+      duration: transcription.duration,
+      segments: transcription.segments || []
+    });
 
   } catch (error) {
-    console.error('STT Route Error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Whisper transcription error:', error);
+    res.status(500).json({
+      error: 'Speech transcription failed',
+      message: error.message
+    });
   }
 });
 
-// POST /api/voice/extract - NLP Entity Extraction
-router.post('/extract', async (req, res) => {
+// POST /api/voice/extract-fields - Extract form fields from transcript using OpenAI
+router.post('/extract-fields', async (req, res) => {
   try {
-    const { transcript, fieldType, context = {} } = req.body;
+    const { transcript, formType = 'student_assessment' } = req.body;
 
-    if (!transcript || !fieldType) {
-      return res.status(400).json({ error: 'Transcript and fieldType are required' });
+    if (!transcript) {
+      return res.status(400).json({ error: 'Transcript is required' });
     }
 
-    // Define field-specific extraction prompts
+    console.log('Extracting fields from transcript:', transcript);
+
+    // Define prompts for different form types
     const extractionPrompts = {
-      title: `Extract the job title from this speech: "${transcript}". Remove filler words and return only the job title.`,
-      company: `Extract the company name from this speech: "${transcript}". Remove filler words and return only the company name.`,
-      type: `Extract the job type from this speech: "${transcript}". Standardize to one of: Full-time, Part-time, Contract, Internship. If unclear, return "Full-time".`,
-      industry: `Extract the industry from this speech: "${transcript}". Standardize to common industry names like Technology, Finance, Healthcare, etc.`,
-      recruiterName: `Extract the person's name from this speech: "${transcript}". Return only the name, removing titles or filler words.`,
-      recruiterContact: `Extract the phone number from this speech: "${transcript}". Return only the phone number in a clean format.`
+      student_assessment: `
+        Extract the following information from this speech transcript and return it as a JSON object:
+        - name: Full name of the person
+        - email: Email address
+        - phone: Phone number (10 digits, clean format)
+        - degree: Educational degree (BE, BTech, MSc, MTech, MBA, BBA, BCom, BCA, MCA)
+        - specialization: Field of study/specialization
+        - institution: College/University name
+        - graduationYear: Year of graduation (4 digits)
+
+        Transcript: "${transcript}"
+
+        Return only valid JSON with the extracted fields. If a field is not mentioned, use null.
+        Example: {"name": "John Doe", "email": "john@example.com", "phone": "9876543210", "degree": "BTech", "specialization": "Computer Science", "institution": "ABC University", "graduationYear": 2024}
+      `,
+      job_posting: `
+        Extract job posting information from this speech transcript and return it as a JSON object:
+        - title: Job title (e.g., "Software Engineer", "Data Scientist")
+        - company: Company name
+        - description: Brief job description
+        - location: Job location/city
+        - salary: Salary range or amount (extract numbers)
+        - requirements: Experience requirements or skills mentioned
+        - industry: Industry type (must be one of: Technology, Healthcare, Finance, Education, Retail, Manufacturing, Consulting, Marketing, Government, Non-profit, Other)
+        - jobType: Employment type (must be one of: Full-time, Part-time, Contract, Internship, Freelance, Remote)
+        - contactName: Contact person name
+        - contactPhone: Contact phone number
+
+        Transcript: "${transcript}"
+
+        Return only valid JSON with the extracted fields. If a field is not mentioned, use null.
+        IMPORTANT: For industry, use exact values: Technology, Healthcare, Finance, Education, Retail, Manufacturing, Consulting, Marketing, Government, Non-profit, Other
+        IMPORTANT: For jobType, use exact values: Full-time, Part-time, Contract, Internship, Freelance, Remote
+
+        Example: {"title": "Software Engineer", "company": "Google", "description": "Develop web applications", "location": "Bangalore", "salary": "800000", "requirements": "3 years experience", "industry": "Technology", "jobType": "Full-time", "contactName": "John Smith", "contactPhone": "9876543210"}
+      `
     };
 
-    const prompt = extractionPrompts[fieldType] || `Extract relevant information for ${fieldType} from: "${transcript}"`;
+    const prompt = extractionPrompts[formType] || extractionPrompts.student_assessment;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "You are an expert at extracting specific information from speech transcripts. Always return only the requested information, cleaned of filler words and formatted appropriately."
+          content: "You are an expert at extracting structured information from speech transcripts. Always return valid JSON only, no additional text or explanations."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      max_tokens: 100,
+      max_tokens: 500,
       temperature: 0.1
     });
 
-    const extractedValue = completion.choices[0].message.content.trim();
+    const extractedText = completion.choices[0].message.content.trim();
+    console.log('OpenAI extraction result:', extractedText);
 
-    // Post-process based on field type
-    let processedValue = extractedValue;
-    
-    switch (fieldType) {
-      case 'type':
-        // Ensure job type is standardized
-        const jobTypes = ['Full-time', 'Part-time', 'Contract', 'Internship'];
-        const matchedType = jobTypes.find(type => 
-          extractedValue.toLowerCase().includes(type.toLowerCase())
-        );
-        processedValue = matchedType || 'Full-time';
-        break;
-        
-      case 'recruiterContact':
-        // Clean phone number format
-        processedValue = extractedValue.replace(/[^\d\+\-\s\(\)]/g, '');
-        break;
-    }
-
-    res.json({
-      extractedValue: processedValue,
-      originalTranscript: transcript,
-      fieldType: fieldType,
-      confidence: 0.9, // Could be enhanced with actual confidence scoring
-      processingTime: Date.now()
-    });
-
-  } catch (error) {
-    console.error('NLP Extraction Error:', error);
-    res.status(500).json({ error: 'Entity extraction failed' });
-  }
-});
-
-// POST /api/voice/validate - Validate extracted information
-router.post('/validate', async (req, res) => {
-  try {
-    const { fieldType, value, context = {} } = req.body;
-
-    if (!fieldType || !value) {
-      return res.status(400).json({ error: 'FieldType and value are required' });
-    }
-
-    const validationRules = {
-      title: {
-        minLength: 2,
-        maxLength: 100,
-        pattern: /^[a-zA-Z0-9\s\-\+\.]+$/
-      },
-      company: {
-        minLength: 2,
-        maxLength: 100,
-        pattern: /^[a-zA-Z0-9\s\-\+\.&]+$/
-      },
-      type: {
-        allowedValues: ['Full-time', 'Part-time', 'Contract', 'Internship']
-      },
-      recruiterContact: {
-        pattern: /^[\d\+\-\s\(\)]{10,15}$/
-      }
-    };
-
-    const rules = validationRules[fieldType];
-    let isValid = true;
-    let errors = [];
-
-    if (rules) {
-      if (rules.minLength && value.length < rules.minLength) {
-        isValid = false;
-        errors.push(`Minimum length is ${rules.minLength}`);
-      }
-      
-      if (rules.maxLength && value.length > rules.maxLength) {
-        isValid = false;
-        errors.push(`Maximum length is ${rules.maxLength}`);
-      }
-      
-      if (rules.pattern && !rules.pattern.test(value)) {
-        isValid = false;
-        errors.push('Invalid format');
-      }
-      
-      if (rules.allowedValues && !rules.allowedValues.includes(value)) {
-        isValid = false;
-        errors.push(`Must be one of: ${rules.allowedValues.join(', ')}`);
+    // Parse the JSON response
+    let extractedFields;
+    try {
+      extractedFields = JSON.parse(extractedText);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      // Try to extract JSON from the response if it's wrapped in other text
+      const jsonMatch = extractedText.match(/\{.*\}/s);
+      if (jsonMatch) {
+        extractedFields = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('Could not parse extracted fields as JSON');
       }
     }
 
     res.json({
-      isValid,
-      errors,
-      fieldType,
-      value,
-      suggestions: isValid ? [] : generateSuggestions(fieldType, value)
+      transcript,
+      extractedFields,
+      success: true
     });
 
   } catch (error) {
-    console.error('Validation Error:', error);
-    res.status(500).json({ error: 'Validation failed' });
+    console.error('Field extraction error:', error);
+    res.status(500).json({
+      error: 'Failed to extract fields from transcript',
+      message: error.message
+    });
   }
-});
-
-// Helper function to generate suggestions for invalid values
-function generateSuggestions(fieldType, value) {
-  const suggestions = [];
-  
-  switch (fieldType) {
-    case 'type':
-      suggestions.push('Try saying: "Full-time", "Part-time", "Contract", or "Internship"');
-      break;
-    case 'recruiterContact':
-      suggestions.push('Please provide a valid phone number with country code');
-      break;
-    default:
-      suggestions.push('Please try speaking more clearly');
-  }
-  
-  return suggestions;
-}
-
-// Error handling middleware
-router.use((error, req, res, next) => {
-  console.error('Voice API Error:', error);
-  
-  if (error instanceof multer.MulterError) {
-    if (error.code === 'LIMIT_FILE_SIZE') {
-      return res.status(400).json({ error: 'Audio file too large' });
-    }
-  }
-  
-  res.status(500).json({ error: 'Internal server error' });
 });
 
 module.exports = router;

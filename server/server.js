@@ -10,6 +10,7 @@ const jobRoutes = require('./routes/job');
 const fitmentRoutes = require('./routes/fitment');
 const recommendationsRoutes = require('./routes/recommendations');
 const adminRoutes = require('./routes/admin');
+const voiceRoutes = require('./routes/voice');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,6 +36,7 @@ app.use('/api/job', jobRoutes);
 app.use('/api/fitment', fitmentRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/voice', voiceRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -55,7 +57,7 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT, 'localhost', () => {
+  console.log(`Server running on http://localhost:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-}); 
+});
