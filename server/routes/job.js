@@ -9,10 +9,10 @@ const validateJobData = [
   body('title').trim().isLength({ min: 3 }).withMessage('Job title must be at least 3 characters'),
   body('company.name').trim().isLength({ min: 2 }).withMessage('Company name must be at least 2 characters'),
   body('description').isLength({ min: 10 }).withMessage('Job description must be at least 10 characters'),
-  body('requirements.education').isIn(['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Any']).withMessage('Invalid education requirement'),
-  body('jobType').isIn(['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance']).withMessage('Invalid job type'),
-  body('industry').notEmpty().withMessage('Industry is required'),
-  body('location.type').isIn(['Remote', 'On-site', 'Hybrid']).withMessage('Invalid location type'),
+  body('requirements.education').optional().isIn(['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Any']).withMessage('Invalid education requirement'),
+  body('jobType').optional().isIn(['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance']).withMessage('Invalid job type'),
+  body('industry').optional().notEmpty().withMessage('Industry is required'),
+  body('location.type').optional().isIn(['Remote', 'On-site', 'Hybrid']).withMessage('Invalid location type'),
   body('contactPerson.name').trim().isLength({ min: 2 }).withMessage('Contact person name must be at least 2 characters'),
   body('contactPerson.phone').trim().isLength({ min: 10 }).withMessage('Contact person phone must be at least 10 characters')
 ];

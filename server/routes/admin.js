@@ -41,18 +41,28 @@ router.get('/jobs', async (req, res) => {
     const totalJobs = await Job.countDocuments(filter);
     const totalPages = Math.ceil(totalJobs / limit);
 
-    // Get summary statistics
-    const stats = await Job.aggregate([
+    // Get summary statistics - calculate from all jobs, not filtered
+    const allJobsStats = await Job.aggregate([
       {
         $group: {
           _id: null,
           totalJobs: { $sum: 1 },
-          activeJobs: { $sum: { $cond: ['$isActive', 1, 0] } },
-          inactiveJobs: { $sum: { $cond: ['$isActive', 0, 1] } },
-          totalApplications: { $sum: '$applicationCount' }
+          activeJobs: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } },
+          inactiveJobs: { $sum: { $cond: [{ $eq: ['$isActive', false] }, 1, 0] } },
+          totalApplications: { $sum: { $ifNull: ['$applicationCount', 0] } }
         }
       }
     ]);
+
+    // If no jobs exist, provide default stats
+    const stats = allJobsStats.length > 0 ? allJobsStats[0] : {
+      totalJobs: 0,
+      activeJobs: 0,
+      inactiveJobs: 0,
+      totalApplications: 0
+    };
+
+
 
     res.json({
       message: 'Jobs retrieved successfully',
@@ -64,12 +74,7 @@ router.get('/jobs', async (req, res) => {
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1
       },
-      stats: stats[0] || {
-        totalJobs: 0,
-        activeJobs: 0,
-        inactiveJobs: 0,
-        totalApplications: 0
-      }
+      stats: stats
     });
 
   } catch (error) {

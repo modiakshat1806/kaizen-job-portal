@@ -41,7 +41,7 @@ const jobSchema = new mongoose.Schema({
   requirements: {
     education: {
       type: String,
-      required: true,
+      required: false,
       enum: ['High School', 'Bachelor', 'Master', 'PhD', 'Diploma', 'Any']
     },
     experience: {
@@ -83,11 +83,11 @@ const jobSchema = new mongoose.Schema({
   jobType: {
     type: String,
     enum: ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'],
-    required: true
+    required: false
   },
   industry: {
     type: String,
-    required: true
+    required: false
   },
   department: String,
   applicationDeadline: Date,
