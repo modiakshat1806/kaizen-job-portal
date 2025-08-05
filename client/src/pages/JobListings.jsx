@@ -1,28 +1,55 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { 
+import {
   Building, MapPin, Clock, DollarSign, Search, Filter,
-  ArrowLeft, Eye, Heart, Share2, Briefcase
+  ArrowLeft, Eye, Heart, Share2, Briefcase, Send, Bookmark
 } from 'lucide-react'
-import { jobAPI } from '../services/api'
+import { jobAPI, jobApplicationAPI } from '../services/api'
 
 const JobListings = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
   const [filteredJobs, setFilteredJobs] = useState([])
   const [selectedRole, setSelectedRole] = useState('')
   const [savedJobs, setSavedJobs] = useState([])
+  const [fromCareerMatch, setFromCareerMatch] = useState(false)
+  const [studentPhone, setStudentPhone] = useState('')
+  const [applying, setApplying] = useState({})
+  const [assessmentState, setAssessmentState] = useState(null)
 
   useEffect(() => {
     const role = searchParams.get('role')
+    const fromAssessment = searchParams.get('fromAssessment')
+    const phone = searchParams.get('phone')
+
+
+
     if (role) {
       setSelectedRole(decodeURIComponent(role))
     }
+
+    // Set fromCareerMatch if we have fromAssessment parameter
+    if (fromAssessment === 'true') {
+      setFromCareerMatch(true)
+
+    }
+
+    if (phone) {
+      setStudentPhone(phone)
+    }
+
+    // Get assessment state from navigation state
+    if (location.state?.careerMatchState) {
+      setAssessmentState(location.state.careerMatchState)
+
+    }
+
     fetchJobs()
-  }, [searchParams])
+  }, [searchParams, location.state])
 
   useEffect(() => {
     filterJobs()
@@ -47,11 +74,24 @@ const JobListings = () => {
       return
     }
 
-    const filtered = jobs.filter(job => 
-      job.title.toLowerCase().includes(selectedRole.toLowerCase()) ||
-      job.company.name.toLowerCase().includes(selectedRole.toLowerCase()) ||
-      job.industry.toLowerCase().includes(selectedRole.toLowerCase())
-    )
+
+
+    const filtered = jobs.filter(job => {
+      if (!job.title) return false
+
+      const jobTitle = job.title.toLowerCase()
+      const searchRole = selectedRole.toLowerCase()
+
+      // More precise matching - check if job title contains the role or vice versa
+      const titleMatch = jobTitle.includes(searchRole) || searchRole.includes(jobTitle)
+
+      // Also check industry and company for broader matches
+      const industryMatch = job.industry && job.industry.toLowerCase().includes(searchRole)
+      const companyMatch = job.company?.name && job.company.name.toLowerCase().includes(searchRole)
+
+      return titleMatch || industryMatch || companyMatch
+    })
+
     setFilteredJobs(filtered)
   }
 
@@ -64,15 +104,44 @@ const JobListings = () => {
     }).format(amount || 0)
   }
 
-  const handleSaveJob = (jobId) => {
-    setSavedJobs(prev => {
-      if (prev.includes(jobId)) {
-        return prev.filter(id => id !== jobId)
+  const handleSaveJob = async (job) => {
+    if (!studentPhone) {
+      toast.error('Please complete your assessment first')
+      return
+    }
+
+    try {
+      await jobApplicationAPI.saveJob(studentPhone, job.jobId)
+      setSavedJobs(prev => [...prev, job.jobId])
+      toast.success('Job saved successfully!')
+    } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('already saved')) {
+        toast.error('Job already saved')
       } else {
-        return [...prev, jobId]
+        toast.error('Failed to save job')
       }
-    })
-    toast.success('Job saved successfully!')
+    }
+  }
+
+  const handleApplyJob = async (job) => {
+    if (!studentPhone) {
+      toast.error('Please complete your assessment first')
+      return
+    }
+
+    setApplying(prev => ({ ...prev, [job.jobId]: true }))
+    try {
+      await jobApplicationAPI.applyForJob(studentPhone, job.jobId, 85) // Default fitment score
+      toast.success('Application submitted successfully!')
+    } catch (error) {
+      if (error.response?.status === 400 && error.response?.data?.error?.includes('already applied')) {
+        toast.error('You have already applied for this job')
+      } else {
+        toast.error('Failed to submit application')
+      }
+    } finally {
+      setApplying(prev => ({ ...prev, [job.jobId]: false }))
+    }
   }
 
   const handleShareJob = async (job) => {
@@ -116,13 +185,26 @@ const JobListings = () => {
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </button>
+        {fromCareerMatch ? (
+          <button
+            onClick={() => {
+              // Navigate back to career match page
+              navigate('/career-match')
+            }}
+            className="flex items-center text-blue-600 hover:text-blue-800 mb-4 font-medium"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Career Matches
+          </button>
+        ) : (
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back
+          </button>
+        )}
         
         <div className="flex items-center justify-between">
           <div>
@@ -178,12 +260,12 @@ const JobListings = () => {
                       </h3>
                       <div className="flex items-center text-gray-600 mb-2">
                         <Building className="w-4 h-4 mr-2" />
-                        <span className="font-medium">{job.company.name}</span>
+                        <span className="font-medium">{job.company?.name || 'Company Name'}</span>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm font-medium">
-                        {job.jobType}
+                        {job.jobType || 'Full-time'}
                       </span>
                     </div>
                   </div>
@@ -192,13 +274,13 @@ const JobListings = () => {
                     <div className="flex items-center text-gray-600">
                       <MapPin className="w-4 h-4 mr-2" />
                       <span>
-                        {job.location.type === 'Remote' ? 'Remote' : 
-                         `${job.location.city || ''}, ${job.location.state || ''}, ${job.location.country || ''}`}
+                        {job.location?.type === 'Remote' ? 'Remote' :
+                         `${job.location?.city || ''}, ${job.location?.state || ''}, ${job.location?.country || ''}`.replace(/^,\s*|,\s*$/g, '') || 'Location not specified'}
                       </span>
                     </div>
                     <div className="flex items-center text-gray-600">
                       <Clock className="w-4 h-4 mr-2" />
-                      <span>{job.industry}</span>
+                      <span>{job.industry || 'Industry not specified'}</span>
                     </div>
                     {job.salary?.min && (
                       <div className="flex items-center text-gray-600">
@@ -211,34 +293,54 @@ const JobListings = () => {
                   </div>
 
                   <p className="text-gray-700 line-clamp-2 mb-4">
-                    {job.description.substring(0, 200)}...
+                    {job.description ? job.description.substring(0, 200) + '...' : 'No description available'}
                   </p>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <span className="text-sm text-gray-500">
-                        Posted {new Date(job.createdAt).toLocaleDateString()}
+                        Posted {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'Recently'}
                       </span>
                     </div>
                     
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleViewJob(job.jobId)}
-                        className="btn-primary text-sm py-2 px-4"
+                        className="btn-outline text-sm py-2 px-3"
                       >
                         <Eye className="w-4 h-4 mr-1" />
-                        View Details
+                        View
                       </button>
-                      <button
-                        onClick={() => handleSaveJob(job._id)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          savedJobs.includes(job._id)
-                            ? 'text-red-500 bg-red-50 hover:bg-red-100'
-                            : 'text-gray-400 hover:text-red-500 hover:bg-red-50'
-                        }`}
-                      >
-                        <Heart className={`w-4 h-4 ${savedJobs.includes(job._id) ? 'fill-current' : ''}`} />
-                      </button>
+
+                      {studentPhone && (
+                        <>
+                          <button
+                            onClick={() => handleApplyJob(job)}
+                            disabled={applying[job.jobId]}
+                            className="btn-primary text-sm py-2 px-3 disabled:opacity-50"
+                          >
+                            <Send className="w-4 h-4 mr-1" />
+                            {applying[job.jobId] ? 'Applying...' : 'Apply'}
+                          </button>
+
+                          <button
+                            onClick={() => handleSaveJob(job)}
+                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Save Job"
+                          >
+                            <Bookmark className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+
+                      {!studentPhone && (
+                        <button
+                          onClick={() => navigate('/assessment')}
+                          className="btn-primary text-sm py-2 px-3"
+                        >
+                          Complete Assessment to Apply
+                        </button>
+                      )}
                       <button
                         onClick={() => handleShareJob(job)}
                         className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"

@@ -95,18 +95,24 @@ const JobDetail = () => {
   }
 
   const handleCheckFitmentWithPhone = async (phone) => {
+    console.log('handleCheckFitmentWithPhone called with:', { phone, jobId })
     setCalculatingFitment(true)
     try {
       // First check if student exists
+      console.log('Checking if student exists for phone:', phone)
       const studentResponse = await studentAPI.getByPhone(phone)
+      console.log('Student response:', studentResponse.data)
 
       if (studentResponse.data.student) {
         // Student exists, calculate fitment
+        console.log('Student found, calculating fitment...')
         const response = await fitmentAPI.calculateFitment(phone, jobId)
+        console.log('Fitment calculation response:', response.data)
         setFitmentData(response.data.fitment)
         toast.success('Fitment calculated successfully!')
       }
     } catch (error) {
+      console.error('Error in handleCheckFitmentWithPhone:', error)
       if (error.response?.status === 404) {
         // Student not found, show new user modal
         setShowNewUserModal(true)

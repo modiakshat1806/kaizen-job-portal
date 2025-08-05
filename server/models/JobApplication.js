@@ -51,7 +51,7 @@ const jobApplicationSchema = new mongoose.Schema({
       degree: String,
       institution: String,
       graduationYear: Number,
-      specialization: String
+      field: String
     },
     skills: [String],
     experience: {
@@ -76,3 +76,4 @@ jobApplicationSchema.index({ companyName: 1 });
 jobApplicationSchema.index({ appliedAt: -1 });
 
 module.exports = mongoose.model('JobApplication', jobApplicationSchema);
+

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { 
   Building, User, Phone, Mail, GraduationCap, 
@@ -8,6 +9,7 @@ import {
 import { jobApplicationAPI } from '../services/api'
 
 const CompanyResults = () => {
+  const navigate = useNavigate()
   const [showCompanyInput, setShowCompanyInput] = useState(true)
   const [companyName, setCompanyName] = useState('')
   const [loading, setLoading] = useState(false)
@@ -98,7 +100,7 @@ const CompanyResults = () => {
               />
               <div className="flex space-x-3">
                 <button
-                  onClick={() => window.history.back()}
+                  onClick={() => navigate('/')}
                   className="btn-outline flex-1"
                 >
                   Cancel

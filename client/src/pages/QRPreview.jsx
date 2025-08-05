@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Building, MapPin, DollarSign, Users, FileText, Download, Share2, ArrowLeft, ExternalLink } from 'lucide-react'
+import { Building, MapPin, DollarSign, Users, FileText, Download, Share2, ArrowLeft, ExternalLink, Copy } from 'lucide-react'
 import { jobAPI } from '../services/api'
 
 const QRPreview = () => {
@@ -74,6 +74,17 @@ const QRPreview = () => {
         console.error('Error copying to clipboard:', error)
         toast.error('Failed to copy job URL')
       }
+    }
+  }
+
+  const copyJobUrl = async () => {
+    const jobUrl = job.generateQRCode ? job.generateQRCode() : `${window.location.origin}/job/${job.jobId}`
+    try {
+      await navigator.clipboard.writeText(jobUrl)
+      toast.success('Job URL copied to clipboard!')
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+      toast.error('Failed to copy job URL')
     }
   }
 
@@ -294,9 +305,27 @@ const QRPreview = () => {
                   </button>
                 </div>
                 
-                                 <div className="text-sm text-gray-500 space-y-1">
+                                 <div className="text-sm text-gray-500 space-y-3">
                    <p>Job ID: <span className="font-mono font-medium">{job.jobId}</span></p>
-                   <p>Job URL: <span className="font-mono font-medium">{job.generateQRCode ? job.generateQRCode() : `${window.location.origin}/job/${job.jobId}`}</span></p>
+
+                   {/* Job URL with copy functionality */}
+                   <div>
+                     <p className="mb-2">Job URL:</p>
+                     <div className="flex items-center space-x-2">
+                       <div className="flex-1 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                         <span className="font-mono text-sm text-gray-700 break-all">
+                           {job.generateQRCode ? job.generateQRCode() : `${window.location.origin}/job/${job.jobId}`}
+                         </span>
+                       </div>
+                       <button
+                         onClick={copyJobUrl}
+                         className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                         title="Copy URL"
+                       >
+                         <Copy className="w-4 h-4" />
+                       </button>
+                     </div>
+                   </div>
                  </div>
               </div>
             ) : (

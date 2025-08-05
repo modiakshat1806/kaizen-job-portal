@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Search, Filter, MapPin, Building, Clock, DollarSign, Star, TrendingUp, User } from 'lucide-react'
+import { Search, Filter, MapPin, Building, Clock, DollarSign, Star, TrendingUp, User, ArrowLeft } from 'lucide-react'
 import { jobAPI, fitmentAPI } from '../services/api'
 
 const CareerMatch = () => {
@@ -25,8 +25,8 @@ const CareerMatch = () => {
   const location = useLocation()
 
   useEffect(() => {
-    // Check if we have data from assessment submission
-    if (location.state?.fromAssessment) {
+    // Check if we have data from assessment submission or saved state
+    if (location.state?.fromAssessment || location.state?.isAIRecommendations) {
       try {
         const student = location.state.student
 
@@ -156,6 +156,19 @@ const CareerMatch = () => {
 
   return (
     <div className="max-w-6xl mx-auto">
+      {/* Back to Home button for assessment results */}
+      {fromAssessment && (
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Home
+          </button>
+        </div>
+      )}
+
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Career Match</h1>
         {fromAssessment && student ? (
@@ -425,7 +438,26 @@ const CareerMatch = () => {
                 key={index}
                 onClick={() => {
                   // Navigate to jobs page filtered by this role
-                  navigate(`/jobs?role=${encodeURIComponent(recommendation.jobTitle)}`)
+                  const params = new URLSearchParams({
+                    role: recommendation.jobTitle,
+                    fromAssessment: 'true',
+                    returnTo: 'career-match'
+                  })
+                  if (student?.phone) {
+                    params.append('phone', student.phone)
+                  }
+                  navigate(`/jobs?${params.toString()}`, {
+                    state: {
+                      careerMatchState: {
+                        recommendations,
+                        student,
+                        totalRecommendations: location.state?.totalRecommendations,
+                        fromAssessment: true,
+                        generatedAt: location.state?.generatedAt,
+                        isAIRecommendations: true
+                      }
+                    }
+                  })
                 }}
                 className="group bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border border-gray-200 dark:border-gray-700 overflow-hidden"
               >

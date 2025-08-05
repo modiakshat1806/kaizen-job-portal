@@ -45,7 +45,7 @@ const Navbar = () => {
       hasDropdown: true,
       dropdownItems: [
         { path: '/post-job', label: 'Post a Job', icon: Briefcase },
-        { path: '/results', label: 'View Applications', icon: BarChart3 }
+        { path: '/company-results', label: 'View Applications', icon: BarChart3 }
       ]
     },
   ]

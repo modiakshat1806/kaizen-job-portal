@@ -159,21 +159,121 @@ const StudentAssessment = () => {
 
 
   const calculateAssessmentScore = (data) => {
-    let technical = 50
-    let communication = 50
-    let problemSolving = 50
-    let teamwork = 50
+    console.log('Calculating assessment score with data:', data)
+    console.log('Core values:', selectedCoreValues)
+    console.log('Slider values:', sliderValues)
+    console.log('Bubble answers:', bubbleAnswers)
 
-    // Adjust based on education level
-    const educationLevels = { 'High School': 30, 'Bachelor': 60, 'Master': 80, 'PhD': 90 }
-    technical += educationLevels[data.degree] || 0
+    // Base scores
+    let technical = 40
+    let communication = 40
+    let problemSolving = 40
+    let teamwork = 40
 
-    return {
-      technical: Math.min(technical, 100),
-      communication: Math.min(communication, 100),
-      problemSolving: Math.min(problemSolving, 100),
-      teamwork: Math.min(teamwork, 100)
+    // 1. Education level adjustment (20 points max)
+    const educationLevels = {
+      'High School': 5,
+      'BTech': 15,
+      'Bachelor': 15,
+      'Master': 18,
+      'PhD': 20
     }
+    const educationBonus = educationLevels[data.degree] || 10
+    technical += educationBonus
+    problemSolving += educationBonus * 0.8
+
+    // 2. Core values assessment (15 points max per category)
+    const coreValueScores = {
+      'Technical Excellence': { technical: 15, problemSolving: 10 },
+      'Innovation': { technical: 12, problemSolving: 15 },
+      'Problem-Solving': { problemSolving: 15, technical: 8 },
+      'Collaboration': { teamwork: 15, communication: 10 },
+      'Communication': { communication: 15, teamwork: 8 },
+      'Leadership': { communication: 12, teamwork: 12 },
+      'Data-Driven': { technical: 12, problemSolving: 12 },
+      'Accountability': { teamwork: 10, problemSolving: 8 },
+      'Adaptability': { problemSolving: 10, communication: 8 },
+      'Customer Focus': { communication: 12, teamwork: 10 }
+    }
+
+    selectedCoreValues.forEach(value => {
+      const scores = coreValueScores[value] || {}
+      technical += scores.technical || 0
+      communication += scores.communication || 0
+      problemSolving += scores.problemSolving || 0
+      teamwork += scores.teamwork || 0
+    })
+
+    // 3. Work preferences (slider values) - 15 points max per category
+    if (sliderValues.independence >= 70) {
+      technical += 10
+      problemSolving += 8
+    }
+    if (sliderValues.routine <= 30) {
+      problemSolving += 12
+      technical += 8
+    }
+    if (sliderValues.pace >= 60) {
+      technical += 8
+      problemSolving += 10
+    }
+    if (sliderValues.focus >= 60) {
+      technical += 12
+      problemSolving += 8
+    }
+    if (sliderValues.approach >= 60) {
+      communication += 10
+      teamwork += 12
+    }
+
+    // 4. Work style questions (bubble answers) - 10 points max per category
+    Object.values(bubbleAnswers).forEach((answer, index) => {
+      // Different questions contribute to different skills
+      switch(index) {
+        case 0: // Problem approach
+          if (answer >= 3) {
+            problemSolving += 8
+            technical += 5
+          }
+          break
+        case 1: // Team collaboration
+          if (answer >= 3) {
+            teamwork += 8
+            communication += 5
+          }
+          break
+        case 2: // Communication style
+          if (answer >= 3) {
+            communication += 8
+            teamwork += 4
+          }
+          break
+        case 3: // Technical challenges
+          if (answer >= 3) {
+            technical += 8
+            problemSolving += 4
+          }
+          break
+        default:
+          // Other questions contribute generally
+          if (answer >= 3) {
+            technical += 2
+            communication += 2
+            problemSolving += 2
+            teamwork += 2
+          }
+      }
+    })
+
+    const finalScores = {
+      technical: Math.min(Math.max(technical, 20), 100),
+      communication: Math.min(Math.max(communication, 20), 100),
+      problemSolving: Math.min(Math.max(problemSolving, 20), 100),
+      teamwork: Math.min(Math.max(teamwork, 20), 100)
+    }
+
+    console.log('Calculated assessment scores:', finalScores)
+    return finalScores
   }
 
   const nextStep = () => {

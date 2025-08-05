@@ -202,7 +202,20 @@ Please respond in the following JSON format:
     });
 
     const response = completion.choices[0].message.content;
-    const fitmentData = JSON.parse(response);
+    console.log('OpenAI fitment response:', response);
+
+    // Clean the response to extract JSON from markdown if needed
+    let cleanedResponse = response.trim();
+
+    // Remove markdown code blocks if present
+    if (cleanedResponse.startsWith('```json')) {
+      cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (cleanedResponse.startsWith('```')) {
+      cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+
+    console.log('Cleaned OpenAI response:', cleanedResponse);
+    const fitmentData = JSON.parse(cleanedResponse);
 
     return {
       score: Math.min(Math.max(fitmentData.score, 0), 100), // Ensure score is between 0-100

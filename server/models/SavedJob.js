@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const savedJobSchema = new mongoose.Schema({
+
   studentPhone: {
     type: String,
     required: true,
