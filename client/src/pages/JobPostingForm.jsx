@@ -817,24 +817,21 @@ const JobPostingForm = () => {
         jobData.department = cleanValue(data.department)
       }
 
-      // Only include salary if min or max is provided and not empty
-      if ((data.salary?.min && data.salary.min > 0) || (data.salary?.max && data.salary.max > 0)) {
+      // Only include salary if amount is provided and not empty
+      if (data.salary?.amount && data.salary.amount > 0) {
         jobData.salary = {
-          min: data.salary?.min || undefined,
-          max: data.salary?.max || undefined,
+          amount: data.salary.amount,
           currency: 'INR',
           period: cleanValue(data.salary?.period) || 'Yearly'
         }
       }
 
       // Only include location details if any location field is provided
-      const hasLocationData = data.location?.type || data.location?.city || data.location?.state || data.location?.country
+      const hasLocationData = data.location?.type || data.location?.city
       if (hasLocationData) {
         jobData.location = {
           type: cleanValue(data.location?.type),
           city: cleanValue(data.location?.city),
-          state: cleanValue(data.location?.state),
-          country: cleanValue(data.location?.country),
           address: cleanValue(data.location?.address)
         }
       }
@@ -933,24 +930,21 @@ const JobPostingForm = () => {
       previewJobData.department = cleanValue(formData.department)
     }
 
-    // Only include salary if min or max is provided and not empty
-    if ((formData.salary?.min && formData.salary.min > 0) || (formData.salary?.max && formData.salary.max > 0)) {
+    // Only include salary if amount is provided and not empty
+    if (formData.salary?.amount && formData.salary.amount > 0) {
       previewJobData.salary = {
-        min: formData.salary?.min || undefined,
-        max: formData.salary?.max || undefined,
+        amount: formData.salary.amount,
         currency: 'INR',
         period: cleanValue(formData.salary?.period) || 'Yearly'
       }
     }
 
     // Only include location details if any location field is provided
-    const hasLocationData = formData.location?.type || formData.location?.city || formData.location?.state || formData.location?.country
+    const hasLocationData = formData.location?.type || formData.location?.city
     if (hasLocationData) {
       previewJobData.location = {
         type: cleanValue(formData.location?.type),
         city: cleanValue(formData.location?.city),
-        state: cleanValue(formData.location?.state),
-        country: cleanValue(formData.location?.country),
         address: cleanValue(formData.location?.address)
       }
     }
@@ -1047,7 +1041,6 @@ const JobPostingForm = () => {
                   <div className="text-purple-100 text-xs sm:text-sm flex items-center sm:justify-end">
                     <span className="mr-1">📍</span>
                     {previewData.location.city}
-                    {previewData.location?.state && `, ${previewData.location.state}`}
                   </div>
                 )}
               </div>
@@ -1100,6 +1093,14 @@ const JobPostingForm = () => {
                     <span className="text-gray-600 dark:text-gray-400">Job ID:</span>
                     <span className="font-medium text-gray-500 dark:text-gray-400 text-sm">Generated after posting</span>
                   </div>
+                  {previewData.salary?.amount && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Salary:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {formatCurrency(previewData.salary.amount)} {previewData.salary?.period}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1498,7 +1499,7 @@ const JobPostingForm = () => {
           </div>
         </div>
 
-        {/* Location - Collapsible */}
+        {/* Location and Salary - Collapsible */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-colors duration-300">
           <button
             type="button"
@@ -1507,12 +1508,12 @@ const JobPostingForm = () => {
           >
             <h2 className="text-lg sm:text-xl font-semibold flex items-center text-gray-900 dark:text-white">
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-              <span>Location</span>
+              <span>Location and Salary</span>
               <span className="text-gray-500 text-xs sm:text-sm font-normal ml-1 sm:ml-2 hidden sm:inline">(Optional)</span>
             </h2>
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                {expandedOptionalFields.location ? 'Hide' : 'Click to Add Location'}
+                {expandedOptionalFields.location ? 'Hide' : 'Click to Add Location & Salary'}
               </span>
               <span className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
                 {expandedOptionalFields.location ? 'Hide' : 'Add'}
@@ -1550,36 +1551,40 @@ const JobPostingForm = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">City</label>
+              <label className="form-label">Location</label>
               <input
                 type="text"
                 className={`input-field ${locationType === 'Remote' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                placeholder="e.g., Mumbai"
+                placeholder="e.g., Mumbai, Maharashtra"
                 disabled={locationType === 'Remote'}
                 {...register('location.city')}
               />
             </div>
+          </div>
 
+          <div className="grid md:grid-cols-2 gap-6 mt-6">
             <div className="form-group">
-              <label className="form-label">State</label>
+              <label className="form-label flex items-center">
+                <DollarSign className="w-4 h-4 mr-1 text-green-600" />
+                Salary (₹)
+              </label>
               <input
-                type="text"
-                className={`input-field ${locationType === 'Remote' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                placeholder="e.g., Maharashtra"
-                disabled={locationType === 'Remote'}
-                {...register('location.state')}
+                type="number"
+                className="input-field"
+                placeholder="e.g., 500000"
+                min="0"
+                {...register('salary.amount', { min: 0 })}
               />
+              <p className="text-xs text-gray-500 mt-1">Enter annual salary in Indian Rupees</p>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Country</label>
-              <input
-                type="text"
-                className={`input-field ${locationType === 'Remote' ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                placeholder="e.g., India"
-                disabled={locationType === 'Remote'}
-                {...register('location.country')}
-              />
+              <label className="form-label">Salary Period</label>
+              <select className="input-field" {...register('salary.period')}>
+                <option value="Yearly">Yearly</option>
+                <option value="Monthly">Monthly</option>
+                <option value="Hourly">Hourly</option>
+              </select>
             </div>
           </div>
 
