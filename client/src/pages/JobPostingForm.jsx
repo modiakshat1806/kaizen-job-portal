@@ -243,7 +243,7 @@ const JobPostingForm = () => {
 
 
 
-  // Optional fields dropdown states
+  // Optional fields dropdown states - all closed by default
   const [expandedOptionalFields, setExpandedOptionalFields] = useState({
     location: false,
     salary: false,
@@ -915,33 +915,33 @@ const JobPostingForm = () => {
   if (showPreview && previewData) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Job Preview
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">Review your job posting before publishing</p>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Review your job posting before publishing</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform hover:scale-[1.02] transition-all duration-500" style={{ transformStyle: 'preserve-3d' }}>
           {/* Header */}
-          <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-8 py-6 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-600 px-4 sm:px-6 md:px-8 py-4 sm:py-6 text-white relative overflow-hidden">
             {/* 3D Background Elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+            <div className="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 bg-white/10 rounded-full -translate-y-12 sm:-translate-y-16 translate-x-12 sm:translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-16 h-16 sm:w-24 sm:h-24 bg-white/5 rounded-full translate-y-8 sm:translate-y-12 -translate-x-8 sm:-translate-x-12"></div>
             <div className="relative flex flex-col sm:flex-row sm:items-start sm:justify-between">
               <div className="mb-4 sm:mb-0 transform hover:scale-105 transition-transform duration-300">
-                <h2 className="text-3xl font-bold mb-2 drop-shadow-lg" style={{
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg" style={{
                   textShadow: '0 4px 8px rgba(0,0,0,0.3)'
                 }}>{previewData.title}</h2>
-                <p className="text-purple-100 text-lg font-medium drop-shadow-md">{previewData.company?.name}</p>
+                <p className="text-purple-100 text-base sm:text-lg font-medium drop-shadow-md">{previewData.company?.name}</p>
                 <p className="text-purple-200 text-sm mt-1">{previewData.industry}</p>
               </div>
               <div className="text-left sm:text-right transform hover:scale-105 transition-transform duration-300">
-                <span className="inline-block bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-2 shadow-lg hover:bg-white/30 transition-all duration-300">
+                <span className="inline-block bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-medium mb-2 shadow-lg hover:bg-white/30 transition-all duration-300">
                   {previewData.jobType}
                 </span>
                 {previewData.location?.city && (
-                  <div className="text-purple-100 text-sm flex items-center justify-end">
+                  <div className="text-purple-100 text-xs sm:text-sm flex items-center sm:justify-end">
                     <span className="mr-1">📍</span>
                     {previewData.location.city}
                     {previewData.location?.state && `, ${previewData.location.state}`}
@@ -952,18 +952,18 @@ const JobPostingForm = () => {
           </div>
 
           {/* Content */}
-          <div className="p-8 space-y-6">
+          <div className="p-4 sm:p-6 md:p-8 space-y-4 sm:space-y-6">
             {/* Job Description */}
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Job Description</h3>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{previewData.description}</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">Job Description</h3>
+              <p className="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed">{previewData.description}</p>
             </div>
 
             {/* Key Information Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
               {/* Job Details */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Job Details</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Job Details</h4>
                 <div className="space-y-3">
                   {previewData.salary?.min && (
                     <div className="flex justify-between">
@@ -989,8 +989,8 @@ const JobPostingForm = () => {
               </div>
 
               {/* Contact Information */}
-              <div className="space-y-4">
-                <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600 dark:text-gray-400">Contact Person:</span>
@@ -1062,21 +1062,21 @@ const JobPostingForm = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 px-8 py-6 flex items-center justify-between border-t border-purple-200 dark:border-purple-700">
+          <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 px-4 sm:px-6 md:px-8 py-4 sm:py-6 flex flex-col sm:flex-row items-center justify-between border-t border-purple-200 dark:border-purple-700 space-y-3 sm:space-y-0">
             <button
               type="button"
               onClick={handleEdit}
-              className="px-6 py-3 border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-all duration-300 flex items-center transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-all duration-300 flex items-center justify-center transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base"
             >
-              <Edit className="w-4 h-4 mr-2" />
+              <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
               Edit Job
             </button>
 
-            <div className="flex space-x-3">
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setShowPreview(false)}
-                className="px-6 py-3 border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-all duration-300 transform hover:scale-105"
+                className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 border border-purple-300 dark:border-purple-500 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800 transition-all duration-300 transform hover:scale-105 text-sm sm:text-base"
               >
                 Cancel
               </button>
@@ -1084,16 +1084,16 @@ const JobPostingForm = () => {
                 type="button"
                 onClick={handlePostJob}
                 disabled={isSubmitting}
-                className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 flex items-center disabled:opacity-50 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                className="w-full sm:w-auto px-6 sm:px-8 py-2 sm:py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all duration-300 flex items-center justify-center disabled:opacity-50 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm sm:text-base"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     Posting...
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
                     Post Job
                   </>
                 )}
@@ -1407,16 +1407,20 @@ const JobPostingForm = () => {
           <button
             type="button"
             onClick={() => toggleOptionalField('location')}
-            className="dropdown-button w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl"
+            className="dropdown-button w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl cursor-pointer"
           >
-            <h2 className="text-xl font-semibold flex items-center text-gray-900 dark:text-white">
-              <MapPin className="w-5 h-5 mr-2 text-blue-600" />
-              Location & Salary
-              <span className="text-gray-500 text-sm font-normal ml-2">(Optional)</span>
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center text-gray-900 dark:text-white">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+              <span className="hidden sm:inline">Location & Salary</span>
+              <span className="sm:hidden">Location</span>
+              <span className="text-gray-500 text-xs sm:text-sm font-normal ml-1 sm:ml-2 hidden sm:inline">(Optional)</span>
             </h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {expandedOptionalFields.location ? 'Hide' : 'Add Location & Salary'}
+              <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                {expandedOptionalFields.location ? 'Hide' : 'Click to Add Location & Salary'}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
+                {expandedOptionalFields.location ? 'Hide' : 'Add'}
               </span>
               <div className={`dropdown-arrow ${expandedOptionalFields.location ? 'rotate-180' : ''}`}>
                 <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -1524,16 +1528,19 @@ const JobPostingForm = () => {
           <button
             type="button"
             onClick={() => toggleOptionalField('requirements')}
-            className="dropdown-button w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl"
+            className="dropdown-button w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl cursor-pointer"
           >
-            <h2 className="text-xl font-semibold flex items-center text-gray-900 dark:text-white">
-              <Users className="w-5 h-5 mr-2 text-blue-600" />
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center text-gray-900 dark:text-white">
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
               Requirements
-              <span className="text-gray-500 text-sm font-normal ml-2">(Optional)</span>
+              <span className="text-gray-500 text-xs sm:text-sm font-normal ml-1 sm:ml-2 hidden sm:inline">(Optional)</span>
             </h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {expandedOptionalFields.requirements ? 'Hide' : 'Add Requirements'}
+              <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                {expandedOptionalFields.requirements ? 'Hide' : 'Click to Add Requirements'}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
+                {expandedOptionalFields.requirements ? 'Hide' : 'Add'}
               </span>
               <div className={`dropdown-arrow ${expandedOptionalFields.requirements ? 'rotate-180' : ''}`}>
                 <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -1623,16 +1630,19 @@ const JobPostingForm = () => {
           <button
             type="button"
             onClick={() => toggleOptionalField('responsibilities')}
-            className="dropdown-button w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl"
+            className="dropdown-button w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl cursor-pointer"
           >
-            <h2 className="text-xl font-semibold flex items-center text-gray-900 dark:text-white">
-              <FileText className="w-5 h-5 mr-2 text-blue-600" />
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center text-gray-900 dark:text-white">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
               Responsibilities
-              <span className="text-gray-500 text-sm font-normal ml-2">(Optional)</span>
+              <span className="text-gray-500 text-xs sm:text-sm font-normal ml-1 sm:ml-2 hidden sm:inline">(Optional)</span>
             </h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {expandedOptionalFields.responsibilities ? 'Hide' : 'Add Responsibilities'}
+              <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                {expandedOptionalFields.responsibilities ? 'Hide' : 'Click to Add Responsibilities'}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
+                {expandedOptionalFields.responsibilities ? 'Hide' : 'Add'}
               </span>
               <div className={`dropdown-arrow ${expandedOptionalFields.responsibilities ? 'rotate-180' : ''}`}>
                 <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -1692,16 +1702,19 @@ const JobPostingForm = () => {
           <button
             type="button"
             onClick={() => toggleOptionalField('benefits')}
-            className="dropdown-button w-full p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl"
+            className="dropdown-button w-full p-4 sm:p-6 text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200 rounded-xl cursor-pointer"
           >
-            <h2 className="text-xl font-semibold flex items-center text-gray-900 dark:text-white">
-              <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center text-gray-900 dark:text-white">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
               Benefits
-              <span className="text-gray-500 text-sm font-normal ml-2">(Optional)</span>
+              <span className="text-gray-500 text-xs sm:text-sm font-normal ml-1 sm:ml-2 hidden sm:inline">(Optional)</span>
             </h2>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {expandedOptionalFields.benefits ? 'Hide' : 'Add Benefits'}
+              <span className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                {expandedOptionalFields.benefits ? 'Hide' : 'Click to Add Benefits'}
+              </span>
+              <span className="text-sm text-gray-500 dark:text-gray-400 sm:hidden">
+                {expandedOptionalFields.benefits ? 'Hide' : 'Add'}
               </span>
               <div className={`dropdown-arrow ${expandedOptionalFields.benefits ? 'rotate-180' : ''}`}>
                 <ChevronDown className="w-5 h-5 text-gray-400" />

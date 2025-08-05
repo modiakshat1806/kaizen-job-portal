@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { User, Briefcase, Building, QrCode, ArrowRight, Zap, MapPin, Users, Target } from 'lucide-react'
+import { User, Briefcase, QrCode, ArrowRight, Zap, MapPin, Users, Target } from 'lucide-react'
 import React, { useEffect, useState, useRef } from 'react'
 import Logo from '../components/Logo'
 
@@ -169,19 +169,12 @@ const Home = () => {
       path: '/assessment'
     },
     {
-      title: 'Career Opportunities',
-      description: 'Browse curated job listings from top companies',
-      icon: Briefcase,
-      path: '/jobs'
-    },
-    {
       title: 'Company Hub',
       description: 'Streamlined recruitment process for hiring managers',
-      icon: Building,
+      icon: Briefcase,
       path: '/post-job',
       scrollToTop: true
     }
-
   ]
 
 
@@ -337,20 +330,14 @@ const Home = () => {
       </section>
 
       {/* Enhanced Features Section with 3D Cards */}
-      <section 
+      <section
         ref={(el) => (sectionsRef.current[1] = el)}
-        className="py-20 px-4 bg-white dark:bg-gray-800 relative min-h-screen flex items-center transition-colors duration-300"
+        className="py-20 px-4 bg-gradient-to-br from-purple-50 via-white to-purple-100 dark:from-gray-800 dark:via-gray-900 dark:to-purple-900/20 relative min-h-screen flex items-center transition-colors duration-300"
         style={{
           transform: `translateZ(${Math.max(0, scrollY - 800) * 0.005}px)`,
           transition: 'transform 0.1s ease-out'
         }}
       >
-        {/* 3D Section Transition Effect */}
-        <div 
-          className={`absolute inset-0 bg-gradient-to-b from-transparent via-purple-50/20 to-transparent transition-opacity duration-1000 ${
-            activeSection === 1 ? 'opacity-100' : 'opacity-0'
-          }`}
-        ></div>
         
         <div className="max-w-7xl mx-auto relative w-full">
           <div className="text-center mb-16">
@@ -371,7 +358,7 @@ const Home = () => {
           </div>
 
           <div
-            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto transform transition-all duration-1000 ${
+            className={`grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto transform transition-all duration-1000 ${
               activeSection === 1 ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-16 opacity-60 scale-95'
             }`}
           >
@@ -386,7 +373,7 @@ const Home = () => {
                       setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100)
                     }
                   }}
-                  className="group bg-gray-50 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-700 p-6 sm:p-8 rounded-2xl transition-all duration-500 hover:shadow-2xl border border-transparent hover:border-purple-100 dark:hover:border-purple-400 transform hover:-translate-y-2 hover:rotate-y-3"
+                  className="group bg-gray-50 dark:bg-gray-800 hover:bg-white dark:hover:bg-gray-700 p-6 sm:p-8 rounded-2xl transition-all duration-500 hover:shadow-2xl border border-transparent hover:border-purple-100 dark:hover:border-purple-400 transform hover:-translate-y-2 hover:rotate-y-3 text-center"
                   style={{
                     transformStyle: 'preserve-3d',
                     perspective: '1000px',
@@ -394,7 +381,7 @@ const Home = () => {
                     transform: `translateZ(${scrollY * 0.005}px)`
                   }}
                 >
-                  <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-xl flex items-center justify-center mb-6 transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110">
+                  <div className="w-14 h-14 bg-purple-100 group-hover:bg-purple-600 rounded-xl flex items-center justify-center mb-6 mx-auto transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110">
                     <Icon className="w-7 h-7 text-purple-600 group-hover:text-white transition-colors duration-300" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3 group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors transform group-hover:scale-105">
@@ -403,7 +390,7 @@ const Home = () => {
                   <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
                     {feature.description}
                   </p>
-                  <div className="flex items-center text-purple-600 font-medium text-sm group-hover:text-purple-700">
+                  <div className="flex items-center justify-center text-purple-600 font-medium text-sm group-hover:text-purple-700">
                     Explore
                     <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-2 transition-transform duration-300" />
                   </div>
@@ -419,7 +406,7 @@ const Home = () => {
       {/* Simple. Fast. Effective. Section */}
       <section
         ref={(el) => (sectionsRef.current[2] = el)}
-        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 dark:from-purple-900 dark:via-purple-800 dark:to-indigo-900 relative"
+        className="py-16 px-4 bg-gradient-to-br from-purple-100 via-purple-200 to-indigo-100 dark:from-gray-900 dark:via-purple-900/30 dark:to-gray-800 relative"
         style={{
           transform: `translateZ(${Math.max(0, scrollY - 1200) * 0.005}px)`,
           transition: 'transform 0.1s ease-out'
@@ -428,14 +415,15 @@ const Home = () => {
         <div className="max-w-6xl mx-auto relative w-full">
           <div className="text-center mb-12">
             <h2
-              className={`text-4xl md:text-5xl font-bold text-gray-900 mb-4 transform transition-all duration-1000 ${
+              className={`text-4xl md:text-5xl font-bold mb-4 transform transition-all duration-1000 ${
                 activeSection === 2 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
               }`}
               style={{
                 background: 'linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
+                backgroundClip: 'text',
+                color: '#1f2937' // fallback for dark mode
               }}
             >
               Simple. Fast. Effective.
@@ -455,26 +443,26 @@ const Home = () => {
             }`}
           >
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
+              <div className="w-16 h-16 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
                 <Briefcase className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-purple-600">1. Companies Post</h3>
+              <h3 className="text-xl font-semibold mb-3 text-purple-600 dark:text-purple-400">1. Companies Post</h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm max-w-xs mx-auto leading-relaxed">Companies create job postings through our simple form and receive unique QR codes for the Opportunity Wall</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
+              <div className="w-16 h-16 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
                 <QrCode className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-purple-600">2. Students Scan</h3>
+              <h3 className="text-xl font-semibold mb-3 text-purple-600 dark:text-purple-400">2. Students Scan</h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm max-w-xs mx-auto leading-relaxed">Students scan QR codes and complete a quick onboarding with education details and personality assessment</p>
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-500 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
+              <div className="w-16 h-16 bg-purple-500 dark:bg-purple-600 rounded-lg flex items-center justify-center mx-auto mb-4 transform hover:scale-110 transition-all duration-300 shadow-lg">
                 <Target className="w-8 h-8 text-white" />
               </div>
-              <h3 className="text-xl font-semibold mb-3 text-purple-600">3. Smart Matching</h3>
+              <h3 className="text-xl font-semibold mb-3 text-purple-600 dark:text-purple-400">3. Smart Matching</h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm max-w-xs mx-auto leading-relaxed">Our AI instantly calculates fitment scores, showing how well students align with each opportunity</p>
             </div>
           </div>
@@ -484,7 +472,7 @@ const Home = () => {
       {/* Why Choose Kaizen Section */}
       <section
         ref={(el) => (sectionsRef.current[3] = el)}
-        className="py-20 px-4 bg-gradient-to-br from-purple-50 via-white to-purple-100 relative"
+        className="py-20 px-4 bg-gradient-to-br from-purple-50 via-white to-purple-100 dark:from-gray-800 dark:via-gray-900 dark:to-purple-900/20 relative"
         style={{
           transform: `translateZ(${Math.max(0, scrollY - 1600) * 0.005}px)`,
           transition: 'transform 0.1s ease-out'
@@ -493,7 +481,7 @@ const Home = () => {
         <div className="max-w-6xl mx-auto relative w-full">
           <div className="text-center mb-16">
             <h2
-              className={`text-4xl md:text-5xl font-bold text-gray-900 mb-6 transform transition-all duration-1000 ${
+              className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6 transform transition-all duration-1000 ${
                 activeSection === 3 ? 'scale-105 translate-y-0 opacity-100' : 'scale-100 translate-y-8 opacity-80'
               }`}
             >
@@ -515,10 +503,10 @@ const Home = () => {
           >
             {/* QR Code Magic */}
             <div className="text-center group">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
-                <QrCode className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-800 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <QrCode className="w-8 h-8 text-purple-600 dark:text-purple-300 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 QR Code Magic
               </h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
@@ -528,10 +516,10 @@ const Home = () => {
 
             {/* Smart Fitment */}
             <div className="text-center group">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
-                <Target className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-800 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <Target className="w-8 h-8 text-purple-600 dark:text-purple-300 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 Smart Fitment
               </h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
@@ -541,10 +529,10 @@ const Home = () => {
 
             {/* Instant Results */}
             <div className="text-center group">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
-                <Zap className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-800 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <Zap className="w-8 h-8 text-purple-600 dark:text-purple-300 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 Instant Results
               </h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
@@ -554,10 +542,10 @@ const Home = () => {
 
             {/* Event Exclusive */}
             <div className="text-center group">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
-                <Users className="w-8 h-8 text-purple-600 group-hover:text-white transition-colors duration-300" />
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-800 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-purple-600 transition-all duration-300 group-hover:scale-110">
+                <Users className="w-8 h-8 text-purple-600 dark:text-purple-300 group-hover:text-white transition-colors duration-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                 Event Exclusive
               </h3>
               <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
@@ -571,9 +559,10 @@ const Home = () => {
       {/* Join Our Aspirant Community Section */}
       <section
         ref={(el) => (sectionsRef.current[4] = el)}
-        className="py-20 px-4 text-white transition-colors duration-300 relative overflow-hidden"
+        className="py-20 px-4 text-white dark:text-gray-100 transition-colors duration-300 relative overflow-hidden"
         style={{
           backgroundColor: '#1e5631',
+          background: 'linear-gradient(135deg, #1e5631 0%, #166534 50%, #15803d 100%)',
           minHeight: '60vh',
           display: 'flex',
           alignItems: 'center'
@@ -652,76 +641,20 @@ const Home = () => {
         </div>
       </section>
 
-      {/* For Students and Companies Section */}
-      <section className="py-16 px-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Quick Access
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Access your saved jobs or view application results
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* For Students */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center hover:shadow-xl transition-all duration-300">
-              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <User className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                For Students
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Access your saved job opportunities and track your applications
-              </p>
-              <Link
-                to="/saved-jobs"
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors duration-300"
-              >
-                <User className="w-5 h-5 mr-2" />
-                Saved Jobs
-              </Link>
-            </div>
-
-            {/* For Companies */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center hover:shadow-xl transition-all duration-300">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Building className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                For Companies
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                View applications and candidate profiles for your job postings
-              </p>
-              <Link
-                to="/company-results"
-                className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors duration-300"
-              >
-                <Building className="w-5 h-5 mr-2" />
-                View Results
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Dark Footer Section */}
-      <footer className="py-12 px-4 text-white bg-gray-900 dark:bg-gray-800 transition-colors duration-300">
+      <footer className="py-8 sm:py-12 px-4 text-white bg-gray-900 dark:bg-gray-800 transition-colors duration-300">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center md:items-start">
+          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0">
             {/* Logo Section - Left Side */}
-            <div className="md:w-1/3 mb-6 md:mb-0">
-              <div className="transform scale-150 md:scale-125 origin-left">
+            <div className="md:w-1/3 flex justify-center md:justify-start">
+              <div className="transform scale-125 md:scale-125 origin-center md:origin-left">
                 <Logo />
               </div>
             </div>
 
             {/* Content Section - Center */}
             <div className="md:w-2/3 text-center md:text-left md:pl-8">
-              <p className="text-gray-300 text-lg mb-2">
+              <p className="text-gray-300 text-base sm:text-lg mb-2">
                 Smart matchmaking for August Fest 2025
               </p>
               <p className="text-gray-400 text-sm">

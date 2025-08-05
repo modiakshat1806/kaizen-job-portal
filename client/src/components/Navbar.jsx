@@ -59,7 +59,7 @@ const Navbar = () => {
 
       return (
         <div
-          className="relative"
+          className="relative z-50 w-full"
           onMouseEnter={() => {
             // Clear any existing timeout
             if (dropdownTimeout) {
@@ -104,7 +104,12 @@ const Navbar = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute top-full left-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-50"
+                className="static md:absolute md:top-full md:left-0 mt-2 mb-4 md:mb-0 w-full md:w-48 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-[9999]"
+                style={{
+                  zIndex: 9999,
+                  maxHeight: '300px',
+                  overflowY: 'auto'
+                }}
               >
                 {item.dropdownItems.map((dropdownItem) => {
                   const DropdownIcon = dropdownItem.icon
@@ -205,22 +210,8 @@ const Navbar = () => {
                 <User className="w-5 h-5 text-white group-hover:scale-110 transition-transform duration-300" />
              </Link>
 
-             {/* Mobile Menu Button and Theme Toggle */}
-             <div className="md:hidden flex items-center space-x-2">
-                {/* Mobile Theme Toggle */}
-                <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-lg text-gray-300 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
-                  aria-label="Toggle theme"
-                >
-                  {isDarkMode ? (
-                    <Sun className="w-5 h-5" />
-                  ) : (
-                    <Moon className="w-5 h-5" />
-                  )}
-                </button>
-
-                {/* Mobile Menu Button */}
+             {/* Mobile Menu Button */}
+             <div className="md:hidden">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="p-2 rounded-lg text-gray-300 hover:text-white dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
@@ -239,11 +230,13 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden overflow-hidden"
+            className="md:hidden overflow-visible"
           >
-            <div className="px-2 pt-2 pb-4 space-y-2 border-t border-gray-700/50 bg-gray-900">
-              {navItems.map((item) => (
-                <NavLink key={item.path} item={item} />
+            <div className="px-2 pt-2 pb-4 space-y-3 border-t border-gray-700/50 bg-gray-900 overflow-visible">
+              {navItems.map((item, index) => (
+                <div key={item.path || `nav-${index}`} className="w-full">
+                  <NavLink item={item} />
+                </div>
               ))}
             </div>
           </motion.div>

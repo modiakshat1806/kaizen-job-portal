@@ -11,8 +11,8 @@ const fitmentRoutes = require('./routes/fitment');
 const openaiRoutes = require('./routes/openai');
 const recommendationsRoutes = require('./routes/recommendations');
 const adminRoutes = require('./routes/admin');
-const jobApplicationRoutes = require('./routes/jobApplication');
 const voiceRoutes = require('./routes/voice');
+const jobApplicationRoutes = require('./routes/jobApplication');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -39,8 +39,8 @@ app.use('/api/fitment', fitmentRoutes);
 app.use('/api', openaiRoutes);
 app.use('/api/recommendations', recommendationsRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/job-application', jobApplicationRoutes);
 app.use('/api/voice', voiceRoutes);
+app.use('/api/job-application', jobApplicationRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

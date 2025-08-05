@@ -35,7 +35,26 @@ const StudentAssessment = () => {
   })
   const [degreeDropdownOpen, setDegreeDropdownOpen] = useState(false)
   const [selectedDegree, setSelectedDegree] = useState('')
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
+  const [selectedYear, setSelectedYear] = useState('')
   const [showProgressPopup, setShowProgressPopup] = useState(false)
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (degreeDropdownOpen && !event.target.closest('.degree-dropdown')) {
+        setDegreeDropdownOpen(false)
+      }
+      if (yearDropdownOpen && !event.target.closest('.year-dropdown')) {
+        setYearDropdownOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [degreeDropdownOpen, yearDropdownOpen])
 
   // Scroll to top when component mounts
   useEffect(() => {
@@ -286,7 +305,7 @@ const StudentAssessment = () => {
       const specialization = watch('specialization')
       const institution = watch('institution')
       
-      if (!name || !email || !phone || !degree || !graduationYear || !specialization || !institution) {
+      if (!name || !email || !phone || !selectedDegree || !selectedYear || !specialization || !institution) {
         toast.error('Please fill in all required fields')
         return
       }
@@ -312,6 +331,13 @@ const StudentAssessment = () => {
       setCurrentStep(currentStep + 1)
       setShowProgressPopup(true)
       console.log('Progress popup shown')
+
+      // Scroll to top of page smoothly
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+
       setTimeout(() => {
         setShowProgressPopup(false)
         console.log('Progress popup hidden')
@@ -445,28 +471,62 @@ const StudentAssessment = () => {
   }
 
   const renderStepIndicator = () => (
-    <div className="flex items-center justify-center space-x-4 mb-8">
-      {steps.map((step, index) => {
-        const Icon = step.icon
-        const isActive = currentStep === step.id
-        const isCompleted = currentStep > step.id
-        
-        return (
-          <div key={step.id} className="flex items-center">
-            <div className={`step-indicator ${
-              isActive ? 'step-active' : 
-              isCompleted ? 'step-completed' : 'step-pending'
-            }`}>
-              {isCompleted ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
-            </div>
-            {index < steps.length - 1 && (
-              <div className={`w-12 h-0.5 mx-2 ${
-                isCompleted ? 'bg-green-500' : 'bg-gray-300'
-              }`} />
-            )}
-          </div>
-        )
-      })}
+    <div className="mb-8">
+      {/* Progress Bar Background */}
+      <div className="relative">
+        <div className="flex items-center justify-between mb-4">
+          {steps.map((step, index) => {
+            const Icon = step.icon
+            const isActive = currentStep === step.id
+            const isCompleted = currentStep > step.id
+
+            return (
+              <div key={step.id} className="flex flex-col items-center relative z-10">
+                {/* Step Circle - Smaller on mobile */}
+                <div className={`flex items-center justify-center w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full border-3 font-medium text-xs sm:text-sm transition-all duration-300 ${
+                  isActive
+                    ? 'border-purple-600 bg-purple-600 text-white shadow-lg scale-110'
+                    : isCompleted
+                    ? 'border-green-500 bg-green-500 text-white shadow-md'
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                }`}>
+                  {isCompleted ? (
+                    <Check className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                  ) : (
+                    <Icon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                  )}
+                </div>
+
+                {/* Step Label - Hidden on mobile, only show icons */}
+                <div className="mt-1 sm:mt-2 text-center max-w-12 sm:max-w-16 md:max-w-20 hidden md:block">
+                  <div className={`text-xs sm:text-xs md:text-sm font-medium transition-colors duration-300 leading-tight ${
+                    isActive
+                      ? 'text-purple-600 dark:text-purple-400'
+                      : isCompleted
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-gray-500 dark:text-gray-400'
+                  }`}>
+                    {step.title}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Animated Progress Line - Responsive positioning */}
+        <div className="absolute top-4 sm:top-5 md:top-6 h-1 bg-gray-200 dark:bg-gray-700 rounded-full -z-0" style={{
+          left: '2rem',
+          right: '2rem'
+        }}>
+          <div
+            className="h-full bg-gradient-to-r from-purple-500 to-green-500 rounded-full transition-all duration-700 ease-in-out"
+            style={{
+              width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`
+            }}
+          />
+        </div>
+      </div>
     </div>
   )
 
@@ -525,7 +585,7 @@ const StudentAssessment = () => {
 
               <div className="form-group">
                 <label className="form-label">Degree *</label>
-                <div className="relative">
+                <div className="relative degree-dropdown">
                   <button
                     type="button"
                     onClick={() => setDegreeDropdownOpen(!degreeDropdownOpen)}
@@ -538,7 +598,7 @@ const StudentAssessment = () => {
                   </button>
 
                   {degreeDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
                       {['BE', 'BTech', 'MSc', 'MTech', 'MBA', 'BBA', 'BCom', 'BCA', 'MCA'].map((degree) => (
                         <button
                           key={degree}
@@ -548,7 +608,7 @@ const StudentAssessment = () => {
                             setValue('degree', degree)
                             setDegreeDropdownOpen(false)
                           }}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg"
+                          className="w-full px-4 py-3 text-left text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg"
                         >
                           {degree}
                         </button>
@@ -566,13 +626,48 @@ const StudentAssessment = () => {
 
               <div className="form-group">
                 <label className="form-label">Year of Graduation *</label>
-                <select className="input-field" {...register('graduationYear', { required: 'Graduation year is required' })}>
-                  <option value="">Select Year</option>
-                  {Array.from({ length: 10 }, (_, i) => {
-                    const year = new Date().getFullYear() + 4 - i
-                    return <option key={year} value={year}>{year}</option>
-                  })}
-                </select>
+                <div className="relative year-dropdown">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setYearDropdownOpen(!yearDropdownOpen)
+                      setDegreeDropdownOpen(false) // Close degree dropdown
+                    }}
+                    className="input-field flex items-center justify-between w-full text-left"
+                  >
+                    <span className={selectedYear ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-300'}>
+                      {selectedYear || 'Select Year'}
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${yearDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {yearDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg z-[100] max-h-60 overflow-y-auto">
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const year = new Date().getFullYear() + 4 - i
+                        return (
+                          <button
+                            key={year}
+                            type="button"
+                            onClick={() => {
+                              setSelectedYear(year.toString())
+                              setValue('graduationYear', year.toString())
+                              setYearDropdownOpen(false)
+                            }}
+                            className="w-full px-4 py-3 text-left text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 first:rounded-t-lg last:rounded-b-lg"
+                          >
+                            {year}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  <input
+                    type="hidden"
+                    {...register('graduationYear', { required: 'Graduation year is required' })}
+                    value={selectedYear}
+                  />
+                </div>
                 {errors.graduationYear && <p className="form-error">{errors.graduationYear.message}</p>}
               </div>
 
@@ -581,7 +676,7 @@ const StudentAssessment = () => {
                 <input
                   type="text"
                   className="input-field"
-                  placeholder="e.g., Computer Science, Mechanical, Finance"
+                  placeholder="Computer Science"
                   {...register('specialization', { required: 'Specialization is required' })}
                 />
                 {errors.specialization && <p className="form-error">{errors.specialization.message}</p>}
@@ -592,7 +687,7 @@ const StudentAssessment = () => {
                 <input
                   type="text"
                   className="input-field"
-                  placeholder="Enter your institution/university name"
+                  placeholder="Enter your institution name"
                   {...register('institution', { required: 'Institution is required' })}
                 />
                 {errors.institution && <p className="form-error">{errors.institution.message}</p>}
@@ -614,15 +709,15 @@ const StudentAssessment = () => {
             
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Selected: {selectedCoreValues.length}/5
                 </span>
                 {selectedCoreValues.length === 5 && (
-                  <span className="text-sm text-green-600 font-medium">✓ All 5 values selected</span>
+                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">✓ All 5 values selected</span>
                 )}
               </div>
               
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                 {coreValues.map((value) => {
                   const isSelected = selectedCoreValues.includes(value)
                   return (
@@ -630,9 +725,9 @@ const StudentAssessment = () => {
                       key={value}
                       type="button"
                       onClick={() => handleCoreValueClick(value)}
-                      className={`p-3 rounded-lg border-2 transition-all duration-200 text-sm font-medium ${
+                      className={`p-2 sm:p-3 rounded-lg border-2 transition-all duration-200 text-xs sm:text-sm font-medium text-center ${
                         isSelected
-                          ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-md'
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 shadow-md'
                           : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700'
                       } ${
                         !isSelected && selectedCoreValues.length >= 5
@@ -649,19 +744,19 @@ const StudentAssessment = () => {
             </div>
 
             {selectedCoreValues.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">Your Selected Core Values:</h4>
+              <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg p-4">
+                <h4 className="font-medium text-purple-900 dark:text-purple-300 mb-2">Your Selected Core Values:</h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedCoreValues.map((value) => (
                     <span
                       key={value}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 dark:bg-purple-800 text-purple-800 dark:text-purple-200"
                     >
                       {value}
                       <button
                         type="button"
                         onClick={() => handleCoreValueClick(value)}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                        className="ml-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200"
                       >
                         ×
                       </button>
@@ -686,10 +781,10 @@ const StudentAssessment = () => {
             
             <div className="space-y-8">
               {/* Question 1 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Do you prefer working independently or with others?</h4>
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">Do you prefer working independently or with others?</h4>
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
+                  <div className="flex justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-300">
                     <span>Independently</span>
                     <span>With Others</span>
                   </div>
@@ -706,7 +801,7 @@ const StudentAssessment = () => {
                       }}
                     />
                     <div
-                      className="absolute top-[-35px] bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded transform -translate-x-1/2"
+                      className="absolute top-[-30px] sm:top-[-35px] bg-purple-600 text-white text-xs font-bold px-1 sm:px-2 py-1 rounded transform -translate-x-1/2"
                       style={{
                         left: `${sliderValues.independence}%`,
                         transition: 'left 0.1s ease-out'
@@ -721,7 +816,7 @@ const StudentAssessment = () => {
 
               {/* Question 2 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Do you thrive on routines or flexibility?</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">Do you thrive on routines or flexibility?</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Routines</span>
@@ -755,7 +850,7 @@ const StudentAssessment = () => {
 
               {/* Question 3 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">What work pace energizes you most?</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">What work pace energizes you most?</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Steady Pace</span>
@@ -789,7 +884,7 @@ const StudentAssessment = () => {
 
               {/* Question 4 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Do you like switching tasks or going deep into one?</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">Do you like switching tasks or going deep into one?</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Switching Tasks</span>
@@ -823,7 +918,7 @@ const StudentAssessment = () => {
 
               {/* Question 5 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Do you like building things or thinking about big ideas?</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">Do you like building things or thinking about big ideas?</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300">
                     <span>Building Things</span>
@@ -869,19 +964,22 @@ const StudentAssessment = () => {
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-6">Please rate how much you agree with each statement by selecting one bubble for each question.</p>
             
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {/* Question 1 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white mb-4">I prefer working in a team rather than alone</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I prefer working in a team rather than alone</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q1', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q1 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -891,22 +989,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 2 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I enjoy taking on leadership roles in projects</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I enjoy taking on leadership roles in projects</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q2', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q2 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -916,22 +1016,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 3 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I'm comfortable with ambiguous or unclear tasks</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I'm comfortable with ambiguous or unclear tasks</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q3', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q3 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -941,13 +1043,12 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 4 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I prefer structured, well-defined processes</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I prefer structured, well-defined processes</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -972,7 +1073,7 @@ const StudentAssessment = () => {
 
               {/* Question 5 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I enjoy learning new technologies and tools</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I enjoy learning new technologies and tools</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -997,7 +1098,7 @@ const StudentAssessment = () => {
 
               {/* Question 6 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I work better under pressure and tight deadlines</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I work better under pressure and tight deadlines</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -1022,7 +1123,7 @@ const StudentAssessment = () => {
 
               {/* Question 7 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I prefer creative problem-solving over following procedures</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I prefer creative problem-solving over following procedures</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -1047,7 +1148,7 @@ const StudentAssessment = () => {
 
               {/* Question 8 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I enjoy mentoring and helping others grow</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I enjoy mentoring and helping others grow</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -1072,7 +1173,7 @@ const StudentAssessment = () => {
 
               {/* Question 9 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I'm motivated by challenging, complex problems</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I'm motivated by challenging, complex problems</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -1097,7 +1198,7 @@ const StudentAssessment = () => {
 
               {/* Question 10 */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">I value work-life balance over career advancement</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white">I value work-life balance over career advancement</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
                   <div className="flex space-x-3">
@@ -1129,41 +1230,42 @@ const StudentAssessment = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="text-center mb-8">
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center shadow-lg">
-            <span className="text-2xl">🎓</span>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-purple-600 dark:bg-purple-700 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-2xl">🎓</span>
+            </div>
+          </div>
+          <h1
+            className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
+            style={{
+              animation: 'assessmentTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
+              transformStyle: 'preserve-3d',
+              textShadow: '0 4px 8px rgba(0,0,0,0.1)'
+            }}
+          >
+            Student Assessment
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">Complete this assessment to help us match you with the best opportunities</p>
+
+          {/* Go to Home button */}
+          <div className="mt-4 flex justify-start">
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors duration-200"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Go to Home
+            </button>
           </div>
         </div>
-        <h1
-          className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2"
-          style={{
-            animation: 'assessmentTitlePop 1.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards',
-            transformStyle: 'preserve-3d',
-            textShadow: '0 4px 8px rgba(0,0,0,0.1)'
-          }}
-        >
-          Student Assessment
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300">Complete this assessment to help us match you with the best opportunities</p>
-        
-        {/* Go to Home button */}
-        <div className="mt-4 flex justify-start">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors duration-200"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" />
-            Go to Home
-          </button>
-        </div>
-      </div>
 
-      {renderStepIndicator()}
+        {renderStepIndicator()}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="card">
+        <form onSubmit={handleSubmit(onSubmit)} className="card">
         {renderStepContent()}
 
         <div className="flex justify-between pt-8 border-t border-gray-200">
@@ -1182,7 +1284,7 @@ const StudentAssessment = () => {
               type="button"
               onClick={nextStep}
               disabled={
-                (currentStep === 1 && (!watch('name') || !watch('email') || !watch('phone') || !watch('degree') || !watch('graduationYear') || !watch('specialization') || !watch('institution'))) ||
+                (currentStep === 1 && (!watch('name') || !watch('email') || !watch('phone') || !selectedDegree || !selectedYear || !watch('specialization') || !watch('institution'))) ||
                 (currentStep === 2 && selectedCoreValues.length !== 5) ||
                 (currentStep === 3 && !areAllSlidersMoved()) ||
                 (currentStep === 4 && !areAllBubblesSelected())
@@ -1212,51 +1314,52 @@ const StudentAssessment = () => {
             </button>
           )}
         </div>
-      </form>
+        </form>
 
-      {/* Progress Saved Popup */}
-      {showProgressPopup && (
-        <div className="fixed top-4 right-4 z-50">
-          <div
-            className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2"
-            style={{
-              animation: 'progressPopup 0.3s ease-out'
-            }}
-          >
-            <Check className="w-5 h-5" />
-            <span className="font-medium">Progress Saved!</span>
+        {/* Progress Saved Popup */}
+        {showProgressPopup && (
+          <div className="fixed top-4 right-4 z-50">
+            <div
+              className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2"
+              style={{
+                animation: 'progressPopup 0.3s ease-out'
+              }}
+            >
+              <Check className="w-5 h-5" />
+              <span className="font-medium">Progress Saved!</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Loading Modal for Career Matching */}
-      {showLoadingModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center">
-            <div className="mb-6">
-              <div className="relative">
-                <div className="w-24 h-24 mx-auto mb-6">
-                  <div className="absolute inset-0 border-4 border-blue-200 rounded-full"></div>
-                  <div className="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
-                  <div className="absolute inset-2 border-4 border-blue-400 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
-                  <div className="absolute inset-4 border-4 border-blue-300 rounded-full border-l-transparent animate-spin" style={{animationDuration: '2s'}}></div>
+        {/* Loading Modal for Career Matching */}
+        {showLoadingModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-8 max-w-md w-full mx-4 text-center">
+              <div className="mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 mx-auto mb-6">
+                    <div className="absolute inset-0 border-4 border-purple-200 dark:border-purple-700 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-purple-600 rounded-full border-t-transparent animate-spin"></div>
+                    <div className="absolute inset-2 border-4 border-purple-400 rounded-full border-b-transparent animate-spin" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                    <div className="absolute inset-4 border-4 border-purple-300 rounded-full border-l-transparent animate-spin" style={{animationDuration: '2s'}}></div>
+                  </div>
                 </div>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                🎯 Finding Your Perfect Career Matches
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Analyzing your assessment results and matching with the best opportunities...
-              </p>
-              <div className="space-y-2 text-sm text-blue-600 font-medium">
-                <div>✨ Evaluating your skills and preferences</div>
-                <div>🔍 Searching through thousands of opportunities</div>
-                <div>🎉 Preparing your personalized results</div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                  🎯 Finding Your Perfect Career Matches
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Analyzing your assessment results and matching with the best opportunities...
+                </p>
+                <div className="space-y-2 text-sm text-purple-600 dark:text-purple-400 font-medium">
+                  <div>✨ Evaluating your skills and preferences</div>
+                  <div>🔍 Searching through thousands of opportunities</div>
+                  <div>🎉 Preparing your personalized results</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
