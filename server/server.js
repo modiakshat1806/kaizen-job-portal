@@ -46,7 +46,7 @@ app.use('/api/college', collegeRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Kaizen Job Portal API is running' });
+  res.json({ status: 'OK', message: 'Kaizen Job Portal API is running on Railway' });
 });
 
 // Error handling middleware
