@@ -63,8 +63,14 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
-// For Vercel deployment, we export the app instead of listening
-if (process.env.NODE_ENV !== 'production') {
+// Start server for Railway deployment
+if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+  });
+} else {
+  // For local development
   app.listen(PORT, 'localhost', () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
