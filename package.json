@@ -1,0 +1,15 @@
+{
+  "name": "kaizen-job-portal",
+  "version": "1.0.0",
+  "description": "Kaizen Job Portal - Full Stack Application",
+  "scripts": {
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev",
+    "install-server": "cd server && npm install",
+    "install-client": "cd client && npm install",
+    "build": "cd server && npm install"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
