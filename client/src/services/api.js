@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-const API_BASE_URL = '/api'
+// Use environment-specific API URL
+const API_BASE_URL = import.meta.env.PROD
+  ? '/api'  // In production, use relative path (Vercel handles routing)
+  : '/api'  // In development, use proxy from vite.config.js
 
 // Create axios instance
 const api = axios.create({
