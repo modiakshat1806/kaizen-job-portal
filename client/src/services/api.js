@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Use environment-specific API URL
 const API_BASE_URL = import.meta.env.PROD
-  ? 'REPLACE_WITH_YOUR_RAILWAY_URL/api'  // Production: Railway backend
+  ? 'https://kaizen-job-portal-production.up.railway.app/api'  // Production: Railway backend
   : '/api'  // Development: use proxy from vite.config.js
 
 // Create axios instance
