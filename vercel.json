@@ -1,27 +1,10 @@
 {
-  "version": 2,
   "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
-  "builds": [
+  "rewrites": [
     {
-      "src": "server/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "maxDuration": 30
-      }
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/server/server.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
