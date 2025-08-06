@@ -44,8 +44,12 @@ app.use('/api/voice', voiceRoutes);
 app.use('/api/job-application', jobApplicationRoutes);
 app.use('/api/college', collegeRoutes);
 
-// Health check endpoint
+// Health check endpoints
 app.get('/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Kaizen Job Portal API is running on Railway' });
+});
+
+app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Kaizen Job Portal API is running on Railway' });
 });
 
