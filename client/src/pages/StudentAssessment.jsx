@@ -1054,17 +1054,20 @@ const StudentAssessment = () => {
               </div>
 
               {/* Question 4 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I prefer structured, well-defined processes</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I prefer structured, well-defined processes</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q4', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q4 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1074,22 +1077,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 5 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I enjoy learning new technologies and tools</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I enjoy learning new technologies and tools</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q5', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q5 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1099,22 +1104,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 6 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I work better under pressure and tight deadlines</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I work better under pressure and tight deadlines</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q6', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q6 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1124,22 +1131,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 7 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I prefer creative problem-solving over following procedures</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I prefer creative problem-solving over following procedures</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q7', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q7 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1149,22 +1158,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 8 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I enjoy mentoring and helping others grow</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I enjoy mentoring and helping others grow</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q8', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q8 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1174,22 +1185,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 9 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I'm motivated by challenging, complex problems</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I'm motivated by challenging, complex problems</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q9', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q9 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1199,22 +1212,24 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
 
               {/* Question 10 */}
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900 dark:text-white">I value work-life balance over career advancement</h4>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Disagree</span>
-                  <div className="flex space-x-3">
+              <div className="space-y-3 sm:space-y-4">
+                <h4 className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">I value work-life balance over career advancement</h4>
+                <div className="flex flex-col space-y-3">
+                  <div className="flex justify-between items-center text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
+                    <span>Strongly Disagree</span>
+                    <span>Strongly Agree</span>
+                  </div>
+                  <div className="flex justify-center space-x-2 sm:space-x-3">
                     {[1, 2, 3, 4, 5].map((value) => (
                       <button
                         key={value}
                         type="button"
                         onClick={() => handleBubbleClick('q10', value)}
-                        className={`w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 transition-all duration-200 text-xs sm:text-sm ${
                           bubbleAnswers.q10 === value
                             ? 'border-primary-600 bg-primary-600 text-white'
                             : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:border-primary-400 dark:hover:border-primary-500'
@@ -1224,7 +1239,6 @@ const StudentAssessment = () => {
                       </button>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 dark:text-gray-300">Strongly Agree</span>
                 </div>
               </div>
             </div>
