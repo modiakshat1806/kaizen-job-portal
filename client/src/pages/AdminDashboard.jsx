@@ -17,7 +17,8 @@ import {
   TrendingUp,
   AlertCircle,
   CheckCircle,
-  UserX
+  UserX,
+  Phone
 } from 'lucide-react'
 import { adminAPI } from '../services/api'
 import toast from 'react-hot-toast'
@@ -92,6 +93,7 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pagination, setPagination] = useState({})
   const [stats, setStats] = useState({})
+  const [selectedFilter, setSelectedFilter] = useState('all') // Track which card is selected
 
   // Add 3D animations CSS
   useEffect(() => {
@@ -265,6 +267,31 @@ const AdminDashboard = () => {
     return sections
   }
 
+  // Handle stat card clicks to filter jobs
+  const handleStatCardClick = (filterType) => {
+    setSelectedFilter(filterType)
+    setCurrentPage(1) // Reset to first page
+
+    // Update the status filter based on card clicked
+    switch (filterType) {
+      case 'total':
+        setStatusFilter('all')
+        break
+      case 'active':
+        setStatusFilter('active')
+        break
+      case 'inactive':
+        setStatusFilter('inactive')
+        break
+      case 'applications':
+        // For applications, we'll show all jobs but could add special handling later
+        setStatusFilter('all')
+        break
+      default:
+        setStatusFilter('all')
+    }
+  }
+
   // Fetch jobs data
   const fetchJobs = async (page = 1) => {
     try {
@@ -277,7 +304,7 @@ const AdminDashboard = () => {
         industry: industryFilter || undefined,
         jobType: jobTypeFilter || undefined
       }
-      
+
       const response = await adminAPI.getAllJobs(params)
       setJobs(response.data.jobs)
       setPagination(response.data.pagination)
@@ -293,6 +320,17 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchJobs(currentPage)
   }, [searchTerm, statusFilter, industryFilter, jobTypeFilter, currentPage])
+
+  // Update selectedFilter when statusFilter changes (for manual filter changes)
+  useEffect(() => {
+    if (statusFilter === 'all') {
+      setSelectedFilter('total')
+    } else if (statusFilter === 'active') {
+      setSelectedFilter('active')
+    } else if (statusFilter === 'inactive') {
+      setSelectedFilter('inactive')
+    }
+  }, [statusFilter])
 
 
 
@@ -744,7 +782,12 @@ const AdminDashboard = () => {
         {/* Stats Cards with 3D Animations */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div
-            className="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+            onClick={() => handleStatCardClick('total')}
+            className={`stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+              selectedFilter === 'total'
+                ? 'border-purple-500 ring-2 ring-purple-200 dark:ring-purple-800'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
             style={{ animationDelay: '0.1s' }}
           >
             <div className="flex items-center justify-between">
@@ -759,7 +802,12 @@ const AdminDashboard = () => {
           </div>
 
           <div
-            className="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+            onClick={() => handleStatCardClick('active')}
+            className={`stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+              selectedFilter === 'active'
+                ? 'border-green-500 ring-2 ring-green-200 dark:ring-green-800'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
             style={{ animationDelay: '0.2s' }}
           >
             <div className="flex items-center justify-between">
@@ -774,7 +822,12 @@ const AdminDashboard = () => {
           </div>
 
           <div
-            className="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+            onClick={() => handleStatCardClick('inactive')}
+            className={`stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+              selectedFilter === 'inactive'
+                ? 'border-red-500 ring-2 ring-red-200 dark:ring-red-800'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
             style={{ animationDelay: '0.3s' }}
           >
             <div className="flex items-center justify-between">
@@ -789,7 +842,12 @@ const AdminDashboard = () => {
           </div>
 
           <div
-            className="stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700"
+            onClick={() => handleStatCardClick('applications')}
+            className={`stat-card bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border cursor-pointer transition-all duration-300 hover:shadow-xl hover:scale-105 ${
+              selectedFilter === 'applications'
+                ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
             style={{ animationDelay: '0.4s' }}
           >
             <div className="flex items-center justify-between">
@@ -913,6 +971,14 @@ const AdminDashboard = () => {
                               <div className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-2" />
                                 Created: {formatDate(job.createdAt)}
+                              </div>
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 mr-2" />
+                                Posted by: {job.contactPerson?.name || 'Not specified'}
+                              </div>
+                              <div className="flex items-center">
+                                <Phone className="w-4 h-4 mr-2" />
+                                Contact: {job.contactPerson?.phone || 'Not specified'}
                               </div>
                             </div>
                             
