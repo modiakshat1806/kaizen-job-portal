@@ -237,34 +237,42 @@ router.post('/students/:phone/summary', async (req, res) => {
     }
 
     // Create comprehensive prompt for student analysis
-    const systemPrompt = `You are an expert HR analyst and career counselor. Analyze the student's profile and provide a comprehensive behavioral and skills assessment that would be valuable for recruiters and career guidance.
+    const systemPrompt = `You are an expert HR analyst and career counselor. Analyze the student's profile and provide a comprehensive behavioral and skills assessment.
 
-Focus on:
-1. Core Behavioral Traits (based on assessment scores and profile)
-2. Technical Competencies (strengths and areas for development)
-3. Communication & Interpersonal Skills
-4. Problem-Solving Approach
-5. Teamwork & Collaboration Style
-6. Career Readiness & Potential
-7. Recommended Career Paths
-8. Development Suggestions
+IMPORTANT FORMATTING RULES:
+- Use clear section headings with bullet points
+- Do NOT repeat section headings
+- Only include sections with meaningful content
+- Skip empty or redundant sections
+- Provide specific, actionable insights
+- Keep each section concise but informative
 
-Provide actionable insights without any fitment scores. Focus on the student's inherent capabilities, work style, and potential.`;
+REQUIRED SECTIONS (only include if you have meaningful content):
+1. **Core Behavioral Profile** - Key personality traits and work style
+2. **Technical Competencies** - Technical skills and proficiency areas
+3. **Communication Style** - How they interact and communicate
+4. **Problem-Solving Approach** - Their analytical and creative thinking
+5. **Collaboration & Teamwork** - How they work with others
+6. **Career Readiness** - Current preparedness for professional roles
+7. **Development Recommendations** - Specific areas for growth
+
+Focus on actionable insights without fitment scores. Be specific and avoid generic statements.`;
 
     // Build dynamic user prompt based on available data
-    let userPrompt = `Analyze this student profile and provide a comprehensive behavioral and skills assessment:
+    let userPrompt = `STUDENT PROFILE ANALYSIS:
 
-STUDENT PROFILE:
-- Name: ${student.name}
-- Education: ${student.education?.degree || 'Not specified'} in ${student.education?.field || 'Not specified'} from ${student.education?.institution || 'Not specified'} (Graduating: ${student.education?.graduationYear || 'Not specified'})
-- Experience: ${student.experienceYears || student.experience?.years || 0} years
-- Career Goals: ${student.careerGoals || 'Not specified'}
+**Basic Information:**
+• Name: ${student.name}
+• Education: ${student.education?.degree || 'Not specified'} in ${student.education?.field || 'Not specified'}
+• Institution: ${student.education?.institution || 'Not specified'} (${student.education?.graduationYear || 'Not specified'})
+• Experience: ${student.experienceYears || student.experience?.years || 0} years
+• Career Goals: ${student.careerGoals || 'Not specified'}
 
-ASSESSMENT SCORES (Key Behavioral Indicators):
-- Technical Skills: ${student.assessmentScore?.technical || 0}/100
-- Communication Skills: ${student.assessmentScore?.communication || 0}/100
-- Problem-Solving Ability: ${student.assessmentScore?.problemSolving || 0}/100
-- Teamwork & Collaboration: ${student.assessmentScore?.teamwork || 0}/100`;
+**Assessment Scores (0-100 scale):**
+• Technical Skills: ${student.assessmentScore?.technical || 0}
+• Communication: ${student.assessmentScore?.communication || 0}
+• Problem-Solving: ${student.assessmentScore?.problemSolving || 0}
+• Teamwork: ${student.assessmentScore?.teamwork || 0}`;
 
     // Add core values if available
     if (student.coreValues && student.coreValues.length > 0) {
@@ -308,7 +316,8 @@ ASSESSMENT SCORES (Key Behavioral Indicators):
       userPrompt += `\n\nINTERNSHIPS: ${student.experience.internships.map(int => `${int.role} at ${int.company}`).join(', ')}`;
     }
 
-    userPrompt += `\n\nPlease provide a detailed behavioral and skills analysis focusing on the student's core competencies, work style, and career potential. Structure your response with clear sections and actionable insights.`;
+    userPrompt += `\n\n**ANALYSIS REQUEST:**
+Provide a comprehensive behavioral and skills analysis. Use the exact section headings from the system prompt. Only include sections where you have meaningful insights. Avoid repetition and keep each section focused and actionable.`;
 
     console.log('Calling OpenAI API for student summary...');
     console.log('User prompt length:', userPrompt.length);
@@ -320,8 +329,8 @@ ASSESSMENT SCORES (Key Behavioral Indicators):
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt }
       ],
-      temperature: 0.7,
-      max_tokens: 1500
+      temperature: 0.3,
+      max_tokens: 1200
     });
 
     console.log('OpenAI API call successful');
