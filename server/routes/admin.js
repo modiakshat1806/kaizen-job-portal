@@ -9,6 +9,44 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+// Helper function to remove duplicate sections from LLM response
+function removeDuplicateSections(text) {
+  const problematicSections = [
+    'Technical Competencies',
+    'Problem-Solving Approach',
+    'Teamwork & Collaboration',
+    'Communication Style',
+    'Career Readiness',
+    'Development Recommendations'
+  ];
+
+  let cleanedText = text;
+
+  // For each problematic section, keep only the first occurrence
+  problematicSections.forEach(section => {
+    const regex = new RegExp(`\\*\\*${section}\\*\\*`, 'gi');
+    const matches = [...cleanedText.matchAll(regex)];
+
+    if (matches.length > 1) {
+      // Find the second occurrence and everything until the next section or end
+      const secondMatch = matches[1];
+      const startIndex = secondMatch.index;
+
+      // Find the next section heading or end of text
+      const nextSectionRegex = /\*\*[^*]+\*\*/g;
+      nextSectionRegex.lastIndex = startIndex + section.length + 4; // Skip current heading
+      const nextMatch = nextSectionRegex.exec(cleanedText);
+
+      const endIndex = nextMatch ? nextMatch.index : cleanedText.length;
+
+      // Remove the duplicate section
+      cleanedText = cleanedText.slice(0, startIndex) + cleanedText.slice(endIndex);
+    }
+  });
+
+  return cleanedText.trim();
+}
+
 // GET /api/admin/jobs - Get all jobs (active and inactive) for admin dashboard
 router.get('/jobs', async (req, res) => {
   try {
@@ -237,26 +275,29 @@ router.post('/students/:phone/summary', async (req, res) => {
     }
 
     // Create comprehensive prompt for student analysis
-    const systemPrompt = `You are an expert HR analyst and career counselor. Analyze the student's profile and provide a comprehensive behavioral and skills assessment.
+    const systemPrompt = `You are an expert HR analyst. Provide a single, comprehensive analysis with NO REPEATED SECTIONS.
 
-IMPORTANT FORMATTING RULES:
-- Use clear section headings with bullet points
-- Do NOT repeat section headings
-- Only include sections with meaningful content
-- Skip empty or redundant sections
-- Provide specific, actionable insights
-- Keep each section concise but informative
+CRITICAL RULES:
+- Each section heading must appear EXACTLY ONCE
+- Never repeat "Technical Competencies", "Problem-Solving Approach", or "Teamwork & Collaboration"
+- If you mention a topic, do not create another section for it
+- Combine related information under one heading only
 
-REQUIRED SECTIONS (only include if you have meaningful content):
-1. **Core Behavioral Profile** - Key personality traits and work style
-2. **Technical Competencies** - Technical skills and proficiency areas
-3. **Communication Style** - How they interact and communicate
-4. **Problem-Solving Approach** - Their analytical and creative thinking
-5. **Collaboration & Teamwork** - How they work with others
-6. **Career Readiness** - Current preparedness for professional roles
-7. **Development Recommendations** - Specific areas for growth
+STRUCTURE (use these exact headings, each appearing only once):
 
-Focus on actionable insights without fitment scores. Be specific and avoid generic statements.`;
+**Core Behavioral Profile**
+[Personality traits, work style, and behavioral patterns]
+
+**Technical & Problem-Solving Competencies**
+[Technical skills AND problem-solving abilities combined in one section]
+
+**Communication & Collaboration Style**
+[Communication skills AND teamwork approach combined in one section]
+
+**Career Readiness & Development**
+[Current preparedness AND growth recommendations combined in one section]
+
+IMPORTANT: Do not create separate sections for Technical Competencies, Problem-Solving Approach, or Teamwork & Collaboration. Combine related topics as shown above.`;
 
     // Build dynamic user prompt based on available data
     let userPrompt = `STUDENT PROFILE ANALYSIS:
@@ -316,8 +357,18 @@ Focus on actionable insights without fitment scores. Be specific and avoid gener
       userPrompt += `\n\nINTERNSHIPS: ${student.experience.internships.map(int => `${int.role} at ${int.company}`).join(', ')}`;
     }
 
-    userPrompt += `\n\n**ANALYSIS REQUEST:**
-Provide a comprehensive behavioral and skills analysis. Use the exact section headings from the system prompt. Only include sections where you have meaningful insights. Avoid repetition and keep each section focused and actionable.`;
+    userPrompt += `\n\n**CRITICAL INSTRUCTIONS:**
+1. Use ONLY the 4 section headings from the system prompt
+2. NEVER create separate sections for "Technical Competencies", "Problem-Solving Approach", or "Teamwork & Collaboration"
+3. Combine related topics under the designated combined headings
+4. Each heading must appear EXACTLY ONCE
+5. If you already mentioned technical skills, do NOT create another "Technical Competencies" section
+
+Provide analysis using only these 4 sections:
+- Core Behavioral Profile
+- Technical & Problem-Solving Competencies
+- Communication & Collaboration Style
+- Career Readiness & Development`;
 
     console.log('Calling OpenAI API for student summary...');
     console.log('User prompt length:', userPrompt.length);
@@ -334,8 +385,12 @@ Provide a comprehensive behavioral and skills analysis. Use the exact section he
     });
 
     console.log('OpenAI API call successful');
-    const summary = completion.choices[0].message.content;
+    let summary = completion.choices[0].message.content;
     console.log('Summary generated, length:', summary.length);
+
+    // Post-process to remove duplicate sections
+    summary = removeDuplicateSections(summary);
+    console.log('Summary after duplicate removal, length:', summary.length);
 
     res.json({
       message: 'Student summary generated successfully',
