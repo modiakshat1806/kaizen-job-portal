@@ -206,8 +206,10 @@ router.get('/students/search/:phone', async (req, res) => {
 router.post('/students/:phone/summary', async (req, res) => {
   try {
     const { phone } = req.params;
+    console.log('Generating summary for phone:', phone);
 
     if (!phone) {
+      console.log('Error: No phone number provided');
       return res.status(400).json({
         error: 'Phone number is required'
       });
@@ -215,11 +217,22 @@ router.post('/students/:phone/summary', async (req, res) => {
 
     // Find student by phone number
     const student = await Student.findOne({ phone });
+    console.log('Student found:', student ? 'Yes' : 'No');
 
     if (!student) {
+      console.log('Student not found for phone:', phone);
       return res.status(404).json({
         error: 'Student not found',
         message: `No student found with phone number: ${phone}`
+      });
+    }
+
+    // Check if OpenAI API key is available
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OpenAI API key not found');
+      return res.status(500).json({
+        error: 'OpenAI API key not configured',
+        message: 'Server configuration error'
       });
     }
 
@@ -243,15 +256,15 @@ Provide actionable insights without any fitment scores. Focus on the student's i
 
 STUDENT PROFILE:
 - Name: ${student.name}
-- Education: ${student.education.degree} in ${student.education.field} from ${student.education.institution} (Graduating: ${student.education.graduationYear})
+- Education: ${student.education?.degree || 'Not specified'} in ${student.education?.field || 'Not specified'} from ${student.education?.institution || 'Not specified'} (Graduating: ${student.education?.graduationYear || 'Not specified'})
 - Experience: ${student.experienceYears || student.experience?.years || 0} years
-- Career Goals: ${student.careerGoals}
+- Career Goals: ${student.careerGoals || 'Not specified'}
 
 ASSESSMENT SCORES (Key Behavioral Indicators):
-- Technical Skills: ${student.assessmentScore.technical}/100
-- Communication Skills: ${student.assessmentScore.communication}/100
-- Problem-Solving Ability: ${student.assessmentScore.problemSolving}/100
-- Teamwork & Collaboration: ${student.assessmentScore.teamwork}/100`;
+- Technical Skills: ${student.assessmentScore?.technical || 0}/100
+- Communication Skills: ${student.assessmentScore?.communication || 0}/100
+- Problem-Solving Ability: ${student.assessmentScore?.problemSolving || 0}/100
+- Teamwork & Collaboration: ${student.assessmentScore?.teamwork || 0}/100`;
 
     // Add core values if available
     if (student.coreValues && student.coreValues.length > 0) {
@@ -297,6 +310,9 @@ ASSESSMENT SCORES (Key Behavioral Indicators):
 
     userPrompt += `\n\nPlease provide a detailed behavioral and skills analysis focusing on the student's core competencies, work style, and career potential. Structure your response with clear sections and actionable insights.`;
 
+    console.log('Calling OpenAI API for student summary...');
+    console.log('User prompt length:', userPrompt.length);
+
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -308,7 +324,9 @@ ASSESSMENT SCORES (Key Behavioral Indicators):
       max_tokens: 1500
     });
 
+    console.log('OpenAI API call successful');
     const summary = completion.choices[0].message.content;
+    console.log('Summary generated, length:', summary.length);
 
     res.json({
       message: 'Student summary generated successfully',
@@ -323,9 +341,34 @@ ASSESSMENT SCORES (Key Behavioral Indicators):
 
   } catch (error) {
     console.error('Error generating student summary:', error);
+
+    // Handle specific OpenAI errors
+    if (error.code === 'insufficient_quota') {
+      return res.status(500).json({
+        error: 'OpenAI quota exceeded',
+        message: 'AI service temporarily unavailable. Please try again later.'
+      });
+    }
+
+    if (error.code === 'invalid_api_key') {
+      return res.status(500).json({
+        error: 'OpenAI API key invalid',
+        message: 'Server configuration error. Please contact administrator.'
+      });
+    }
+
+    // Handle network/timeout errors
+    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+      return res.status(500).json({
+        error: 'Network timeout',
+        message: 'Request timed out. Please try again.'
+      });
+    }
+
     res.status(500).json({
       error: 'Failed to generate student summary',
-      message: error.message
+      message: error.message || 'Unknown error occurred',
+      code: error.code || 'UNKNOWN_ERROR'
     });
   }
 });

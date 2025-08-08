@@ -650,12 +650,27 @@ const AdminDashboard = () => {
 
     try {
       setSummaryLoading(true)
+      console.log('Generating summary for student:', studentData.phone)
+
       const response = await adminAPI.generateStudentSummary(studentData.phone)
+      console.log('Summary response:', response.data)
+
       setStudentSummary(response.data.summary)
+      setShowSummaryModal(true) // Show the modal
       toast.success('Student summary generated successfully')
     } catch (error) {
       console.error('Error generating summary:', error)
-      toast.error('Failed to generate student summary')
+
+      // More detailed error handling
+      if (error.response?.status === 404) {
+        toast.error('Student not found in database')
+      } else if (error.response?.status === 500) {
+        toast.error('Server error while generating summary. Please try again.')
+      } else if (error.response?.data?.message) {
+        toast.error(`Error: ${error.response.data.message}`)
+      } else {
+        toast.error('Failed to generate student summary. Please check your connection.')
+      }
     } finally {
       setSummaryLoading(false)
     }
@@ -1066,35 +1081,7 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (!studentData) {
-                            toast.error('No student data available')
-                            return
-                          }
-
-                          try {
-                            setSummaryLoading(true)
-                            const response = await fetch(`/api/admin/students/${studentData.phone}/summary`, {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json'
-                              }
-                            })
-
-                            if (response.ok) {
-                              const data = await response.json()
-                              setStudentSummary(data.summary)
-                              setShowSummaryModal(true)
-                            } else {
-                              throw new Error('Failed to generate summary')
-                            }
-                          } catch (error) {
-                            console.error('Error:', error)
-                            toast.error('Failed to generate student summary. Please try again.')
-                          } finally {
-                            setSummaryLoading(false)
-                          }
-                        }}
+                        onClick={handleGenerateSummary}
                         disabled={summaryLoading}
                         className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                       >
