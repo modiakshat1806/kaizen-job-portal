@@ -120,6 +120,9 @@ export const adminAPI = {
   // Toggle job status
   toggleJobStatus: (id, isActive) => api.put(`/admin/jobs/${id}/status`, { isActive }),
 
+  // Get all applications for admin dashboard
+  getAllApplications: (params = {}) => api.get('/admin/applications', { params }),
+
   // Search student by phone
   searchStudent: (phone) => api.get(`/admin/students/search/${phone}`),
 

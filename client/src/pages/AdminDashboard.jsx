@@ -23,6 +23,25 @@ import {
 import { adminAPI } from '../services/api'
 import toast from 'react-hot-toast'
 
+// CSS to ensure buttons work
+const buttonStyles = `
+  .admin-job-buttons {
+    pointer-events: auto !important;
+    z-index: 9999 !important;
+    position: relative !important;
+  }
+  .admin-job-buttons button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10000 !important;
+    position: relative !important;
+  }
+  .admin-job-card {
+    position: relative !important;
+    overflow: visible !important;
+  }
+`
+
 // Animated Counter Component with 3D effects
 const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = '' }) => {
   const [count, setCount] = useState(0)
@@ -94,6 +113,8 @@ const AdminDashboard = () => {
   const [pagination, setPagination] = useState({})
   const [stats, setStats] = useState({})
   const [selectedFilter, setSelectedFilter] = useState('all') // Track which card is selected
+  const [applications, setApplications] = useState([]) // Store applications data
+  const [showApplications, setShowApplications] = useState(false) // Toggle between jobs and applications view
 
   // Add 3D animations CSS
   useEffect(() => {
@@ -200,6 +221,11 @@ const AdminDashboard = () => {
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [showSummaryModal, setShowSummaryModal] = useState(false)
 
+  // Processing states to prevent multiple clicks
+  const [processingJobs, setProcessingJobs] = useState(new Set())
+
+
+
   // Function to format LLM response
   const formatSummary = (rawSummary) => {
     if (!rawSummary) return []
@@ -267,28 +293,31 @@ const AdminDashboard = () => {
     return sections
   }
 
-  // Handle stat card clicks to filter jobs
+  // Handle stat card clicks to filter jobs or show applications
   const handleStatCardClick = (filterType) => {
     setSelectedFilter(filterType)
     setCurrentPage(1) // Reset to first page
 
-    // Update the status filter based on card clicked
-    switch (filterType) {
-      case 'total':
-        setStatusFilter('all')
-        break
-      case 'active':
-        setStatusFilter('active')
-        break
-      case 'inactive':
-        setStatusFilter('inactive')
-        break
-      case 'applications':
-        // For applications, we'll show all jobs but could add special handling later
-        setStatusFilter('all')
-        break
-      default:
-        setStatusFilter('all')
+    if (filterType === 'applications') {
+      // Show applications view
+      setShowApplications(true)
+      fetchApplications(1)
+    } else {
+      // Show jobs view with appropriate filter
+      setShowApplications(false)
+      switch (filterType) {
+        case 'total':
+          setStatusFilter('all')
+          break
+        case 'active':
+          setStatusFilter('active')
+          break
+        case 'inactive':
+          setStatusFilter('inactive')
+          break
+        default:
+          setStatusFilter('all')
+      }
     }
   }
 
@@ -306,7 +335,23 @@ const AdminDashboard = () => {
       }
 
       const response = await adminAPI.getAllJobs(params)
-      setJobs(response.data.jobs)
+      console.log('Fetched jobs data:', response.data.jobs)
+
+      // Validate job data structure
+      const validatedJobs = response.data.jobs.map(job => {
+        if (!job.jobId && !job._id) {
+          console.warn('Job missing both jobId and _id:', job)
+        }
+        if (!job.title) {
+          console.warn('Job missing title:', job)
+        }
+        if (job.isActive === undefined || job.isActive === null) {
+          console.warn('Job missing isActive status:', job)
+        }
+        return job
+      })
+
+      setJobs(validatedJobs)
       setPagination(response.data.pagination)
       setStats(response.data.stats)
     } catch (error) {
@@ -317,9 +362,35 @@ const AdminDashboard = () => {
     }
   }
 
+  // Fetch applications data
+  const fetchApplications = async (page = 1) => {
+    try {
+      setLoading(true)
+      const params = {
+        page,
+        limit: 20,
+        search: searchTerm
+      }
+
+      const response = await adminAPI.getAllApplications(params)
+      setApplications(response.data.applications)
+      setPagination(response.data.pagination)
+      // Keep existing stats for job counts, applications will show in the list
+    } catch (error) {
+      console.error('Error fetching applications:', error)
+      toast.error('Failed to fetch applications')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    fetchJobs(currentPage)
-  }, [searchTerm, statusFilter, industryFilter, jobTypeFilter, currentPage])
+    if (showApplications) {
+      fetchApplications(currentPage)
+    } else {
+      fetchJobs(currentPage)
+    }
+  }, [searchTerm, statusFilter, industryFilter, jobTypeFilter, currentPage, showApplications])
 
   // Update selectedFilter when statusFilter changes (for manual filter changes)
   useEffect(() => {
@@ -336,29 +407,95 @@ const AdminDashboard = () => {
 
   // Handle job deletion
   const handleDeleteJob = async (jobId, jobTitle) => {
+    // Add validation for required parameters
+    if (!jobId) {
+      console.error('Job deletion failed: Missing jobId', { jobId, jobTitle })
+      toast.error('Cannot delete job: Missing job ID')
+      return
+    }
+
+    if (!jobTitle) {
+      console.error('Job deletion failed: Missing jobTitle', { jobId, jobTitle })
+      toast.error('Cannot delete job: Missing job title')
+      return
+    }
+
+    // Check if job is already being processed
+    if (processingJobs.has(jobId)) {
+      console.log('Job deletion already in progress:', jobId)
+      return
+    }
+
     if (!window.confirm(`Are you sure you want to delete "${jobTitle}"? This action cannot be undone.`)) {
       return
     }
 
     try {
+      // Mark job as being processed
+      setProcessingJobs(prev => new Set([...prev, jobId]))
+
+      console.log('Attempting to delete job:', { jobId, jobTitle })
       await adminAPI.deleteJob(jobId)
       toast.success('Job deleted successfully')
       fetchJobs(currentPage)
     } catch (error) {
       console.error('Error deleting job:', error)
-      toast.error('Failed to delete job')
+      toast.error(`Failed to delete job: ${error.response?.data?.error || error.message}`)
+    } finally {
+      // Remove job from processing set
+      setProcessingJobs(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(jobId)
+        return newSet
+      })
     }
   }
 
   // Handle job status toggle
   const handleToggleJobStatus = async (jobId, currentStatus, jobTitle) => {
+    // Add validation for required parameters
+    if (!jobId) {
+      console.error('Job status toggle failed: Missing jobId', { jobId, currentStatus, jobTitle })
+      toast.error('Cannot update job status: Missing job ID')
+      return
+    }
+
+    if (currentStatus === undefined || currentStatus === null) {
+      console.error('Job status toggle failed: Missing currentStatus', { jobId, currentStatus, jobTitle })
+      toast.error('Cannot update job status: Missing current status')
+      return
+    }
+
+    if (!jobTitle) {
+      console.error('Job status toggle failed: Missing jobTitle', { jobId, currentStatus, jobTitle })
+      toast.error('Cannot update job status: Missing job title')
+      return
+    }
+
+    // Check if job is already being processed
+    if (processingJobs.has(jobId)) {
+      console.log('Job status toggle already in progress:', jobId)
+      return
+    }
+
     try {
+      // Mark job as being processed
+      setProcessingJobs(prev => new Set([...prev, jobId]))
+
+      console.log('Attempting to toggle job status:', { jobId, currentStatus, newStatus: !currentStatus, jobTitle })
       await adminAPI.toggleJobStatus(jobId, !currentStatus)
       toast.success(`Job "${jobTitle}" ${!currentStatus ? 'activated' : 'deactivated'} successfully`)
       fetchJobs(currentPage)
     } catch (error) {
       console.error('Error updating job status:', error)
-      toast.error('Failed to update job status')
+      toast.error(`Failed to update job status: ${error.response?.data?.error || error.message}`)
+    } finally {
+      // Remove job from processing set
+      setProcessingJobs(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(jobId)
+        return newSet
+      })
     }
   }
 
@@ -768,6 +905,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <style>{buttonStyles}</style>
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
@@ -869,16 +1007,16 @@ const AdminDashboard = () => {
             <div className="floating-card bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Job Management
+                  {showApplications ? 'Application Management' : 'Job Management'}
                 </h2>
-                
+
                 {/* Filters */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <input
                       type="text"
-                      placeholder="Search jobs..."
+                      placeholder={showApplications ? "Search applications..." : "Search jobs..."}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
@@ -913,131 +1051,283 @@ const AdminDashboard = () => {
                 </div>
                 
                 <button
-                  onClick={() => fetchJobs(1)}
+                  onClick={() => showApplications ? fetchApplications(1) : fetchJobs(1)}
                   className="admin-button flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
+                  Refresh {showApplications ? 'Applications' : 'Jobs'}
                 </button>
               </div>
               
-              {/* Jobs List */}
+              {/* Jobs/Applications List */}
               <div className="p-6">
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
-                    <p className="text-gray-600 dark:text-gray-400 mt-2">Loading jobs...</p>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">
+                      Loading {showApplications ? 'applications' : 'jobs'}...
+                    </p>
                   </div>
-                ) : jobs.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400">No jobs found</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {jobs.map((job) => (
-                      <div
-                        key={job._id}
-                        className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {job.title}
-                              </h3>
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                job.isActive 
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                              }`}>
-                                {job.isActive ? 'Active' : 'Inactive'}
-                              </span>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                              <div className="flex items-center">
-                                <Building className="w-4 h-4 mr-2" />
-                                {job.company.name}
+                ) : showApplications ? (
+                  // Applications View
+                  applications.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400">No applications found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {applications.map((application) => (
+                        <div
+                          key={application._id}
+                          className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {application.studentName}
+                                </h3>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  application.status === 'applied'
+                                    ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+                                    : application.status === 'reviewed'
+                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                                    : application.status === 'shortlisted'
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    : application.status === 'rejected'
+                                    ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                    : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+                                }`}>
+                                  {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                                </span>
                               </div>
-                              <div className="flex items-center">
-                                <MapPin className="w-4 h-4 mr-2" />
-                                {job.location.type} - {job.location.city || 'Not specified'}
-                              </div>
-                              <div className="flex items-center">
-                                <Briefcase className="w-4 h-4 mr-2" />
-                                {job.jobType} • {job.industry}
-                              </div>
-                              <div className="flex items-center">
-                                <Calendar className="w-4 h-4 mr-2" />
-                                Created: {formatDate(job.createdAt)}
-                              </div>
-                              <div className="flex items-center">
-                                <User className="w-4 h-4 mr-2" />
-                                Posted by: {job.contactPerson?.name || 'Not specified'}
-                              </div>
-                              <div className="flex items-center">
-                                <Phone className="w-4 h-4 mr-2" />
-                                Contact: {job.contactPerson?.phone || 'Not specified'}
-                              </div>
-                            </div>
-                            
-                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                              <strong>Job ID:</strong> {job.jobId}
-                            </div>
-                            
-                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                              <strong>Salary:</strong> {formatSalary(job.salary)}
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col gap-2 ml-4">
-                            <button
-                              onClick={() => handleDownloadJobDetails(job)}
-                              className="admin-button flex items-center px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
-                              title="Download Complete Job Details as PNG Image"
-                            >
-                              <Download className="w-4 h-4 mr-1" />
-                              Details
-                            </button>
 
-                            <button
-                              onClick={() => handleDownloadQROnly(job)}
-                              className="admin-button flex items-center px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm"
-                              title="Download QR Code Only"
-                            >
-                              <QrCode className="w-4 h-4 mr-1" />
-                              QR
-                            </button>
-
-                            <button
-                              onClick={() => handleToggleJobStatus(job.jobId, job.isActive, job.title)}
-                              className={`admin-button flex items-center px-3 py-1 rounded transition-colors text-sm ${
-                                job.isActive
-                                  ? 'bg-yellow-600 text-white hover:bg-yellow-700'
-                                  : 'bg-green-600 text-white hover:bg-green-700'
-                              }`}
-                              title={job.isActive ? 'Deactivate Job' : 'Activate Job'}
-                            >
-                              {job.isActive ? <EyeOff className="w-4 h-4 mr-1" /> : <Eye className="w-4 h-4 mr-1" />}
-                              {job.isActive ? 'Hide' : 'Show'}
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteJob(job.jobId, job.title)}
-                              className="admin-button flex items-center px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm"
-                              title="Delete Job"
-                            >
-                              <Trash2 className="w-4 h-4 mr-1" />
-                              Delete
-                            </button>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                <div className="flex items-center">
+                                  <Phone className="w-4 h-4 mr-2" />
+                                  {application.studentPhone}
+                                </div>
+                                <div className="flex items-center">
+                                  <User className="w-4 h-4 mr-2" />
+                                  {application.studentEmail}
+                                </div>
+                                <div className="flex items-center">
+                                  <Briefcase className="w-4 h-4 mr-2" />
+                                  {application.jobTitle}
+                                </div>
+                                <div className="flex items-center">
+                                  <Building className="w-4 h-4 mr-2" />
+                                  {application.companyName}
+                                </div>
+                                <div className="flex items-center">
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  Applied: {formatDate(application.appliedAt)}
+                                </div>
+                                {application.fitmentScore && (
+                                  <div className="flex items-center">
+                                    <TrendingUp className="w-4 h-4 mr-2" />
+                                    Fitment: {application.fitmentScore}%
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )
+                ) : (
+                  // Jobs View
+                  jobs.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600 dark:text-gray-400">No jobs found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {jobs.map((job, index) => {
+                        console.log(`Rendering job ${index}:`, job.jobId || job._id, job.title)
+                        return (
+                        <div
+                          key={job._id}
+                          className="admin-job-card border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800"
+                        >
+                          <div
+                            className="flex items-start justify-between"
+                            style={{ position: 'relative' }}
+                          >
+                            <div className="flex-1 pr-4">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                  {job.title}
+                                </h3>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  job.isActive
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                                }`}>
+                                  {job.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                <div className="flex items-center">
+                                  <Building className="w-4 h-4 mr-2" />
+                                  {job.company.name}
+                                </div>
+                                <div className="flex items-center">
+                                  <MapPin className="w-4 h-4 mr-2" />
+                                  {job.location.type} - {job.location.city || 'Not specified'}
+                                </div>
+                                <div className="flex items-center">
+                                  <Briefcase className="w-4 h-4 mr-2" />
+                                  {job.jobType} • {job.industry}
+                                </div>
+                                <div className="flex items-center">
+                                  <Calendar className="w-4 h-4 mr-2" />
+                                  Created: {formatDate(job.createdAt)}
+                                </div>
+                                <div className="flex items-center">
+                                  <User className="w-4 h-4 mr-2" />
+                                  Posted by: {job.contactPerson?.name || 'Not specified'}
+                                </div>
+                                <div className="flex items-center">
+                                  <Phone className="w-4 h-4 mr-2" />
+                                  Contact: {job.contactPerson?.phone || 'Not specified'}
+                                </div>
+                              </div>
+
+                              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                <strong>Job ID:</strong> {job.jobId}
+                              </div>
+
+                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                                <strong>Salary:</strong> {formatSalary(job.salary)}
+                              </div>
+                            </div>
+
+                            <div className="admin-job-buttons flex flex-col gap-2 min-w-[120px]">
+                              <button
+                                onClick={() => {
+                                  console.log('Details button clicked for job:', job.jobId || job._id, job)
+                                  handleDownloadJobDetails(job)
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  backgroundColor: '#2563eb',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <Download size={16} />
+                                Details
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  console.log('QR button clicked for job:', job.jobId || job._id, job)
+                                  handleDownloadQROnly(job)
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  backgroundColor: '#7c3aed',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '14px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px'
+                                }}
+                              >
+                                <QrCode size={16} />
+                                QR
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  console.log('Toggle button clicked for job:', job.jobId || job._id, job.isActive, job)
+                                  handleToggleJobStatus(job.jobId || job._id, job.isActive, job.title)
+                                }}
+                                disabled={processingJobs.has(job.jobId || job._id)}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  backgroundColor: job.isActive ? '#ca8a04' : '#16a34a',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: processingJobs.has(job.jobId || job._id) ? 'not-allowed' : 'pointer',
+                                  fontSize: '14px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px',
+                                  opacity: processingJobs.has(job.jobId || job._id) ? 0.5 : 1
+                                }}
+                              >
+                                {processingJobs.has(job.jobId || job._id) ? (
+                                  <>⏳ Processing...</>
+                                ) : (
+                                  <>
+                                    {job.isActive ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    {job.isActive ? 'Hide' : 'Show'}
+                                  </>
+                                )}
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  console.log('Delete button clicked for job:', job.jobId || job._id, job)
+                                  handleDeleteJob(job.jobId || job._id, job.title)
+                                }}
+                                disabled={processingJobs.has(job.jobId || job._id)}
+                                style={{
+                                  width: '100%',
+                                  padding: '8px 12px',
+                                  backgroundColor: '#dc2626',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: processingJobs.has(job.jobId || job._id) ? 'not-allowed' : 'pointer',
+                                  fontSize: '14px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '4px',
+                                  opacity: processingJobs.has(job.jobId || job._id) ? 0.5 : 1
+                                }}
+                              >
+                                {processingJobs.has(job.jobId || job._id) ? (
+                                  <>⏳ Deleting...</>
+                                ) : (
+                                  <>
+                                    <Trash2 size={16} />
+                                    Delete
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        )
+                      })}
+                    </div>
+                  )
                 )}
-                
+
                 {/* Pagination */}
                 {pagination.totalPages > 1 && (
                   <div className="flex justify-center items-center gap-2 mt-6">

@@ -2,6 +2,7 @@ const express = require('express');
 const OpenAI = require('openai');
 const Job = require('../models/Job');
 const Student = require('../models/Student');
+const JobApplication = require('../models/JobApplication');
 const router = express.Router();
 
 // Initialize OpenAI client
@@ -70,7 +71,7 @@ router.get('/jobs', async (req, res) => {
 
     // Get jobs with pagination
     const jobs = await Job.find(filter)
-      .select('jobId title company jobType location industry salary requirements isActive applicationCount qrCode createdAt updatedAt')
+      .select('jobId title company contactPerson jobType location industry salary requirements isActive applicationCount qrCode createdAt updatedAt')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -471,6 +472,83 @@ router.delete('/students/:phone', async (req, res) => {
     console.error('Error deleting student:', error);
     res.status(500).json({
       error: 'Failed to delete student profile',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/admin/applications - Get all job applications for admin dashboard
+router.get('/applications', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search, status, jobId } = req.query;
+
+    // Build filter object
+    const filter = {};
+
+    if (search) {
+      filter.$or = [
+        { studentName: { $regex: search, $options: 'i' } },
+        { studentEmail: { $regex: search, $options: 'i' } },
+        { studentPhone: { $regex: search, $options: 'i' } },
+        { jobTitle: { $regex: search, $options: 'i' } },
+        { companyName: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (status) filter.status = status;
+    if (jobId) filter.jobId = jobId;
+
+    // Get applications with pagination
+    const applications = await JobApplication.find(filter)
+      .sort({ appliedAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    // Get total count for pagination
+    const totalApplications = await JobApplication.countDocuments(filter);
+    const totalPages = Math.ceil(totalApplications / limit);
+
+    // Get summary statistics
+    const applicationStats = await JobApplication.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalApplications: { $sum: 1 },
+          appliedCount: { $sum: { $cond: [{ $eq: ['$status', 'applied'] }, 1, 0] } },
+          reviewedCount: { $sum: { $cond: [{ $eq: ['$status', 'reviewed'] }, 1, 0] } },
+          shortlistedCount: { $sum: { $cond: [{ $eq: ['$status', 'shortlisted'] }, 1, 0] } },
+          rejectedCount: { $sum: { $cond: [{ $eq: ['$status', 'rejected'] }, 1, 0] } },
+          hiredCount: { $sum: { $cond: [{ $eq: ['$status', 'hired'] }, 1, 0] } }
+        }
+      }
+    ]);
+
+    const stats = applicationStats.length > 0 ? applicationStats[0] : {
+      totalApplications: 0,
+      appliedCount: 0,
+      reviewedCount: 0,
+      shortlistedCount: 0,
+      rejectedCount: 0,
+      hiredCount: 0
+    };
+
+    res.json({
+      message: 'Applications fetched successfully',
+      applications,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages,
+        totalApplications,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      },
+      stats
+    });
+
+  } catch (error) {
+    console.error('Error fetching applications for admin:', error);
+    res.status(500).json({
+      error: 'Failed to fetch applications',
       message: error.message
     });
   }
