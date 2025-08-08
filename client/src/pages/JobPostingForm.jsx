@@ -267,6 +267,58 @@ const JobPostingForm = () => {
   const streamRef = useRef(null)
   const recordingIntervalRef = useRef(null)
 
+  // Cleanup function for voice recording resources
+  const cleanupVoiceRecording = () => {
+    try {
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+        recordingIntervalRef.current = null
+      }
+
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+      }
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          try {
+            track.stop()
+          } catch (e) {
+            console.warn('Error stopping track during cleanup:', e)
+          }
+        })
+        streamRef.current = null
+      }
+
+      setIsRecording(false)
+      setIsProcessingVoice(false)
+      setVoiceProgress(0)
+      setRecordingTime(0)
+    } catch (error) {
+      console.warn('Error during voice recording cleanup:', error)
+    }
+  }
+
+  // iOS detection utility
+  const isIOS = () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  }
+
+  // Check if voice recording is supported
+  const isVoiceRecordingSupported = () => {
+    return !!(navigator.mediaDevices &&
+              navigator.mediaDevices.getUserMedia &&
+              window.MediaRecorder)
+  }
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      cleanupVoiceRecording()
+    }
+  }, [])
+
   // Job title suggestions database - Comprehensive career roles list
   const jobTitleDatabase = [
     'Agile Coach',
@@ -486,7 +538,7 @@ const JobPostingForm = () => {
     }))
   }
 
-  // Voice recording functions using OpenAI Whisper
+  // Voice recording functions using OpenAI Whisper - Enhanced for iOS compatibility
   const startVoiceRecording = async () => {
     try {
       setIsRecording(true)
@@ -494,19 +546,38 @@ const JobPostingForm = () => {
       setRecordingTime(0)
       audioChunksRef.current = []
 
-      // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({
+      // Enhanced microphone access with iOS compatibility
+      const constraints = {
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
-          autoGainControl: true
+          autoGainControl: true,
+          sampleRate: 44100,
+          channelCount: 1
         }
-      })
+      }
 
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
       streamRef.current = stream
-      mediaRecorderRef.current = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
-      })
+
+      // iOS-compatible MIME type detection
+      let mimeType = 'audio/webm;codecs=opus'
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm'
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/mp4'
+          if (!MediaRecorder.isTypeSupported(mimeType)) {
+            mimeType = 'audio/wav'
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+              mimeType = '' // Let browser choose
+            }
+          }
+        }
+      }
+
+      console.log('Using MIME type for recording:', mimeType)
+
+      mediaRecorderRef.current = new MediaRecorder(stream, mimeType ? { mimeType } : {})
 
       mediaRecorderRef.current.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -515,24 +586,43 @@ const JobPostingForm = () => {
       }
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
-        await processVoiceInput(audioBlob)
-
-        // Clean up
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach(track => track.stop())
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: mimeType || 'audio/webm'
+          })
+          await processVoiceInput(audioBlob)
+        } catch (error) {
+          console.error('Error processing voice input:', error)
+          toast.error('Failed to process voice input. Please try again.')
+        } finally {
+          // Clean up resources
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => {
+              try {
+                track.stop()
+              } catch (e) {
+                console.warn('Error stopping track:', e)
+              }
+            })
+          }
         }
+      }
+
+      mediaRecorderRef.current.onerror = (event) => {
+        console.error('MediaRecorder error:', event.error)
+        toast.error('Recording error occurred. Please try again.')
+        stopVoiceRecording()
       }
 
       mediaRecorderRef.current.start()
       setVoiceProgress(25)
       toast.success('🎤 Recording started! Speak your job details clearly.')
 
-      // Start recording timer
+      // Start recording timer - Extended to 90 seconds
       recordingIntervalRef.current = setInterval(() => {
         setRecordingTime(prev => {
           const newTime = prev + 1
-          if (newTime >= 30) { // Auto-stop after 30 seconds
+          if (newTime >= 90) { // Auto-stop after 90 seconds
             stopVoiceRecording()
           }
           return newTime
@@ -543,9 +633,12 @@ const JobPostingForm = () => {
       console.error('Voice recording error:', error)
       setIsRecording(false)
       setVoiceProgress(0)
+      setRecordingTime(0)
 
       if (error.name === 'NotAllowedError') {
-        toast.error('Microphone access denied. Please allow microphone access.')
+        toast.error('Microphone access denied. Please allow microphone access and try again.')
+      } else if (error.name === 'NotFoundError') {
+        toast.error('No microphone found. Please check your device settings.')
       } else {
         toast.error('Failed to start recording. Please try again.')
       }
@@ -553,14 +646,46 @@ const JobPostingForm = () => {
   }
 
   const stopVoiceRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-      mediaRecorderRef.current.stop()
+    try {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+        mediaRecorderRef.current.stop()
+        setIsRecording(false)
+        setVoiceProgress(50)
+
+        // Use a more reliable toast notification
+        if (typeof toast === 'object' && toast.info) {
+          toast.info('Processing your voice input...')
+        } else {
+          console.log('Processing your voice input...')
+        }
+      }
+
+      // Clear the recording timer
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+        recordingIntervalRef.current = null
+      }
+    } catch (error) {
+      console.error('Error stopping recording:', error)
       setIsRecording(false)
-      setVoiceProgress(50)
-      toast.info('Processing your voice input...')
-    }
-    if (recordingIntervalRef.current) {
-      clearInterval(recordingIntervalRef.current)
+      setVoiceProgress(0)
+      setRecordingTime(0)
+
+      // Clean up resources on error
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+        recordingIntervalRef.current = null
+      }
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          try {
+            track.stop()
+          } catch (e) {
+            console.warn('Error stopping track on cleanup:', e)
+          }
+        })
+      }
     }
   }
 
@@ -1274,9 +1399,11 @@ const JobPostingForm = () => {
                       startVoiceRecording()
                     }
                   }}
-                  disabled={isProcessingVoice}
+                  disabled={isProcessingVoice || !isVoiceRecordingSupported()}
                   className={`group relative flex items-center space-x-2 sm:space-x-3 px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base transition-all duration-300 transform-gpu touch-manipulation ${
-                    isRecording
+                    !isVoiceRecordingSupported()
+                      ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-50'
+                      : isRecording
                       ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl voice-button-active'
                       : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white shadow-lg hover:shadow-2xl voice-button-inactive'
                   } ${isProcessingVoice ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -1305,10 +1432,22 @@ const JobPostingForm = () => {
 
                   {/* Text with 3D effect - responsive */}
                   <span className="relative z-10 drop-shadow-sm hidden sm:inline">
-                    {isRecording ? 'Stop Recording' : isProcessingVoice ? 'Processing...' : 'Fill with Voice'}
+                    {!isVoiceRecordingSupported()
+                      ? 'Voice Not Supported'
+                      : isRecording
+                      ? 'Stop Recording'
+                      : isProcessingVoice
+                      ? 'Processing...'
+                      : 'Fill with Voice'}
                   </span>
                   <span className="relative z-10 drop-shadow-sm sm:hidden">
-                    {isRecording ? 'Stop' : isProcessingVoice ? '...' : 'Voice'}
+                    {!isVoiceRecordingSupported()
+                      ? 'N/A'
+                      : isRecording
+                      ? 'Stop'
+                      : isProcessingVoice
+                      ? '...'
+                      : 'Voice'}
                   </span>
 
                   {/* Animated border glow */}
@@ -1339,7 +1478,7 @@ const JobPostingForm = () => {
                   Voice Entry Progress
                 </span>
                 <span className="text-xs text-blue-600 dark:text-blue-300">
-                  {isRecording ? `Recording: ${recordingTime}/30 seconds` : 'Processing...'}
+                  {isRecording ? `Recording: ${recordingTime}/90 seconds` : 'Processing...'}
                 </span>
               </div>
               <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
