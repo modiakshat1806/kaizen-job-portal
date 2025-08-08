@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
-import { Building, MapPin, DollarSign, Users, FileText, Download, Share2, ArrowLeft, ExternalLink, Copy } from 'lucide-react'
+import { Building, MapPin, DollarSign, Users, FileText, Download, Share2, ArrowLeft, ExternalLink, Copy, QrCode } from 'lucide-react'
 import { jobAPI } from '../services/api'
 
 const QRPreview = () => {
@@ -30,15 +30,187 @@ const QRPreview = () => {
     }
   }
 
-  const downloadQRCode = async () => {
+  // Handle complete job details download as PNG image (like admin dashboard)
+  const downloadJobDetails = async () => {
     if (!job?.qrCode) return
-    
+
+    setDownloading(true)
+    try {
+      // Create a canvas to draw the job details
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+
+      // Set canvas size (A4 proportions)
+      canvas.width = 800
+      canvas.height = 1200
+
+      // Fill background
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      // Helper function to draw text with word wrapping
+      const drawWrappedText = (text, x, y, maxWidth, lineHeight, fontSize = 16, color = '#333333') => {
+        ctx.fillStyle = color
+        ctx.font = `${fontSize}px Arial`
+
+        const words = text.split(' ')
+        let line = ''
+        let currentY = y
+
+        for (let n = 0; n < words.length; n++) {
+          const testLine = line + words[n] + ' '
+          const metrics = ctx.measureText(testLine)
+          const testWidth = metrics.width
+
+          if (testWidth > maxWidth && n > 0) {
+            ctx.fillText(line, x, currentY)
+            line = words[n] + ' '
+            currentY += lineHeight
+          } else {
+            line = testLine
+          }
+        }
+        ctx.fillText(line, x, currentY)
+        return currentY + lineHeight
+      }
+
+      let currentY = 40
+
+      // Header - Logo and Title
+      ctx.fillStyle = '#7c3aed'
+      ctx.font = 'bold 24px Arial'
+      ctx.textAlign = 'center'
+      ctx.fillText('🚀 Kaizen Job Portal', canvas.width / 2, currentY)
+      currentY += 40
+
+      // Job Title
+      ctx.fillStyle = '#1f2937'
+      ctx.font = 'bold 32px Arial'
+      ctx.fillText(job.title, canvas.width / 2, currentY)
+      currentY += 40
+
+      // Company Name
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '20px Arial'
+      ctx.fillText(job.company?.name || 'Company Name', canvas.width / 2, currentY)
+      currentY += 30
+
+      // Status Badge
+      const statusText = job.isActive ? 'ACTIVE' : 'INACTIVE'
+      const statusColor = job.isActive ? '#065f46' : '#991b1b'
+      const statusBgColor = job.isActive ? '#d1fae5' : '#fee2e2'
+
+      ctx.fillStyle = statusBgColor
+      ctx.fillRect(canvas.width / 2 - 40, currentY - 15, 80, 25)
+      ctx.fillStyle = statusColor
+      ctx.font = 'bold 12px Arial'
+      ctx.fillText(statusText, canvas.width / 2, currentY)
+      currentY += 40
+
+      // Job Details Section
+      ctx.textAlign = 'left'
+      const leftMargin = 50
+      const rightMargin = canvas.width - 50
+      const maxWidth = rightMargin - leftMargin
+
+      // Job Type and Location
+      ctx.fillStyle = '#374151'
+      ctx.font = 'bold 18px Arial'
+      ctx.fillText('Job Details', leftMargin, currentY)
+      currentY += 30
+
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '16px Arial'
+      ctx.fillText(`Type: ${job.jobType}`, leftMargin, currentY)
+      currentY += 25
+      ctx.fillText(`Location: ${job.location?.city || 'Remote'}, ${job.location?.state || ''} ${job.location?.country || ''}`, leftMargin, currentY)
+      currentY += 25
+      ctx.fillText(`Salary: ${formatCurrency(job.salary?.min)} - ${formatCurrency(job.salary?.max)}`, leftMargin, currentY)
+      currentY += 35
+
+      // Description
+      if (job.description) {
+        ctx.fillStyle = '#374151'
+        ctx.font = 'bold 18px Arial'
+        ctx.fillText('Description', leftMargin, currentY)
+        currentY += 25
+        currentY = drawWrappedText(job.description, leftMargin, currentY, maxWidth, 22, 14, '#6b7280')
+        currentY += 20
+      }
+
+      // Load and draw QR code
+      const qrImg = new Image()
+      qrImg.onload = () => {
+        // QR Code Section
+        const qrSectionY = currentY
+        const qrSectionHeight = 200
+
+        ctx.fillStyle = '#374151'
+        ctx.font = 'bold 18px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText('Scan QR Code to Apply', canvas.width / 2, qrSectionY + 30)
+
+        // Draw QR Code
+        const qrSize = 120
+        const qrX = canvas.width / 2 - qrSize / 2
+        const qrY = qrSectionY + 70
+
+        // White background for QR
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20)
+
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize)
+
+        currentY += qrSectionHeight + 30
+
+        // Footer
+        ctx.fillStyle = '#6b7280'
+        ctx.font = '12px Arial'
+        ctx.textAlign = 'center'
+        ctx.fillText(`Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`, canvas.width / 2, currentY)
+        currentY += 20
+        ctx.fillText('Kaizen Job Portal - August Fest 2025 | Smart Career Matching Platform', canvas.width / 2, currentY)
+
+        // Convert canvas to blob and download
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `JobDetails_${job.jobId}_${job.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`
+
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+
+          URL.revokeObjectURL(url)
+          toast.success('Job details downloaded successfully!')
+        }, 'image/png', 1.0)
+      }
+
+      qrImg.onerror = () => {
+        toast.error('Failed to load QR code image')
+      }
+
+      qrImg.src = job.qrCode
+
+    } catch (error) {
+      console.error('Error downloading job details:', error)
+      toast.error('Failed to download job details')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  // Handle QR code only download (original functionality)
+  const downloadQRCodeOnly = async () => {
+    if (!job?.qrCode) return
+
     setDownloading(true)
     try {
       // Create a temporary link element to download the QR code
       const link = document.createElement('a')
       link.href = job.qrCode
-      link.download = `job-qr-${job.jobId}.png`
+      link.download = `QR_${job.jobId}_${job.title.replace(/[^a-zA-Z0-9]/g, '_')}.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -279,9 +451,10 @@ const QRPreview = () => {
                 
                 <div className="space-y-3">
                   <button
-                    onClick={downloadQRCode}
+                    onClick={downloadJobDetails}
                     disabled={downloading}
                     className="btn-primary w-full flex items-center justify-center"
+                    title="Download Complete Job Details with QR Code"
                   >
                     {downloading ? (
                       <>
@@ -291,11 +464,21 @@ const QRPreview = () => {
                     ) : (
                       <>
                         <Download className="w-4 h-4 mr-2" />
-                        Download QR Code
+                        Download Job Details
                       </>
                     )}
                   </button>
-                  
+
+                  <button
+                    onClick={downloadQRCodeOnly}
+                    disabled={downloading}
+                    className="btn-outline w-full flex items-center justify-center"
+                    title="Download QR Code Only"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Download QR Only
+                  </button>
+
                   <button
                     onClick={shareJob}
                     className="btn-outline w-full flex items-center justify-center"
